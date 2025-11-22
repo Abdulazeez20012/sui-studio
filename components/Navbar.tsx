@@ -4,9 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Menu, X, Hexagon, Wallet, Globe, Moon, Sun, 
   ChevronDown, ChevronRight, ExternalLink, 
-  Layout, Terminal, Cpu, Book, Users, FileText, LifeBuoy, Shield, Zap, Code2, Rocket, MessageSquare
+  Layout, Terminal, Cpu, Book, Users, FileText, LifeBuoy, Shield, Zap, Code2, Rocket, MessageSquare, User, LogOut
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Button from './ui/Button';
+import { useAuthStore } from '../src/store/authStore';
+import AuthModal from '../src/components/auth/AuthModal';
 
 type NavItem = {
   label: string;
@@ -50,12 +53,16 @@ const NAV_MENU: NavItem[] = [
 ];
 
 const Navbar: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuthStore();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [network, setNetwork] = useState('Testnet');
   const [lang, setLang] = useState('EN');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
@@ -65,6 +72,16 @@ const Navbar: React.FC = () => {
 
   const handleConnect = () => {
     setIsConnected(!isConnected);
+  };
+
+  const handleAuthSuccess = () => {
+    setShowAuthModal(false);
+    navigate('/ide');
+  };
+
+  const handleLogout = () => {
+    logout();
+    setShowUserMenu(false);
   };
 
   return (
@@ -163,9 +180,64 @@ const Navbar: React.FC = () => {
               <ChevronDown className="w-3 h-3 text-slate-500 cursor-pointer hover:text-white" />
             </div>
 
+            {/* Auth / User Profile */}
+            {isAuthenticated && user ? (
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-[#161b22] border border-white/10 rounded-lg hover:border-sui-cyan/30 transition-colors"
+                >
+                  {user.picture ? (
+                    <img 
+                      src={user.picture} 
+                      alt={user.name} 
+                      className="w-6 h-6 rounded-full"
+                    />
+                  ) : (
+                    <User size={16} className="text-slate-400" />
+                  )}
+                  <span className="text-sm text-white">{user.name}</span>
+                  <ChevronDown className="w-3 h-3 text-slate-500" />
+                </button>
+
+                {/* User Dropdown */}
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-56 bg-[#161b22] border border-white/10 rounded-xl shadow-2xl py-2 z-50">
+                    <div className="px-4 py-2 border-b border-white/10">
+                      <p className="text-sm font-medium text-white">{user.name}</p>
+                      <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                    </div>
+                    <button
+                      onClick={() => navigate('/ide')}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                    >
+                      <Terminal size={16} />
+                      <span>Open IDE</span>
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                    >
+                      <LogOut size={16} />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Button 
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowAuthModal(true)}
+              >
+                <User className="w-4 h-4 mr-2" />
+                Sign In
+              </Button>
+            )}
+
             {/* Wallet Connect */}
             <Button 
-              variant={isConnected ? 'outline' : 'secondary'}
+              variant={isConnected ? 'outline' : 'outline'}
               size="sm"
               onClick={handleConnect}
               className={isConnected ? "border-sui-cyan/30 text-sui-cyan bg-sui-cyan/5" : ""}
@@ -287,6 +359,13 @@ const Navbar: React.FC = () => {
           </>
         )}
       </AnimatePresence>
+
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleAuthSuccess}
+      />
     </nav>
   );
 };

@@ -2,10 +2,16 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
 import { ChevronRight, Play, Command, CheckCircle2, Copy, Terminal, Star } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Button from './ui/Button';
 import Section from './ui/Section';
+import { useAuthStore } from '../src/store/authStore';
+import AuthModal from '../src/components/auth/AuthModal';
 
 const Hero: React.FC = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
   
@@ -39,6 +45,19 @@ const Hero: React.FC = () => {
   // IDE Animation State
   const [isCompiling, setIsCompiling] = useState(false);
   const [compileSuccess, setCompileSuccess] = useState(false);
+
+  const handleStartBuilding = () => {
+    if (isAuthenticated) {
+      navigate('/ide');
+    } else {
+      setShowAuthModal(true);
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    setShowAuthModal(false);
+    navigate('/ide');
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -123,8 +142,13 @@ const Hero: React.FC = () => {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="flex flex-col sm:flex-row items-center gap-4 mb-20"
         >
-          <Button size="lg" variant="primary" className="group min-w-[180px] shadow-[0_0_30px_-5px_rgba(60,185,255,0.3)]">
-            Start Building Free
+          <Button 
+            size="lg" 
+            variant="primary" 
+            className="group min-w-[180px] shadow-[0_0_30px_-5px_rgba(60,185,255,0.3)]"
+            onClick={handleStartBuilding}
+          >
+            {isAuthenticated ? 'Open IDE' : 'Start Building Free'}
             <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Button>
           <Button size="lg" variant="outline" className="group min-w-[160px] border-white/10 hover:bg-white/5">
@@ -246,6 +270,13 @@ const Hero: React.FC = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleAuthSuccess}
+      />
     </Section>
   );
 };
