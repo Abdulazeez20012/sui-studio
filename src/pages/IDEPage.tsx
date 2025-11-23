@@ -86,7 +86,7 @@ const IDEPage: React.FC = () => {
   }, [addTab, toggleLeftPanel, toggleBottomPanel]);
 
   return (
-    <div className="h-screen flex flex-col bg-dark-bg text-white cyber-grid">
+    <div className="h-screen flex flex-col bg-black text-white">
       {/* Menu Bar */}
       <MenuBar />
       
@@ -110,7 +110,7 @@ const IDEPage: React.FC = () => {
         </div>
         
         {/* Main Editor Area */}
-        <div className="flex-1 flex flex-col min-w-0 bg-dark-bg relative">
+        <div className="flex-1 flex flex-col min-w-0 bg-black relative">
           <EditorTabs />
           
           <div className={`flex-1 ${bottomPanelOpen ? 'h-[60%]' : 'h-full'}`}>
