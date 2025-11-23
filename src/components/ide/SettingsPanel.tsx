@@ -199,6 +199,45 @@ const SettingsPanel: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Extensions */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <svg className="w-4 h-4 text-sui-cyan" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M23.15 2.587L18.21.21a1.494 1.494 0 0 0-1.705.29l-9.46 8.63-4.12-3.128a.999.999 0 0 0-1.276.057L.327 7.261A1 1 0 0 0 .326 8.74L3.899 12 .326 15.26a1 1 0 0 0 .001 1.479L1.65 17.94a.999.999 0 0 0 1.276.057l4.12-3.128 9.46 8.63a1.492 1.492 0 0 0 1.704.29l4.942-2.377A1.5 1.5 0 0 0 24 20.06V3.939a1.5 1.5 0 0 0-.85-1.352zm-5.146 14.861L10.826 12l7.178-5.448v10.896z"/>
+            </svg>
+            <h4 className="text-sm font-medium text-white">Extensions</h4>
+          </div>
+
+          <div className="pl-6">
+            <div className="p-4 bg-dark-panel border border-neon-purple/30 rounded-lg hover:border-neon-purple hover:shadow-purple-glow transition-all">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-10 h-10 bg-neon-purple/20 rounded-lg flex items-center justify-center border border-neon-purple/50 flex-shrink-0">
+                  <svg className="w-6 h-6 text-neon-purple" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M23.15 2.587L18.21.21a1.494 1.494 0 0 0-1.705.29l-9.46 8.63-4.12-3.128a.999.999 0 0 0-1.276.057L.327 7.261A1 1 0 0 0 .326 8.74L3.899 12 .326 15.26a1 1 0 0 0 .001 1.479L1.65 17.94a.999.999 0 0 0 1.276.057l4.12-3.128 9.46 8.63a1.492 1.492 0 0 0 1.704.29l4.942-2.377A1.5 1.5 0 0 0 24 20.06V3.939a1.5 1.5 0 0 0-.85-1.352zm-5.146 14.861L10.826 12l7.178-5.448v10.896z"/>
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h5 className="text-sm font-bold text-white mb-1">Core Analyzer</h5>
+                  <p className="text-xs text-slate-400 mb-3">
+                    Advanced Sui Move analysis and debugging tools for VS Code
+                  </p>
+                  <a
+                    href="https://marketplace.visualstudio.com/items?itemName=your-team-name.core-analyzer"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-neon-purple hover:bg-neon-purple/90 text-white rounded-lg transition-all text-xs font-bold uppercase tracking-wider"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    <span>Download Extension</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Actions */}

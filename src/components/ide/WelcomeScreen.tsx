@@ -167,7 +167,38 @@ const WelcomeScreen: React.FC = () => {
           ))}
         </div>
 
-        <div className="flex items-center justify-center gap-4">
+        {/* Core Analyzer Extension Banner */}
+        <div className="mb-8 p-6 bg-gradient-to-r from-neon-purple/10 via-sui-cyan/10 to-neon-pink/10 border border-sui-cyan/30 rounded-xl relative overflow-hidden group hover:border-sui-cyan hover:shadow-neon-lg transition-all">
+          <div className="absolute inset-0 bg-gradient-cyber opacity-0 group-hover:opacity-10 transition-opacity"></div>
+          <div className="relative z-10 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-neon-purple/20 rounded-xl flex items-center justify-center border-2 border-neon-purple/50 shadow-purple-glow">
+                <svg className="w-10 h-10 text-neon-purple" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M23.15 2.587L18.21.21a1.494 1.494 0 0 0-1.705.29l-9.46 8.63-4.12-3.128a.999.999 0 0 0-1.276.057L.327 7.261A1 1 0 0 0 .326 8.74L3.899 12 .326 15.26a1 1 0 0 0 .001 1.479L1.65 17.94a.999.999 0 0 0 1.276.057l4.12-3.128 9.46 8.63a1.492 1.492 0 0 0 1.704.29l4.942-2.377A1.5 1.5 0 0 0 24 20.06V3.939a1.5 1.5 0 0 0-.85-1.352zm-5.146 14.861L10.826 12l7.178-5.448v10.896z"/>
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white mb-1 font-cyber tracking-wide">
+                  CORE ANALYZER EXTENSION
+                </h3>
+                <p className="text-sm text-slate-400 font-medium font-tech">
+                  Enhance your VS Code with advanced Sui Move analysis and debugging tools
+                </p>
+              </div>
+            </div>
+            <a
+              href="https://marketplace.visualstudio.com/items?itemName=your-team-name.core-analyzer"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-6 py-3 bg-neon-purple hover:bg-neon-purple/90 text-white rounded-lg transition-all font-bold uppercase text-sm tracking-wider font-tech shadow-purple-glow hover:shadow-[0_0_30px_rgba(176,38,255,0.5)]"
+            >
+              <Download size={20} />
+              <span>Download</span>
+            </a>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-center gap-4 mb-8">
           <button 
             onClick={handleOpenFolder}
             className="flex items-center gap-2 px-6 py-3 bg-dark-panel border border-sui-cyan/30 rounded-lg hover:border-sui-cyan hover:shadow-neon transition-all text-slate-300 hover:text-sui-cyan font-bold uppercase text-sm tracking-wider"
