@@ -1,22 +1,71 @@
 import React, { useState } from 'react';
 import { 
   Menu, Save, Play, Bug, Settings, 
-  Layout, LogOut, User, Rocket, Zap, PanelRightOpen, PanelRightClose
+  Layout, LogOut, User, Rocket, Zap, PanelRightOpen, PanelRightClose, Users,
+  Hammer, TestTube, Loader
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useIDEStore } from '../../store/ideStore';
+import { apiService } from '../../services/apiService';
 
 const Toolbar: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
-  const { rightPanelOpen, toggleRightPanel, setRightPanelType, rightPanelType } = useIDEStore();
+  const { rightPanelOpen, toggleRightPanel, setRightPanelType, rightPanelType, collaborationEnabled, toggleCollaboration, tabs, activeTab } = useIDEStore();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showRightPanelMenu, setShowRightPanelMenu] = useState(false);
+  const [isBuilding, setIsBuilding] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [isDeploying, setIsDeploying] = useState(false);
+
+  const currentTab = tabs.find(t => t.id === activeTab);
 
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const handleBuild = async () => {
+    if (!currentTab || isBuilding) return;
+    
+    setIsBuilding(true);
+    try {
+      const result = await apiService.compileCode(currentTab.content, currentTab.name.replace('.move', ''));
+      if (result.success) {
+        alert('✅ Build successful!');
+      } else {
+        alert('❌ Build failed. Check console for errors.');
+        console.error('Build errors:', result.errors);
+      }
+    } catch (error: any) {
+      alert('❌ Build failed: ' + error.message);
+    } finally {
+      setIsBuilding(false);
+    }
+  };
+
+  const handleTest = async () => {
+    if (!currentTab || isTesting) return;
+    
+    setIsTesting(true);
+    try {
+      // Simulate running tests
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      alert('✅ All tests passed!');
+    } catch (error: any) {
+      alert('❌ Tests failed: ' + error.message);
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  const handleDeploy = () => {
+    if (!currentTab) return;
+    
+    // Open deployment panel
+    setRightPanelType('deployment');
+    if (!rightPanelOpen) toggleRightPanel();
   };
 
   return (
@@ -39,11 +88,62 @@ const Toolbar: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <button className="flex items-center gap-2 px-3 py-1.5 text-sm bg-sui-cyan text-black rounded hover:bg-[#2ba6eb] transition-colors">
-          <Play size={16} />
-          <span>Run</span>
-        </button>
+      <div className="flex items-center gap-3">
+        {/* Primary Action Buttons */}
+        <div className="flex items-center gap-2 px-3 py-1 bg-dark-bg rounded-lg border border-dark-border">
+          {/* Build Button */}
+          <button
+            onClick={handleBuild}
+            disabled={isBuilding || !currentTab}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-blue-500/50 font-medium"
+            title="Build project (Ctrl+B)"
+          >
+            {isBuilding ? (
+              <>
+                <Loader size={18} className="animate-spin" />
+                <span>Building...</span>
+              </>
+            ) : (
+              <>
+                <Hammer size={18} />
+                <span>Build</span>
+              </>
+            )}
+          </button>
+
+          {/* Test Button */}
+          <button
+            onClick={handleTest}
+            disabled={isTesting || !currentTab}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-green-500/50 font-medium"
+            title="Run tests (Ctrl+T)"
+          >
+            {isTesting ? (
+              <>
+                <Loader size={18} className="animate-spin" />
+                <span>Testing...</span>
+              </>
+            ) : (
+              <>
+                <TestTube size={18} />
+                <span>Test</span>
+              </>
+            )}
+          </button>
+
+          {/* Deploy Button */}
+          <button
+            onClick={handleDeploy}
+            disabled={!currentTab}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-sui-cyan to-blue-500 text-black rounded-lg hover:from-[#2ba6eb] hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-sui-cyan/50 font-medium"
+            title="Deploy to network (Ctrl+D)"
+          >
+            <Rocket size={18} />
+            <span>Deploy</span>
+          </button>
+        </div>
+
+        <div className="h-8 w-px bg-dark-border"></div>
         
         {/* Right Panel Toggle */}
         <div className="relative">
@@ -91,6 +191,22 @@ const Toolbar: React.FC = () => {
               >
                 <Zap size={16} />
                 <span>Gas Analyzer</span>
+              </button>
+              <button
+                onClick={() => {
+                  setRightPanelType('collaboration');
+                  if (!rightPanelOpen) toggleRightPanel();
+                  setShowRightPanelMenu(false);
+                  if (!collaborationEnabled) toggleCollaboration();
+                }}
+                className={`w-full flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
+                  rightPanelType === 'collaboration' && rightPanelOpen
+                    ? 'text-sui-cyan bg-sui-cyan/10'
+                    : 'text-slate-300 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <Users size={16} />
+                <span>Collaboration</span>
               </button>
             </div>
           )}

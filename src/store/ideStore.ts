@@ -22,7 +22,8 @@ interface IDEState {
   
   // View
   viewMode: ViewMode;
-  rightPanelType: 'deployment' | 'gas' | 'docs';
+  rightPanelType: 'deployment' | 'gas' | 'docs' | 'collaboration';
+  collaborationEnabled: boolean;
   
   // Actions
   setFiles: (files: FileNode[]) => void;
@@ -66,6 +67,7 @@ export const useIDEStore = create<IDEState>((set) => ({
   
   viewMode: 'editor',
   rightPanelType: 'deployment',
+  collaborationEnabled: false,
   
   setFiles: (files) => set({ files }),
   setActiveFile: (path) => set({ activeFile: path }),
@@ -94,8 +96,9 @@ export const useIDEStore = create<IDEState>((set) => ({
   toggleLeftPanel: () => set((state) => ({ leftPanelOpen: !state.leftPanelOpen })),
   setLeftPanelType: (type) => set({ leftPanelType: type }),
   toggleRightPanel: () => set((state) => ({ rightPanelOpen: !state.rightPanelOpen })),
-  setRightPanelType: (type: 'deployment' | 'gas' | 'docs') => set({ rightPanelType: type }),
+  setRightPanelType: (type: 'deployment' | 'gas' | 'docs' | 'collaboration') => set({ rightPanelType: type }),
   toggleBottomPanel: () => set((state) => ({ bottomPanelOpen: !state.bottomPanelOpen })),
+  toggleCollaboration: () => set((state) => ({ collaborationEnabled: !state.collaborationEnabled })),
   
   addTerminal: (terminal) => set((state) => ({
     terminals: [...state.terminals, terminal],

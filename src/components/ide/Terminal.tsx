@@ -77,13 +77,34 @@ const Terminal: React.FC = () => {
 
       <div
         ref={outputRef}
-        className="flex-1 overflow-y-auto scrollbar-thin p-4 font-mono text-sm"
+        className="flex-1 overflow-y-auto scrollbar-thin p-4 font-mono text-sm relative"
       >
-        {currentTerminal?.output.map((line, index) => (
-          <div key={index} className="text-slate-300">
-            {line}
-          </div>
-        ))}
+        {/* Sui Logo Watermark */}
+        <div 
+          className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
+          style={{
+            opacity: 0.03,
+            zIndex: 0,
+          }}
+        >
+          <img 
+            src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763580906/sui-sui-logo_gmux9g.png"
+            alt="Sui Logo"
+            className="w-64 h-64 object-contain"
+            style={{
+              filter: 'grayscale(100%) brightness(2)',
+            }}
+          />
+        </div>
+
+        {/* Terminal Output */}
+        <div className="relative z-10">
+          {currentTerminal?.output.map((line, index) => (
+            <div key={index} className="text-slate-300">
+              {line}
+            </div>
+          ))}
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="border-t border-dark-border p-2">

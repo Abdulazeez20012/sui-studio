@@ -52,6 +52,27 @@ export const useKeyboardShortcuts = () => {
           setActiveTab(tabs[nextIndex].id);
         }
       }
+
+      // Ctrl/Cmd + Shift + B: Build
+      if (modifier && e.shiftKey && e.key === 'B') {
+        e.preventDefault();
+        // Trigger build button click
+        document.querySelector('[title="Build project (Ctrl+B)"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      }
+
+      // Ctrl/Cmd + Shift + T: Test
+      if (modifier && e.shiftKey && e.key === 'T') {
+        e.preventDefault();
+        // Trigger test button click
+        document.querySelector('[title="Run tests (Ctrl+T)"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      }
+
+      // Ctrl/Cmd + Shift + D: Deploy
+      if (modifier && e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        // Trigger deploy button click
+        document.querySelector('[title="Deploy to network (Ctrl+D)"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);

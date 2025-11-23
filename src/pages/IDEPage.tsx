@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Sidebar from '../components/ide/Sidebar';
 import LeftPanel from '../components/ide/LeftPanel';
 import RightPanel from '../components/ide/RightPanel';
@@ -7,11 +7,14 @@ import CodeEditor from '../components/ide/CodeEditor';
 import Terminal from '../components/ide/Terminal';
 import StatusBar from '../components/ide/StatusBar';
 import Toolbar from '../components/ide/Toolbar';
+import BuildStatus from '../components/ide/BuildStatus';
 import { useIDEStore } from '../store/ideStore';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 
 const IDEPage: React.FC = () => {
   const { leftPanelOpen, rightPanelOpen, bottomPanelOpen } = useIDEStore();
+  const [buildStatus, setBuildStatus] = useState<'idle' | 'building' | 'success' | 'error'>('idle');
+  const [buildMessage, setBuildMessage] = useState('');
   
   // Enable keyboard shortcuts
   useKeyboardShortcuts();
@@ -51,6 +54,13 @@ const IDEPage: React.FC = () => {
       </div>
       
       <StatusBar />
+
+      {/* Build Status Toast */}
+      <BuildStatus 
+        status={buildStatus}
+        message={buildMessage}
+        onClose={() => setBuildStatus('idle')}
+      />
     </div>
   );
 };

@@ -1,0 +1,83 @@
+// Prisma Schema for Sui Studio IDE
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  picture       String?
+  googleId      String?   @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  projects      Project[]
+  deployments   Deployment[]
+  
+  @@index([email])
+  @@index([googleId])
+}
+
+model Project {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  files         Json      // Store file structure as JSON
+  isPublic      Boolean   @default(false)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  deployments   Deployment[]
+  
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Deployment {
+  id                String    @id @default(cuid())
+  projectId         String
+  project           Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  network           String    // testnet, devnet, mainnet
+  packageId         String?
+  transactionDigest String?
+  status            String    // pending, success, failed
+  errorMessage      String?
+  
+  gasUsed           Int?
+  gasBudget         Int?
+  
+  createdAt         DateTime  @default(now())
+  
+  @@index([projectId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model CompilationCache {
+  id            String    @id @default(cuid())
+  codeHash      String    @unique
+  bytecode      String
+  errors        Json?
+  success       Boolean
+  
+  createdAt     DateTime  @default(now())
+  expiresAt     DateTime
+  
+  @@index([codeHash])
+  @@index([expiresAt])
+}

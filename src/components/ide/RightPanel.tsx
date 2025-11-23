@@ -2,6 +2,7 @@ import React from 'react';
 import { useIDEStore } from '../../store/ideStore';
 import DeploymentPanel from './DeploymentPanel';
 import GasAnalyzer from './GasAnalyzer';
+import CollaborationPanel from './CollaborationPanel';
 
 const RightPanel: React.FC = () => {
   const { rightPanelType } = useIDEStore();
@@ -12,6 +13,8 @@ const RightPanel: React.FC = () => {
         return <DeploymentPanel />;
       case 'gas':
         return <GasAnalyzer />;
+      case 'collaboration':
+        return <CollaborationPanel />;
       case 'docs':
         return (
           <div className="h-full bg-dark-surface p-4">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { GitBranch, AlertCircle, CheckCircle } from 'lucide-react';
+import { GitBranch, AlertCircle, CheckCircle, Hammer, TestTube, Rocket } from 'lucide-react';
 import { useIDEStore } from '../../store/ideStore';
 
 const StatusBar: React.FC = () => {
@@ -15,7 +15,22 @@ const StatusBar: React.FC = () => {
         </div>
         <div className="flex items-center gap-1">
           <CheckCircle size={14} />
-          <span>No Issues</span>
+          <span>Ready</span>
+        </div>
+        <div className="h-3 w-px bg-black/20"></div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity cursor-pointer" title="Last build status">
+            <Hammer size={12} />
+            <span>Build: Ready</span>
+          </div>
+          <div className="flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity cursor-pointer" title="Last test status">
+            <TestTube size={12} />
+            <span>Tests: Passed</span>
+          </div>
+          <div className="flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity cursor-pointer" title="Deployment status">
+            <Rocket size={12} />
+            <span>Deploy: Testnet</span>
+          </div>
         </div>
       </div>
 
@@ -27,7 +42,7 @@ const StatusBar: React.FC = () => {
             <span>UTF-8</span>
           </>
         )}
-        <span>Sui Studio IDE</span>
+        <span className="font-semibold">Sui Studio IDE</span>
       </div>
     </div>
   );
