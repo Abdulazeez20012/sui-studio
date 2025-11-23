@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   Menu, Save, Play, Bug, Settings, 
   Layout, LogOut, User, Rocket, Zap, PanelRightOpen, PanelRightClose, Users,
-  Hammer, TestTube, Loader
+  Hammer, TestTube, Loader, TrendingUp, CheckCircle, XCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
@@ -33,13 +33,15 @@ const Toolbar: React.FC = () => {
     try {
       const result = await apiService.compileCode(currentTab.content, currentTab.name.replace('.move', ''));
       if (result.success) {
-        alert('✅ Build successful!');
+        // Show success notification
+        console.log('Build successful!');
       } else {
-        alert('❌ Build failed. Check console for errors.');
+        // Show error notification
+        console.error('Build failed. Check console for errors.');
         console.error('Build errors:', result.errors);
       }
     } catch (error: any) {
-      alert('❌ Build failed: ' + error.message);
+      console.error('Build failed:', error.message);
     } finally {
       setIsBuilding(false);
     }
@@ -52,9 +54,9 @@ const Toolbar: React.FC = () => {
     try {
       // Simulate running tests
       await new Promise(resolve => setTimeout(resolve, 2000));
-      alert('✅ All tests passed!');
+      console.log('All tests passed!');
     } catch (error: any) {
-      alert('❌ Tests failed: ' + error.message);
+      console.error('Tests failed:', error.message);
     } finally {
       setIsTesting(false);
     }
@@ -69,7 +71,7 @@ const Toolbar: React.FC = () => {
   };
 
   return (
-    <div className="h-12 bg-dark-surface border-b border-dark-border flex items-center justify-between px-4">
+    <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-4">
         <button
           onClick={() => navigate('/')}
@@ -211,6 +213,21 @@ const Toolbar: React.FC = () => {
               >
                 <Users size={16} />
                 <span>Collaboration</span>
+              </button>
+              <button
+                onClick={() => {
+                  setRightPanelType('stats');
+                  if (!rightPanelOpen) toggleRightPanel();
+                  setShowRightPanelMenu(false);
+                }}
+                className={`w-full flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
+                  rightPanelType === 'stats' && rightPanelOpen
+                    ? 'text-sui-cyan bg-sui-cyan/10'
+                    : 'text-slate-300 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <TrendingUp size={16} />
+                <span>Analytics</span>
               </button>
               <button
                 onClick={() => {

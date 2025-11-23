@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { FileNode, Tab, Terminal, PanelType, ViewMode } from '../types/ide';
+import { FileNode, Tab, Terminal, PanelType, ViewMode, RightPanelType } from '../types/ide';
 
 interface IDEState {
   // File System
@@ -22,7 +22,7 @@ interface IDEState {
   
   // View
   viewMode: ViewMode;
-  rightPanelType: 'deployment' | 'gas' | 'docs' | 'collaboration' | 'settings';
+  rightPanelType: RightPanelType;
   collaborationEnabled: boolean;
   
   // Actions
@@ -37,7 +37,7 @@ interface IDEState {
   toggleLeftPanel: () => void;
   setLeftPanelType: (type: PanelType) => void;
   toggleRightPanel: () => void;
-  setRightPanelType: (type: 'deployment' | 'gas' | 'docs' | 'collaboration' | 'settings') => void;
+  setRightPanelType: (type: RightPanelType) => void;
   toggleBottomPanel: () => void;
   toggleCollaboration: () => void;
   
@@ -98,7 +98,7 @@ export const useIDEStore = create<IDEState>((set) => ({
   toggleLeftPanel: () => set((state) => ({ leftPanelOpen: !state.leftPanelOpen })),
   setLeftPanelType: (type) => set({ leftPanelType: type }),
   toggleRightPanel: () => set((state) => ({ rightPanelOpen: !state.rightPanelOpen })),
-  setRightPanelType: (type: 'deployment' | 'gas' | 'docs' | 'collaboration' | 'settings') => set({ rightPanelType: type }),
+  setRightPanelType: (type: RightPanelType) => set({ rightPanelType: type }),
   toggleBottomPanel: () => set((state) => ({ bottomPanelOpen: !state.bottomPanelOpen })),
   toggleCollaboration: () => set((state) => ({ collaborationEnabled: !state.collaborationEnabled })),
   

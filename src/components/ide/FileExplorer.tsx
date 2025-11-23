@@ -36,23 +36,23 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({ node, level }) => {
   return (
     <div>
       <div
-        className="flex items-center gap-1 px-2 py-1 hover:bg-white/5 cursor-pointer group"
-        style={{ paddingLeft: `${level * 12 + 8}px` }}
+        className="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-700/30 cursor-pointer group rounded-sm transition-colors"
+        style={{ paddingLeft: `${level * 16 + 8}px` }}
         onClick={handleClick}
       >
         {node.type === 'folder' && (
-          <span className="text-slate-400">
+          <span className="text-slate-500 group-hover:text-slate-300">
             {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           </span>
         )}
-        <span className="text-slate-400">
+        <span className={node.type === 'folder' ? 'text-yellow-500' : 'text-slate-400'}>
           {node.type === 'folder' ? (
             isOpen ? <FolderOpen size={16} /> : <Folder size={16} />
           ) : (
             <File size={16} />
           )}
         </span>
-        <span className="text-sm text-slate-300 group-hover:text-white">
+        <span className="text-sm text-slate-300 group-hover:text-white font-medium">
           {node.name}
         </span>
       </div>
@@ -71,13 +71,18 @@ const FileExplorer: React.FC = () => {
   const { files } = useIDEStore();
 
   return (
-    <div className="h-full bg-dark-surface border-r border-dark-border overflow-y-auto scrollbar-thin">
-      <div className="p-3 border-b border-dark-border">
-        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-          Explorer
-        </h3>
+    <div className="h-full bg-[#252b3b] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
+      <div className="p-4 border-b border-slate-700/50">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            Files
+          </h3>
+          <button className="text-slate-400 hover:text-white text-xs">
+            + ADD
+          </button>
+        </div>
       </div>
-      <div className="py-2">
+      <div className="py-2 px-1">
         {files.map((node) => (
           <FileTreeItem key={node.id} node={node} level={0} />
         ))}

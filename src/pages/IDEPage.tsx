@@ -20,34 +20,42 @@ const IDEPage: React.FC = () => {
   useKeyboardShortcuts();
 
   return (
-    <div className="h-screen flex flex-col bg-dark-bg text-white">
-      <Toolbar />
+    <div className="h-screen flex flex-col bg-[#1e2433] text-white">
+      {/* Top Header Bar */}
+      <div className="h-14 bg-[#2d3748] border-b border-slate-700/50 flex items-center justify-between px-4">
+        <Toolbar />
+      </div>
       
       <div className="flex-1 flex overflow-hidden">
+        {/* Left Sidebar */}
         <Sidebar />
         
+        {/* File Explorer Panel */}
         {leftPanelOpen && (
-          <div className="w-64 flex-shrink-0">
+          <div className="w-64 flex-shrink-0 bg-[#252b3b]">
             <LeftPanel />
           </div>
         )}
         
-        <div className="flex-1 flex flex-col min-w-0">
+        {/* Main Editor Area */}
+        <div className="flex-1 flex flex-col min-w-0 bg-[#1e2433]">
           <EditorTabs />
           
           <div className={`flex-1 ${bottomPanelOpen ? 'h-[60%]' : 'h-full'}`}>
             <CodeEditor />
           </div>
           
+          {/* Bottom Panel (Terminal/Tests) */}
           {bottomPanelOpen && (
-            <div className="h-[40%] border-t border-dark-border">
+            <div className="h-[40%] border-t border-slate-700/50 bg-[#252b3b]">
               <Terminal />
             </div>
           )}
         </div>
 
+        {/* Right Panel */}
         {rightPanelOpen && (
-          <div className="w-80 flex-shrink-0 border-l border-dark-border">
+          <div className="w-80 flex-shrink-0 border-l border-slate-700/50 bg-[#252b3b]">
             <RightPanel />
           </div>
         )}

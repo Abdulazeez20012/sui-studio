@@ -35,7 +35,7 @@ const CodeEditor: React.FC = () => {
   }
 
   return (
-    <div className="h-full bg-dark-bg">
+    <div className="h-full bg-[#1e2433] relative">
       <Editor
         height="100%"
         language={currentTab.language}
@@ -45,7 +45,8 @@ const CodeEditor: React.FC = () => {
         theme="vs-dark"
         options={{
           fontSize: 14,
-          fontFamily: 'JetBrains Mono, Fira Code, monospace',
+          fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
+          fontLigatures: true,
           minimap: { enabled: true },
           scrollBeyondLastLine: false,
           automaticLayout: true,
@@ -54,6 +55,10 @@ const CodeEditor: React.FC = () => {
           lineNumbers: 'on',
           renderWhitespace: 'selection',
           bracketPairColorization: { enabled: true },
+          padding: { top: 16, bottom: 16 },
+          smoothScrolling: true,
+          cursorBlinking: 'smooth',
+          cursorSmoothCaretAnimation: 'on',
         }}
       />
     </div>

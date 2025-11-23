@@ -33,4 +33,5 @@ export interface Project {
 }
 
 export type PanelType = 'explorer' | 'search' | 'git' | 'extensions';
+export type RightPanelType = 'deployment' | 'gas' | 'collaboration' | 'settings' | 'stats' | 'docs';
 export type ViewMode = 'editor' | 'split' | 'preview';

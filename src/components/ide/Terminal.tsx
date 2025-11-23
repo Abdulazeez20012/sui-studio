@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Terminal as TerminalIcon, X, Plus } from 'lucide-react';
+import { Terminal as TerminalIcon, X, Plus, ChevronDown, CheckCircle, Play, Send } from 'lucide-react';
 import { useIDEStore } from '../../store/ideStore';
 
 const Terminal: React.FC = () => {
@@ -44,30 +44,23 @@ const Terminal: React.FC = () => {
   };
 
   return (
-    <div className="h-full bg-dark-surface flex flex-col">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-dark-border">
-        <div className="flex items-center gap-2">
-          <TerminalIcon size={16} className="text-slate-400" />
+    <div className="h-full bg-[#252b3b] flex flex-col">
+      {/* Tab Bar */}
+      <div className="flex items-center justify-between px-4 py-2 border-b border-slate-700/50 bg-[#2d3748]">
+        <div className="flex items-center gap-3">
           <div className="flex gap-1">
-            {terminals.map((terminal) => (
-              <button
-                key={terminal.id}
-                onClick={() => setActiveTerminal(terminal.id)}
-                className={`px-3 py-1 text-sm rounded ${
-                  activeTerminal === terminal.id
-                    ? 'bg-dark-bg text-white'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                {terminal.name}
-              </button>
-            ))}
+            <button className="px-4 py-1.5 text-sm font-medium text-white bg-[#252b3b] rounded-t border-b-2 border-cyan-400">
+              TESTS
+            </button>
+            <button className="px-4 py-1.5 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-700/30 rounded-t">
+              CONSOLE
+            </button>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={handleNewTerminal}
-            className="p-1 text-slate-400 hover:text-white hover:bg-white/5 rounded"
+            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700/30 rounded"
             title="New Terminal"
           >
             <Plus size={16} />
@@ -75,30 +68,45 @@ const Terminal: React.FC = () => {
         </div>
       </div>
 
+      {/* Test Results Area */}
       <div
         ref={outputRef}
-        className="flex-1 overflow-y-auto scrollbar-thin p-4 font-mono text-sm relative"
+        className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent p-4 font-mono text-sm"
       >
-        {/* Sui Logo Watermark */}
-        <div 
-          className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
-          style={{
-            opacity: 0.03,
-            zIndex: 0,
-          }}
-        >
-          <img 
-            src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763580906/sui-sui-logo_gmux9g.png"
-            alt="Sui Logo"
-            className="w-64 h-64 object-contain"
-            style={{
-              filter: 'grayscale(100%) brightness(2)',
-            }}
-          />
+        {/* Test Cases */}
+        <div className="space-y-3">
+          <div className="bg-[#2d3748] rounded-lg p-4 border border-slate-700/50">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-white font-semibold">Test 1</h3>
+              <button className="text-slate-400 hover:text-white">
+                <ChevronDown size={16} />
+              </button>
+            </div>
+            <div className="space-y-1 text-sm">
+              <div className="text-slate-400">
+                <span className="text-blue-400">Input:</span> a: [2, 4, 7]
+              </div>
+              <div className="text-slate-400">
+                <span className="text-blue-400">Expected Output:</span> 4
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-[#2d3748] rounded-lg p-4 border border-slate-700/50">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-white font-semibold">Test 2</h3>
+              <button className="text-slate-400 hover:text-white">
+                <ChevronDown size={16} />
+              </button>
+            </div>
+            <div className="text-sm text-slate-400">
+              Test case details...
+            </div>
+          </div>
         </div>
 
         {/* Terminal Output */}
-        <div className="relative z-10">
+        <div className="mt-4 space-y-1">
           {currentTerminal?.output.map((line, index) => (
             <div key={index} className="text-slate-300">
               {line}
@@ -107,19 +115,25 @@ const Terminal: React.FC = () => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="border-t border-dark-border p-2">
-        <div className="flex items-center gap-2 px-2">
-          <span className="text-sui-cyan font-mono">$</span>
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            className="flex-1 bg-transparent outline-none text-white font-mono"
-            placeholder="Type a command..."
-            autoFocus
-          />
+      {/* Bottom Status Bar */}
+      <div className="border-t border-slate-700/50 px-4 py-2 bg-[#2d3748] flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-green-400">
+            <CheckCircle size={16} />
+            <span className="text-sm font-semibold">300/300</span>
+          </div>
         </div>
-      </form>
+        <div className="flex items-center gap-2">
+          <button className="flex items-center gap-2 px-4 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors">
+            <Play size={14} />
+            <span>RUN TEST</span>
+          </button>
+          <button className="flex items-center gap-2 px-4 py-1.5 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-semibold transition-colors">
+            <Send size={14} />
+            <span>SUBMIT</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

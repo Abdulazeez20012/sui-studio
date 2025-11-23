@@ -14,7 +14,7 @@ const Sidebar: React.FC = () => {
   ];
 
   return (
-    <div className="w-12 bg-dark-surface border-r border-dark-border flex flex-col items-center py-4 gap-2">
+    <div className="w-14 bg-[#252b3b] border-r border-slate-700/50 flex flex-col items-center py-4 gap-1">
       {items.map((item) => (
         <button
           key={item.type}
@@ -26,10 +26,10 @@ const Sidebar: React.FC = () => {
               if (!leftPanelOpen) toggleLeftPanel();
             }
           }}
-          className={`p-2 rounded hover:bg-white/5 transition-colors ${
+          className={`p-3 rounded-lg transition-all duration-200 ${
             leftPanelType === item.type && leftPanelOpen
-              ? 'text-sui-cyan bg-sui-cyan/10'
-              : 'text-slate-400'
+              ? 'text-cyan-400 bg-cyan-500/10 border-l-2 border-cyan-400'
+              : 'text-slate-400 hover:text-white hover:bg-slate-700/30'
           }`}
           title={item.label}
         >
