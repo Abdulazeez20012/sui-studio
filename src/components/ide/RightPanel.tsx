@@ -5,6 +5,7 @@ import GasAnalyzer from './GasAnalyzer';
 import CollaborationPanel from './CollaborationPanel';
 import SettingsPanel from './SettingsPanel';
 import StatsPanel from './StatsPanel';
+import ExtensionsMarketplace from './ExtensionsMarketplace';
 
 const RightPanel: React.FC = () => {
   const { rightPanelType } = useIDEStore();
@@ -21,9 +22,11 @@ const RightPanel: React.FC = () => {
         return <SettingsPanel />;
       case 'stats':
         return <StatsPanel />;
+      case 'extensions':
+        return <ExtensionsMarketplace />;
       case 'docs':
         return (
-          <div className="h-full bg-[#252b3b] p-4">
+          <div className="h-full bg-dark-surface p-4">
             <h3 className="text-sm font-semibold text-white mb-3">Documentation</h3>
             <p className="text-sm text-slate-400">Documentation panel coming soon...</p>
           </div>

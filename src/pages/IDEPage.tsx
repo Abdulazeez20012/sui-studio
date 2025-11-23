@@ -13,7 +13,7 @@ import { useIDEStore } from '../store/ideStore';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 
 const IDEPage: React.FC = () => {
-  const { leftPanelOpen, rightPanelOpen, bottomPanelOpen, toggleLeftPanel, toggleBottomPanel, addTab } = useIDEStore();
+  const { leftPanelOpen, rightPanelOpen, bottomPanelOpen, toggleLeftPanel, toggleBottomPanel, toggleRightPanel, setRightPanelType, addTab } = useIDEStore();
   const [buildStatus, setBuildStatus] = useState<'idle' | 'building' | 'success' | 'error'>('idle');
   const [buildMessage, setBuildMessage] = useState('');
   
@@ -66,8 +66,16 @@ const IDEPage: React.FC = () => {
       // Implement test logic
     };
 
+    const handleOpenExtensions = () => {
+      setRightPanelType('extensions');
+      if (!rightPanelOpen) {
+        toggleRightPanel();
+      }
+    };
+
     document.addEventListener('ide:newFile', handleNewFile);
     document.addEventListener('ide:save', handleSave);
+    document.addEventListener('ide:openExtensions', handleOpenExtensions);
     document.addEventListener('ide:find', handleFind);
     document.addEventListener('ide:toggleSidebar', handleToggleSidebar);
     document.addEventListener('ide:togglePanel', handleTogglePanel);
@@ -77,13 +85,14 @@ const IDEPage: React.FC = () => {
     return () => {
       document.removeEventListener('ide:newFile', handleNewFile);
       document.removeEventListener('ide:save', handleSave);
+      document.removeEventListener('ide:openExtensions', handleOpenExtensions);
       document.removeEventListener('ide:find', handleFind);
       document.removeEventListener('ide:toggleSidebar', handleToggleSidebar);
       document.removeEventListener('ide:togglePanel', handleTogglePanel);
       document.removeEventListener('ide:build', handleBuild);
       document.removeEventListener('ide:test', handleTest);
     };
-  }, [addTab, toggleLeftPanel, toggleBottomPanel]);
+  }, [addTab, toggleLeftPanel, toggleBottomPanel, toggleRightPanel, setRightPanelType, rightPanelOpen]);
 
   return (
     <div className="h-screen flex flex-col bg-black text-white">

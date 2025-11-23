@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   Menu, Save, Play, Bug, Settings, 
   Layout, LogOut, User, Rocket, Zap, PanelRightOpen, PanelRightClose, Users,
-  Hammer, TestTube, Loader, TrendingUp, CheckCircle, XCircle, PanelBottom, PanelBottomClose
+  Hammer, TestTube, Loader, TrendingUp, CheckCircle, XCircle, PanelBottom, PanelBottomClose, Package
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
@@ -241,6 +241,21 @@ const Toolbar: React.FC = () => {
               >
                 <TrendingUp size={16} />
                 <span>Analytics</span>
+              </button>
+              <button
+                onClick={() => {
+                  setRightPanelType('extensions');
+                  if (!rightPanelOpen) toggleRightPanel();
+                  setShowRightPanelMenu(false);
+                }}
+                className={`w-full flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all ${
+                  rightPanelType === 'extensions' && rightPanelOpen
+                    ? 'text-sui-cyan bg-sui-cyan/10'
+                    : 'text-slate-400 hover:text-sui-cyan hover:bg-sui-cyan/5'
+                }`}
+              >
+                <Package size={16} />
+                <span>Extensions</span>
               </button>
               <button
                 onClick={() => {
