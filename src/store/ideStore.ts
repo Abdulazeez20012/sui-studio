@@ -22,7 +22,7 @@ interface IDEState {
   
   // View
   viewMode: ViewMode;
-  rightPanelType: 'deployment' | 'gas' | 'docs' | 'collaboration';
+  rightPanelType: 'deployment' | 'gas' | 'docs' | 'collaboration' | 'settings';
   collaborationEnabled: boolean;
   
   // Actions
@@ -37,7 +37,9 @@ interface IDEState {
   toggleLeftPanel: () => void;
   setLeftPanelType: (type: PanelType) => void;
   toggleRightPanel: () => void;
+  setRightPanelType: (type: 'deployment' | 'gas' | 'docs' | 'collaboration' | 'settings') => void;
   toggleBottomPanel: () => void;
+  toggleCollaboration: () => void;
   
   addTerminal: (terminal: Terminal) => void;
   setActiveTerminal: (id: string) => void;
@@ -96,7 +98,7 @@ export const useIDEStore = create<IDEState>((set) => ({
   toggleLeftPanel: () => set((state) => ({ leftPanelOpen: !state.leftPanelOpen })),
   setLeftPanelType: (type) => set({ leftPanelType: type }),
   toggleRightPanel: () => set((state) => ({ rightPanelOpen: !state.rightPanelOpen })),
-  setRightPanelType: (type: 'deployment' | 'gas' | 'docs' | 'collaboration') => set({ rightPanelType: type }),
+  setRightPanelType: (type: 'deployment' | 'gas' | 'docs' | 'collaboration' | 'settings') => set({ rightPanelType: type }),
   toggleBottomPanel: () => set((state) => ({ bottomPanelOpen: !state.bottomPanelOpen })),
   toggleCollaboration: () => set((state) => ({ collaborationEnabled: !state.collaborationEnabled })),
   

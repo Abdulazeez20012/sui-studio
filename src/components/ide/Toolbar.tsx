@@ -212,6 +212,21 @@ const Toolbar: React.FC = () => {
                 <Users size={16} />
                 <span>Collaboration</span>
               </button>
+              <button
+                onClick={() => {
+                  setRightPanelType('settings');
+                  if (!rightPanelOpen) toggleRightPanel();
+                  setShowRightPanelMenu(false);
+                }}
+                className={`w-full flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
+                  rightPanelType === 'settings' && rightPanelOpen
+                    ? 'text-sui-cyan bg-sui-cyan/10'
+                    : 'text-slate-300 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <Settings size={16} />
+                <span>Settings</span>
+              </button>
             </div>
           )}
         </div>
@@ -222,7 +237,14 @@ const Toolbar: React.FC = () => {
         <button className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded transition-colors">
           <Save size={18} />
         </button>
-        <button className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded transition-colors">
+        <button 
+          onClick={() => {
+            setRightPanelType('settings');
+            if (!rightPanelOpen) toggleRightPanel();
+          }}
+          className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded transition-colors"
+          title="Settings"
+        >
           <Settings size={18} />
         </button>
 
