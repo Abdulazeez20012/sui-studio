@@ -98,7 +98,11 @@ const Navbar: React.FC = () => {
           {/* Logo Area */}
           <div className="flex items-center gap-3 shrink-0 cursor-pointer">
             <div className="relative group">
-               <Hexagon className="w-8 h-8 text-sui-cyan fill-sui-cyan/10 transition-transform group-hover:scale-110 duration-500" />
+               <img 
+                 src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763580906/sui-sui-logo_gmux9g.png"
+                 alt="Sui Logo"
+                 className="w-8 h-8 object-contain transition-transform group-hover:scale-110 duration-500"
+               />
                <div className="absolute inset-0 bg-sui-cyan/40 blur-lg opacity-50 group-hover:opacity-80 transition-opacity duration-500" />
             </div>
             <span className="font-heading font-bold text-xl tracking-tight text-white">Sui Studio</span>

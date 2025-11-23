@@ -276,7 +276,11 @@ const EcosystemOrbit: React.FC = () => {
           <div className="absolute inset-[-20px] border border-sui-cyan/10 rounded-full animate-spin-reverse-slower" />
           
           <div className="flex flex-col items-center justify-center z-10">
-             <Droplets className="w-10 h-10 text-sui-cyan fill-sui-cyan/20" />
+             <img 
+               src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763580906/sui-sui-logo_gmux9g.png"
+               alt="Sui Logo"
+               className="w-12 h-12 object-contain"
+             />
              <span className="text-xs font-bold tracking-[0.2em] text-white mt-2">SUI</span>
           </div>
         </div>

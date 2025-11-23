@@ -72,7 +72,11 @@ const Footer: React.FC = () => {
              <div className="md:col-span-4">
                <div className="flex items-center gap-3 mb-6">
                   <div className="relative">
-                     <Hexagon className="w-8 h-8 text-sui-cyan fill-sui-cyan/10" />
+                     <img 
+                       src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763580906/sui-sui-logo_gmux9g.png"
+                       alt="Sui Logo"
+                       className="w-8 h-8 object-contain"
+                     />
                      <div className="absolute inset-0 bg-sui-cyan/20 blur-lg" />
                   </div>
                   <span className="font-heading font-bold text-xl text-white">Sui Studio</span>

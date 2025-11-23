@@ -75,8 +75,12 @@ const Toolbar: React.FC = () => {
           onClick={() => navigate('/')}
           className="flex items-center gap-2 text-sui-cyan hover:text-white transition-colors"
         >
-          <div className="w-8 h-8 bg-sui-cyan rounded flex items-center justify-center">
-            <span className="text-black font-bold text-sm">S</span>
+          <div className="w-8 h-8 bg-sui-cyan/10 rounded flex items-center justify-center p-1">
+            <img 
+              src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763580906/sui-sui-logo_gmux9g.png"
+              alt="Sui Logo"
+              className="w-full h-full object-contain"
+            />
           </div>
           <span className="font-semibold">Sui Studio</span>
         </button>
