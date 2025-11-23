@@ -143,9 +143,8 @@ const WelcomeScreen: React.FC = () => {
             />
           </div>
           <h1 
-            className="text-5xl font-black text-white mb-3 tracking-tight glitch-text scanline" 
-            style={{ fontFamily: "'Orbitron', 'Rajdhani', sans-serif" }}
-            data-text="WELCOME TO SUI STUDIO"
+            className="text-6xl font-black text-white mb-3 tracking-wide uppercase" 
+            style={{ fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.1em' }}
           >
             WELCOME TO SUI STUDIO
           </h1>
@@ -182,7 +181,7 @@ const WelcomeScreen: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white mb-1 font-cyber tracking-wide glitch-text" data-text="CORE ANALYZER EXTENSION">
+                <h3 className="text-xl font-black text-white mb-1 tracking-wider uppercase" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
                   CORE ANALYZER EXTENSION
                 </h3>
                 <p className="text-sm text-slate-400 font-medium font-tech">

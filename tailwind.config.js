@@ -29,46 +29,7 @@ export default {
         'neon-lg': '0 0 30px rgba(0, 212, 255, 0.4)',
         'purple-glow': '0 0 20px rgba(176, 38, 255, 0.3)',
       },
-      animation: {
-        'glitch': 'glitch 1s infinite',
-        'glitch-skew': 'glitch-skew 0.5s infinite',
-        'color-shift': 'color-shift 3s infinite',
-        'scanline': 'scanline 3s linear infinite',
-      },
-      keyframes: {
-        glitch: {
-          '0%, 14%, 49%, 99%': {
-            textShadow: '0.05em 0 0 rgba(0, 212, 255, 0.75), -0.05em -0.025em 0 rgba(176, 38, 255, 0.75), -0.025em 0.05em 0 rgba(255, 0, 110, 0.75)',
-          },
-          '15%, 50%': {
-            textShadow: '-0.05em -0.025em 0 rgba(0, 212, 255, 0.75), 0.025em 0.025em 0 rgba(176, 38, 255, 0.75), -0.05em -0.05em 0 rgba(255, 0, 110, 0.75)',
-          },
-          '100%': {
-            textShadow: '-0.025em 0 0 rgba(0, 212, 255, 0.75), -0.025em -0.025em 0 rgba(176, 38, 255, 0.75), -0.025em -0.05em 0 rgba(255, 0, 110, 0.75)',
-          },
-        },
-        'glitch-skew': {
-          '0%, 100%': { transform: 'skew(0deg)' },
-          '10%': { transform: 'skew(-2deg)' },
-          '20%': { transform: 'skew(2deg)' },
-          '30%': { transform: 'skew(-1deg)' },
-          '40%': { transform: 'skew(1deg)' },
-          '50%': { transform: 'skew(0deg)' },
-          '60%': { transform: 'skew(-1deg)' },
-          '70%': { transform: 'skew(2deg)' },
-          '80%': { transform: 'skew(-2deg)' },
-          '90%': { transform: 'skew(1deg)' },
-        },
-        'color-shift': {
-          '0%, 100%': { color: '#00D4FF' },
-          '33%': { color: '#B026FF' },
-          '66%': { color: '#FF006E' },
-        },
-        scanline: {
-          '0%': { transform: 'translateY(-100%)' },
-          '100%': { transform: 'translateY(100%)' },
-        },
-      },
+
       fontFamily: {
         sans: ['Rajdhani', 'Inter', 'sans-serif'],
         cyber: ['Orbitron', 'sans-serif'],
