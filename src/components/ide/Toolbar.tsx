@@ -84,7 +84,7 @@ const Toolbar: React.FC = () => {
               className="w-full h-full object-contain"
             />
           </div>
-          <span className="font-bold text-lg glow-text">SUI STUDIO</span>
+          <span className="font-bold text-lg glow-text font-cyber tracking-wider">SUI STUDIO</span>
         </button>
 
         <div className="flex items-center gap-1 ml-4">
@@ -101,7 +101,7 @@ const Toolbar: React.FC = () => {
           <button
             onClick={handleBuild}
             disabled={isBuilding || !currentTab}
-            className="flex items-center gap-2 px-4 py-2 bg-dark-bg border border-blue-500/30 hover:border-blue-500 text-blue-400 hover:text-white rounded-lg hover:shadow-neon disabled:opacity-50 disabled:cursor-not-allowed transition-all font-bold uppercase text-xs tracking-wider"
+            className="flex items-center gap-2 px-4 py-2 bg-dark-bg border border-blue-500/30 hover:border-blue-500 text-blue-400 hover:text-white rounded-lg hover:shadow-neon disabled:opacity-50 disabled:cursor-not-allowed transition-all font-bold uppercase text-xs tracking-wider font-tech"
             title="Build project (Ctrl+B)"
           >
             {isBuilding ? (
@@ -121,7 +121,7 @@ const Toolbar: React.FC = () => {
           <button
             onClick={handleTest}
             disabled={isTesting || !currentTab}
-            className="flex items-center gap-2 px-4 py-2 bg-dark-bg border border-neon-green/30 hover:border-neon-green text-neon-green hover:text-white rounded-lg hover:shadow-[0_0_20px_rgba(0,255,148,0.3)] disabled:opacity-50 disabled:cursor-not-allowed transition-all font-bold uppercase text-xs tracking-wider"
+            className="flex items-center gap-2 px-4 py-2 bg-dark-bg border border-neon-green/30 hover:border-neon-green text-neon-green hover:text-white rounded-lg hover:shadow-[0_0_20px_rgba(0,255,148,0.3)] disabled:opacity-50 disabled:cursor-not-allowed transition-all font-bold uppercase text-xs tracking-wider font-tech"
             title="Run tests (Ctrl+T)"
           >
             {isTesting ? (
@@ -141,7 +141,7 @@ const Toolbar: React.FC = () => {
           <button
             onClick={handleDeploy}
             disabled={!currentTab}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-neon hover:shadow-neon-lg text-black rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all font-bold uppercase text-xs tracking-wider"
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-neon hover:shadow-neon-lg text-black rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all font-bold uppercase text-xs tracking-wider font-tech"
             title="Deploy to network (Ctrl+D)"
           >
             <Rocket size={16} />

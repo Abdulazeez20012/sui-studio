@@ -44,7 +44,7 @@ const StatusBar: React.FC = () => {
             <span className="font-medium">UTF-8</span>
           </>
         )}
-        <span className="font-bold text-sui-cyan glow-text">SUI STUDIO</span>
+        <span className="font-bold text-sui-cyan glow-text font-cyber tracking-wider">SUI STUDIO</span>
       </div>
     </div>
   );

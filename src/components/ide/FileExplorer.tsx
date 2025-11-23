@@ -74,8 +74,8 @@ const FileExplorer: React.FC = () => {
     <div className="h-full bg-dark-surface overflow-y-auto scrollbar-thin scrollbar-thumb-sui-cyan/30 scrollbar-track-transparent">
       <div className="p-4 border-b border-sui-cyan/10">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold text-sui-cyan uppercase tracking-widest">
-            Files
+          <h3 className="text-xs font-bold text-sui-cyan uppercase tracking-widest font-tech">
+            FILES
           </h3>
           <button className="text-slate-500 hover:text-sui-cyan text-xs font-semibold hover:shadow-neon transition-all">
             + ADD

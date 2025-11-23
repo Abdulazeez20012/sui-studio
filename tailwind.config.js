@@ -30,6 +30,9 @@ export default {
         'purple-glow': '0 0 20px rgba(176, 38, 255, 0.3)',
       },
       fontFamily: {
+        sans: ['Rajdhani', 'Inter', 'sans-serif'],
+        cyber: ['Orbitron', 'sans-serif'],
+        tech: ['Rajdhani', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
     },

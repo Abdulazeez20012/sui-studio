@@ -50,10 +50,10 @@ const Terminal: React.FC = () => {
         <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-sui-cyan/30 to-transparent"></div>
         <div className="flex items-center gap-3">
           <div className="flex gap-1">
-            <button className="px-4 py-1.5 text-sm font-bold text-sui-cyan bg-dark-surface rounded-t border-b-2 border-sui-cyan shadow-neon">
+            <button className="px-4 py-1.5 text-sm font-bold text-sui-cyan bg-dark-surface rounded-t border-b-2 border-sui-cyan shadow-neon font-tech tracking-wider">
               TESTS
             </button>
-            <button className="px-4 py-1.5 text-sm font-medium text-slate-500 hover:text-sui-cyan hover:bg-sui-cyan/5 rounded-t transition-all">
+            <button className="px-4 py-1.5 text-sm font-bold text-slate-500 hover:text-sui-cyan hover:bg-sui-cyan/5 rounded-t transition-all font-tech tracking-wider">
               CONSOLE
             </button>
           </div>
@@ -78,7 +78,7 @@ const Terminal: React.FC = () => {
         <div className="space-y-3">
           <div className="bg-dark-panel rounded-lg p-4 border border-sui-cyan/20 hover:border-sui-cyan/40 transition-all">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-white font-semibold">Test 1</h3>
+              <h3 className="text-white font-bold font-tech">Test 1</h3>
               <button className="text-slate-500 hover:text-sui-cyan transition-colors">
                 <ChevronDown size={16} />
               </button>
@@ -95,7 +95,7 @@ const Terminal: React.FC = () => {
 
           <div className="bg-dark-panel rounded-lg p-4 border border-sui-cyan/20 hover:border-sui-cyan/40 transition-all">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-white font-semibold">Test 2</h3>
+              <h3 className="text-white font-bold font-tech">Test 2</h3>
               <button className="text-slate-500 hover:text-sui-cyan transition-colors">
                 <ChevronDown size={16} />
               </button>
@@ -126,11 +126,11 @@ const Terminal: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-4 py-2 bg-dark-panel hover:bg-sui-cyan/10 border border-sui-cyan/30 hover:border-sui-cyan text-slate-300 hover:text-sui-cyan rounded-lg text-sm font-semibold transition-all shadow-neon">
+          <button className="flex items-center gap-2 px-4 py-2 bg-dark-panel hover:bg-sui-cyan/10 border border-sui-cyan/30 hover:border-sui-cyan text-slate-300 hover:text-sui-cyan rounded-lg text-sm font-bold transition-all shadow-neon font-tech tracking-wider">
             <Play size={14} />
             <span>RUN TEST</span>
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-gradient-neon hover:shadow-neon-lg text-black rounded-lg text-sm font-bold transition-all">
+          <button className="flex items-center gap-2 px-4 py-2 bg-gradient-neon hover:shadow-neon-lg text-black rounded-lg text-sm font-bold transition-all font-tech tracking-wider">
             <Send size={14} />
             <span>SUBMIT</span>
           </button>

@@ -130,14 +130,24 @@ const WelcomeScreen: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center justify-center h-full bg-dark-bg">
+    <div className="flex items-center justify-center h-full bg-dark-bg cyber-grid">
       <div className="max-w-4xl w-full px-8">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-sui-cyan/10 rounded-xl mb-4">
-            <Zap className="w-8 h-8 text-sui-cyan" />
+          {/* Sui Logo */}
+          <div className="inline-flex items-center justify-center w-24 h-24 bg-sui-cyan/10 rounded-2xl mb-6 border-2 border-sui-cyan/30 shadow-neon-lg relative group">
+            <div className="absolute inset-0 bg-gradient-neon opacity-0 group-hover:opacity-20 rounded-2xl transition-opacity"></div>
+            <img 
+              src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763580906/sui-sui-logo_gmux9g.png"
+              alt="Sui Logo"
+              className="w-16 h-16 object-contain"
+            />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Welcome to Sui Studio IDE</h1>
-          <p className="text-slate-400">Start building on Sui with our templates or create a new project</p>
+          <h1 className="text-5xl font-black text-white mb-3 tracking-tight glow-text" style={{ fontFamily: "'Orbitron', 'Rajdhani', sans-serif" }}>
+            WELCOME TO SUI STUDIO
+          </h1>
+          <p className="text-lg text-slate-400 font-medium" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
+            Start building on Sui with our templates or create a new project
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -145,13 +155,14 @@ const WelcomeScreen: React.FC = () => {
             <button
               key={key}
               onClick={() => loadTemplate(key as TemplateKey)}
-              className="p-6 bg-dark-surface border border-dark-border rounded-lg hover:border-sui-cyan/50 hover:bg-dark-surface/80 transition-all text-left group"
+              className="p-6 bg-dark-surface border border-sui-cyan/20 rounded-xl hover:border-sui-cyan hover:shadow-neon transition-all text-left group relative overflow-hidden"
             >
-              <div className="w-10 h-10 bg-sui-cyan/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-sui-cyan/20 transition-colors">
-                <FileText className="w-5 h-5 text-sui-cyan" />
+              <div className="absolute inset-0 bg-gradient-neon opacity-0 group-hover:opacity-5 transition-opacity"></div>
+              <div className="w-12 h-12 bg-sui-cyan/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-sui-cyan/20 group-hover:shadow-neon transition-all border border-sui-cyan/30">
+                <FileText className="w-6 h-6 text-sui-cyan" />
               </div>
-              <h3 className="text-white font-semibold mb-2">{template.name}</h3>
-              <p className="text-sm text-slate-400">{template.description}</p>
+              <h3 className="text-white font-bold mb-2 text-lg" style={{ fontFamily: "'Rajdhani', sans-serif" }}>{template.name}</h3>
+              <p className="text-sm text-slate-400 font-medium" style={{ fontFamily: "'Rajdhani', sans-serif" }}>{template.description}</p>
             </button>
           ))}
         </div>
@@ -159,16 +170,18 @@ const WelcomeScreen: React.FC = () => {
         <div className="flex items-center justify-center gap-4">
           <button 
             onClick={handleOpenFolder}
-            className="flex items-center gap-2 px-4 py-2 bg-dark-surface border border-dark-border rounded-lg hover:border-sui-cyan/50 hover:bg-dark-surface/80 transition-all text-slate-300 hover:text-white"
+            className="flex items-center gap-2 px-6 py-3 bg-dark-panel border border-sui-cyan/30 rounded-lg hover:border-sui-cyan hover:shadow-neon transition-all text-slate-300 hover:text-sui-cyan font-bold uppercase text-sm tracking-wider"
+            style={{ fontFamily: "'Rajdhani', sans-serif" }}
           >
-            <Folder size={18} />
+            <Folder size={20} />
             <span>Open Folder</span>
           </button>
           <button 
             onClick={() => setShowCloneDialog(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-dark-surface border border-dark-border rounded-lg hover:border-sui-cyan/50 hover:bg-dark-surface/80 transition-all text-slate-300 hover:text-white"
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-neon hover:shadow-neon-lg text-black rounded-lg transition-all font-bold uppercase text-sm tracking-wider"
+            style={{ fontFamily: "'Rajdhani', sans-serif" }}
           >
-            <Download size={18} />
+            <Download size={20} />
             <span>Clone Repository</span>
           </button>
         </div>
