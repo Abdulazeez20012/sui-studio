@@ -20,9 +20,10 @@ const IDEPage: React.FC = () => {
   useKeyboardShortcuts();
 
   return (
-    <div className="h-screen flex flex-col bg-[#1e2433] text-white">
-      {/* Top Header Bar */}
-      <div className="h-14 bg-[#2d3748] border-b border-slate-700/50 flex items-center justify-between px-4">
+    <div className="h-screen flex flex-col bg-dark-bg text-white cyber-grid">
+      {/* Top Header Bar with Gradient */}
+      <div className="h-14 bg-dark-header border-b border-sui-cyan/20 flex items-center justify-between px-4 relative">
+        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-neon opacity-50"></div>
         <Toolbar />
       </div>
       
@@ -32,13 +33,13 @@ const IDEPage: React.FC = () => {
         
         {/* File Explorer Panel */}
         {leftPanelOpen && (
-          <div className="w-64 flex-shrink-0 bg-[#252b3b]">
+          <div className="w-64 flex-shrink-0 bg-dark-surface border-r border-dark-border">
             <LeftPanel />
           </div>
         )}
         
         {/* Main Editor Area */}
-        <div className="flex-1 flex flex-col min-w-0 bg-[#1e2433]">
+        <div className="flex-1 flex flex-col min-w-0 bg-dark-bg relative">
           <EditorTabs />
           
           <div className={`flex-1 ${bottomPanelOpen ? 'h-[60%]' : 'h-full'}`}>
@@ -47,7 +48,7 @@ const IDEPage: React.FC = () => {
           
           {/* Bottom Panel (Terminal/Tests) */}
           {bottomPanelOpen && (
-            <div className="h-[40%] border-t border-slate-700/50 bg-[#252b3b]">
+            <div className="h-[40%] border-t border-sui-cyan/20 bg-dark-surface">
               <Terminal />
             </div>
           )}
@@ -55,7 +56,7 @@ const IDEPage: React.FC = () => {
 
         {/* Right Panel */}
         {rightPanelOpen && (
-          <div className="w-80 flex-shrink-0 border-l border-slate-700/50 bg-[#252b3b]">
+          <div className="w-80 flex-shrink-0 border-l border-sui-cyan/20 bg-dark-surface">
             <RightPanel />
           </div>
         )}

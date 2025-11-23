@@ -35,7 +35,13 @@ const CodeEditor: React.FC = () => {
   }
 
   return (
-    <div className="h-full bg-[#1e2433] relative">
+    <div className="h-full bg-dark-bg relative">
+      {/* Subtle grid overlay */}
+      <div className="absolute inset-0 opacity-30 pointer-events-none" style={{
+        backgroundImage: 'linear-gradient(rgba(0, 212, 255, 0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 212, 255, 0.02) 1px, transparent 1px)',
+        backgroundSize: '30px 30px'
+      }}></div>
+      
       <Editor
         height="100%"
         language={currentTab.language}

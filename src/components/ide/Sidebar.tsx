@@ -14,7 +14,10 @@ const Sidebar: React.FC = () => {
   ];
 
   return (
-    <div className="w-14 bg-[#252b3b] border-r border-slate-700/50 flex flex-col items-center py-4 gap-1">
+    <div className="w-16 bg-dark-header border-r border-sui-cyan/20 flex flex-col items-center py-4 gap-2 relative">
+      {/* Vertical accent line */}
+      <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-sui-cyan/50 to-transparent"></div>
+      
       {items.map((item) => (
         <button
           key={item.type}
@@ -26,14 +29,17 @@ const Sidebar: React.FC = () => {
               if (!leftPanelOpen) toggleLeftPanel();
             }
           }}
-          className={`p-3 rounded-lg transition-all duration-200 ${
+          className={`p-3 rounded-lg transition-all duration-300 relative group ${
             leftPanelType === item.type && leftPanelOpen
-              ? 'text-cyan-400 bg-cyan-500/10 border-l-2 border-cyan-400'
-              : 'text-slate-400 hover:text-white hover:bg-slate-700/30'
+              ? 'text-sui-cyan bg-sui-cyan/10 shadow-neon'
+              : 'text-slate-500 hover:text-sui-cyan hover:bg-sui-cyan/5'
           }`}
           title={item.label}
         >
           {item.icon}
+          {leftPanelType === item.type && leftPanelOpen && (
+            <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-8 bg-sui-cyan rounded-r-full shadow-neon"></div>
+          )}
         </button>
       ))}
     </div>

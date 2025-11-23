@@ -36,23 +36,23 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({ node, level }) => {
   return (
     <div>
       <div
-        className="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-700/30 cursor-pointer group rounded-sm transition-colors"
+        className="flex items-center gap-2 px-2 py-1.5 hover:bg-sui-cyan/5 cursor-pointer group rounded-sm transition-all duration-200 border-l-2 border-transparent hover:border-sui-cyan/50"
         style={{ paddingLeft: `${level * 16 + 8}px` }}
         onClick={handleClick}
       >
         {node.type === 'folder' && (
-          <span className="text-slate-500 group-hover:text-slate-300">
+          <span className="text-slate-600 group-hover:text-sui-cyan transition-colors">
             {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           </span>
         )}
-        <span className={node.type === 'folder' ? 'text-yellow-500' : 'text-slate-400'}>
+        <span className={node.type === 'folder' ? 'text-neon-purple' : 'text-slate-500 group-hover:text-sui-cyan'}>
           {node.type === 'folder' ? (
             isOpen ? <FolderOpen size={16} /> : <Folder size={16} />
           ) : (
             <File size={16} />
           )}
         </span>
-        <span className="text-sm text-slate-300 group-hover:text-white font-medium">
+        <span className="text-sm text-slate-400 group-hover:text-white font-medium transition-colors">
           {node.name}
         </span>
       </div>
@@ -71,13 +71,13 @@ const FileExplorer: React.FC = () => {
   const { files } = useIDEStore();
 
   return (
-    <div className="h-full bg-[#252b3b] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
-      <div className="p-4 border-b border-slate-700/50">
+    <div className="h-full bg-dark-surface overflow-y-auto scrollbar-thin scrollbar-thumb-sui-cyan/30 scrollbar-track-transparent">
+      <div className="p-4 border-b border-sui-cyan/10">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+          <h3 className="text-xs font-bold text-sui-cyan uppercase tracking-widest">
             Files
           </h3>
-          <button className="text-slate-400 hover:text-white text-xs">
+          <button className="text-slate-500 hover:text-sui-cyan text-xs font-semibold hover:shadow-neon transition-all">
             + ADD
           </button>
         </div>
