@@ -28,6 +28,157 @@ h1, h2, h3, h4, h5, h6 {
   font-family: 'Rajdhani', sans-serif;
 }
 
+/* Animated Glitch Text Effect */
+@keyframes glitch {
+  0% {
+    text-shadow: 
+      0.05em 0 0 rgba(0, 212, 255, 0.75),
+      -0.05em -0.025em 0 rgba(176, 38, 255, 0.75),
+      -0.025em 0.05em 0 rgba(255, 0, 110, 0.75);
+  }
+  14% {
+    text-shadow: 
+      0.05em 0 0 rgba(0, 212, 255, 0.75),
+      -0.05em -0.025em 0 rgba(176, 38, 255, 0.75),
+      -0.025em 0.05em 0 rgba(255, 0, 110, 0.75);
+  }
+  15% {
+    text-shadow: 
+      -0.05em -0.025em 0 rgba(0, 212, 255, 0.75),
+      0.025em 0.025em 0 rgba(176, 38, 255, 0.75),
+      -0.05em -0.05em 0 rgba(255, 0, 110, 0.75);
+  }
+  49% {
+    text-shadow: 
+      -0.05em -0.025em 0 rgba(0, 212, 255, 0.75),
+      0.025em 0.025em 0 rgba(176, 38, 255, 0.75),
+      -0.05em -0.05em 0 rgba(255, 0, 110, 0.75);
+  }
+  50% {
+    text-shadow: 
+      0.025em 0.05em 0 rgba(0, 212, 255, 0.75),
+      0.05em 0 0 rgba(176, 38, 255, 0.75),
+      0 -0.05em 0 rgba(255, 0, 110, 0.75);
+  }
+  99% {
+    text-shadow: 
+      0.025em 0.05em 0 rgba(0, 212, 255, 0.75),
+      0.05em 0 0 rgba(176, 38, 255, 0.75),
+      0 -0.05em 0 rgba(255, 0, 110, 0.75);
+  }
+  100% {
+    text-shadow: 
+      -0.025em 0 0 rgba(0, 212, 255, 0.75),
+      -0.025em -0.025em 0 rgba(176, 38, 255, 0.75),
+      -0.025em -0.05em 0 rgba(255, 0, 110, 0.75);
+  }
+}
+
+@keyframes glitch-skew {
+  0% {
+    transform: skew(0deg);
+  }
+  10% {
+    transform: skew(-2deg);
+  }
+  20% {
+    transform: skew(2deg);
+  }
+  30% {
+    transform: skew(-1deg);
+  }
+  40% {
+    transform: skew(1deg);
+  }
+  50% {
+    transform: skew(0deg);
+  }
+  60% {
+    transform: skew(-1deg);
+  }
+  70% {
+    transform: skew(2deg);
+  }
+  80% {
+    transform: skew(-2deg);
+  }
+  90% {
+    transform: skew(1deg);
+  }
+  100% {
+    transform: skew(0deg);
+  }
+}
+
+@keyframes color-shift {
+  0%, 100% {
+    color: #00D4FF;
+  }
+  33% {
+    color: #B026FF;
+  }
+  66% {
+    color: #FF006E;
+  }
+}
+
+.glitch-text {
+  animation: glitch 1s infinite, color-shift 3s infinite;
+  position: relative;
+  display: inline-block;
+}
+
+.glitch-text::before,
+.glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.glitch-text::before {
+  animation: glitch-skew 0.5s infinite;
+  clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+  transform: translate(-0.025em, -0.0125em);
+  opacity: 0.8;
+}
+
+.glitch-text::after {
+  animation: glitch-skew 0.7s infinite reverse;
+  clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%);
+  transform: translate(0.0125em, 0.025em);
+  opacity: 0.8;
+}
+
+/* Scanline effect */
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+.scanline {
+  position: relative;
+  overflow: hidden;
+}
+
+.scanline::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(transparent, rgba(0, 212, 255, 0.5), transparent);
+  animation: scanline 3s linear infinite;
+  pointer-events: none;
+}
+
 /* Web3 Glow Effects */
 .glow-text {
   text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
