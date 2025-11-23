@@ -101,11 +101,13 @@ const IDEPage: React.FC = () => {
         <Sidebar />
         
         {/* File Explorer Panel */}
-        {leftPanelOpen && (
-          <div className="w-64 flex-shrink-0 bg-dark-surface border-r border-dark-border">
-            <LeftPanel />
-          </div>
-        )}
+        <div 
+          className={`bg-dark-surface border-r border-dark-border transition-all duration-300 ease-in-out overflow-hidden ${
+            leftPanelOpen ? 'w-64 opacity-100' : 'w-0 opacity-0'
+          }`}
+        >
+          {leftPanelOpen && <LeftPanel />}
+        </div>
         
         {/* Main Editor Area */}
         <div className="flex-1 flex flex-col min-w-0 bg-dark-bg relative">
@@ -116,19 +118,23 @@ const IDEPage: React.FC = () => {
           </div>
           
           {/* Bottom Panel (Terminal/Tests) */}
-          {bottomPanelOpen && (
-            <div className="h-[40%] border-t border-sui-cyan/20 bg-dark-surface">
-              <Terminal />
-            </div>
-          )}
+          <div 
+            className={`border-t border-sui-cyan/20 bg-dark-surface transition-all duration-300 ease-in-out overflow-hidden ${
+              bottomPanelOpen ? 'h-[40%] opacity-100' : 'h-0 opacity-0'
+            }`}
+          >
+            {bottomPanelOpen && <Terminal />}
+          </div>
         </div>
 
         {/* Right Panel */}
-        {rightPanelOpen && (
-          <div className="w-80 flex-shrink-0 border-l border-sui-cyan/20 bg-dark-surface">
-            <RightPanel />
-          </div>
-        )}
+        <div 
+          className={`border-l border-sui-cyan/20 bg-dark-surface transition-all duration-300 ease-in-out overflow-hidden ${
+            rightPanelOpen ? 'w-80 opacity-100' : 'w-0 opacity-0'
+          }`}
+        >
+          {rightPanelOpen && <RightPanel />}
+        </div>
       </div>
       
       <StatusBar />

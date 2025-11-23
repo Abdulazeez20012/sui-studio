@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   Menu, Save, Play, Bug, Settings, 
   Layout, LogOut, User, Rocket, Zap, PanelRightOpen, PanelRightClose, Users,
-  Hammer, TestTube, Loader, TrendingUp, CheckCircle, XCircle
+  Hammer, TestTube, Loader, TrendingUp, CheckCircle, XCircle, PanelBottom, PanelBottomClose
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
@@ -12,7 +12,7 @@ import { apiService } from '../../services/apiService';
 const Toolbar: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
-  const { rightPanelOpen, toggleRightPanel, setRightPanelType, rightPanelType, collaborationEnabled, toggleCollaboration, tabs, activeTab } = useIDEStore();
+  const { rightPanelOpen, toggleRightPanel, setRightPanelType, rightPanelType, collaborationEnabled, toggleCollaboration, tabs, activeTab, bottomPanelOpen, toggleBottomPanel } = useIDEStore();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showRightPanelMenu, setShowRightPanelMenu] = useState(false);
   const [isBuilding, setIsBuilding] = useState(false);
@@ -150,6 +150,19 @@ const Toolbar: React.FC = () => {
         </div>
 
         <div className="h-8 w-px bg-sui-cyan/20"></div>
+        
+        {/* Bottom Panel Toggle */}
+        <button
+          onClick={toggleBottomPanel}
+          className={`p-2 rounded-lg border transition-all ${
+            bottomPanelOpen 
+              ? 'text-sui-cyan bg-sui-cyan/10 border-sui-cyan/50 shadow-neon' 
+              : 'text-slate-500 hover:text-sui-cyan hover:bg-sui-cyan/5 border-transparent hover:border-sui-cyan/30'
+          }`}
+          title="Toggle Panel (Ctrl+J)"
+        >
+          <Layout size={18} />
+        </button>
         
         {/* Right Panel Toggle */}
         <div className="relative">
