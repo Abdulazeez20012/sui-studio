@@ -159,6 +159,96 @@ class APIService {
     });
     return this.handleResponse(response);
   }
+
+  // Analytics endpoints
+  async getUserAnalytics() {
+    const response = await fetch(`${API_URL}/api/analytics/user`, {
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async getProjectAnalytics(projectId: string) {
+    const response = await fetch(`${API_URL}/api/analytics/project/${projectId}`, {
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async trackEvent(event: string, metadata?: any) {
+    const response = await fetch(`${API_URL}/api/analytics/track`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ event, metadata }),
+    });
+    return this.handleResponse(response);
+  }
+
+  // AI endpoints
+  async sendAIMessage(message: string, conversationId?: string, context?: any) {
+    const response = await fetch(`${API_URL}/api/ai/chat`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ message, conversationId, context }),
+    });
+    return this.handleResponse(response);
+  }
+
+  async getAIConversations() {
+    const response = await fetch(`${API_URL}/api/ai/conversations`, {
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async getAIConversation(id: string) {
+    const response = await fetch(`${API_URL}/api/ai/conversations/${id}`, {
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async deleteAIConversation(id: string) {
+    const response = await fetch(`${API_URL}/api/ai/conversations/${id}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  // Extensions endpoints
+  async getInstalledExtensions() {
+    const response = await fetch(`${API_URL}/api/extensions/installed`, {
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async installExtension(extensionId: string) {
+    const response = await fetch(`${API_URL}/api/extensions/install`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ extensionId }),
+    });
+    return this.handleResponse(response);
+  }
+
+  async uninstallExtension(extensionId: string) {
+    const response = await fetch(`${API_URL}/api/extensions/uninstall/${extensionId}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async toggleExtension(extensionId: string, enabled: boolean) {
+    const response = await fetch(`${API_URL}/api/extensions/toggle/${extensionId}`, {
+      method: 'PATCH',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ enabled }),
+    });
+    return this.handleResponse(response);
+  }
 }
 
 export const apiService = new APIService();

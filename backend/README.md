@@ -242,3 +242,188 @@ DATABASE_URL="postgresql://user:password@localhost:5432/sui_studio"
 ## License
 
 MIT
+
+
+---
+
+## 🆕 New Features (Backend Integration)
+
+### Analytics System ✨
+Track user activity, deployments, and gas usage with comprehensive analytics.
+
+**Endpoints:**
+- `GET /api/analytics/user` - User statistics
+- `GET /api/analytics/project/:projectId` - Project analytics
+- `POST /api/analytics/track` - Track custom events
+
+**Features:**
+- Deployment success rates
+- Gas usage tracking
+- Activity timeline (7 days)
+- Compilation statistics
+- Network distribution
+
+### AI Integration (Nexi) ✨
+Persistent AI conversations with code context awareness.
+
+**Endpoints:**
+- `POST /api/ai/chat` - Send message to AI
+- `GET /api/ai/conversations` - List conversations
+- `GET /api/ai/conversations/:id` - Get conversation details
+- `DELETE /api/ai/conversations/:id` - Delete conversation
+
+**Features:**
+- Context-aware responses (includes code, language, filename)
+- Persistent conversation history
+- Code generation and optimization
+- Debugging assistance
+- Sui ecosystem expertise
+
+### Extension Management ✨
+Track and manage user-installed extensions.
+
+**Endpoints:**
+- `GET /api/extensions/installed` - Get user's extensions
+- `POST /api/extensions/install` - Install extension
+- `DELETE /api/extensions/uninstall/:extensionId` - Uninstall
+- `PATCH /api/extensions/toggle/:extensionId` - Enable/disable
+
+**Features:**
+- Installation tracking
+- Download counting
+- Enable/disable without uninstalling
+- User-specific extension lists
+
+---
+
+## 📊 Updated Database Schema
+
+### New Models
+
+```prisma
+Extension
+├── id: String
+├── name: String
+├── publisher: String
+├── description: String
+├── version: String
+├── category: String
+├── icon: String
+├── marketplaceUrl: String
+├── featured: Boolean
+├── downloads: Int
+└── rating: Float
+
+UserExtension
+├── id: String
+├── userId: String
+├── extensionId: String
+├── enabled: Boolean
+└── installedAt: DateTime
+
+AIConversation
+├── id: String
+├── userId: String
+├── title: String
+└── messages: AIMessage[]
+
+AIMessage
+├── id: String
+├── conversationId: String
+├── role: String (user/assistant)
+├── content: Text
+├── context: Text?
+└── createdAt: DateTime
+```
+
+---
+
+## 🚀 Quick Start (Updated)
+
+### Automated Setup
+```bash
+npm run setup      # Install deps, generate Prisma, run migrations
+npm run seed       # Seed extensions data
+npm run dev        # Start development server
+```
+
+### Manual Setup
+```bash
+npm install
+cp .env.example .env
+npx prisma generate
+npx prisma migrate dev
+npm run seed
+npm run dev
+```
+
+---
+
+## 📚 Additional Documentation
+
+- **BACKEND_INTEGRATION.md** - Complete API reference
+- **INTEGRATION_EXAMPLES.md** - Real-world usage examples
+- **QUICK_REFERENCE.md** - Quick command reference
+- **BACKEND_INTEGRATION_SUMMARY.md** - Feature summary
+
+---
+
+## 🔄 Migration from Old Version
+
+If upgrading from previous version:
+
+```bash
+# Pull latest changes
+git pull
+
+# Install new dependencies
+npm install
+
+# Run new migrations
+npx prisma migrate dev
+
+# Seed extensions
+npm run seed
+
+# Restart server
+npm run dev
+```
+
+---
+
+## 📈 Performance Optimizations
+
+- **Compilation Caching**: 24 hours for successful builds
+- **Database Indexing**: Optimized queries on frequently accessed fields
+- **Frontend Caching**: 5-minute cache for analytics
+- **Rate Limiting**: Configurable per-IP limits
+
+---
+
+## 🎯 Usage Examples
+
+### Track Code Compilation
+```typescript
+// Frontend
+const result = await apiService.compileCode(code);
+analyticsService.trackCodeCompile(result.success, duration);
+```
+
+### Send AI Message with Context
+```typescript
+const response = await aiService.sendMessage('Help me', {
+  code: currentCode,
+  language: 'move',
+  fileName: 'main.move'
+});
+```
+
+### Install Extension
+```typescript
+await apiService.installExtension('core-analyzer');
+analyticsService.trackExtensionInstall('core-analyzer', 'Core Analyzer');
+```
+
+---
+
+**Backend now includes comprehensive analytics, AI integration, and extension management!** 🎉

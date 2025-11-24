@@ -81,3 +81,65 @@ model CompilationCache {
   @@index([codeHash])
   @@index([expiresAt])
 }
+
+model Extension {
+  id            String    @id @default(cuid())
+  name          String
+  publisher     String
+  description   String
+  version       String
+  category      String
+  icon          String
+  marketplaceUrl String
+  featured      Boolean   @default(false)
+  downloads     Int       @default(0)
+  rating        Float     @default(0.0)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  userExtensions UserExtension[]
+  
+  @@index([category])
+  @@index([featured])
+}
+
+model UserExtension {
+  id            String    @id @default(cuid())
+  userId        String
+  extensionId   String
+  extension     Extension @relation(fields: [extensionId], references: [id], onDelete: Cascade)
+  enabled       Boolean   @default(true)
+  installedAt   DateTime  @default(now())
+  
+  @@unique([userId, extensionId])
+  @@index([userId])
+}
+
+model AIConversation {
+  id            String    @id @default(cuid())
+  userId        String
+  title         String
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  messages      AIMessage[]
+  
+  @@index([userId])
+  @@index([updatedAt])
+}
+
+model AIMessage {
+  id              String    @id @default(cuid())
+  conversationId  String
+  conversation    AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role            String    // user, assistant
+  content         String    @db.Text
+  context         String?   @db.Text
+  
+  createdAt       DateTime  @default(now())
+  
+  @@index([conversationId])
+  @@index([createdAt])
+}
