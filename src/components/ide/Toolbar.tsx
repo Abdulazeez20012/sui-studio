@@ -90,9 +90,13 @@ const Toolbar: React.FC = () => {
   const handleDeploy = () => {
     if (!currentTab) return;
     
-    // Open deployment panel
-    setRightPanelType('deployment');
-    if (!rightPanelOpen) toggleRightPanel();
+    // Toggle deployment panel
+    if (rightPanelType === 'deployment' && rightPanelOpen) {
+      toggleRightPanel();
+    } else {
+      setRightPanelType('deployment');
+      if (!rightPanelOpen) toggleRightPanel();
+    }
   };
 
   return (
@@ -211,15 +215,19 @@ const Toolbar: React.FC = () => {
         {/* Nexi AI Quick Access */}
         <button
           onClick={() => {
-            setRightPanelType('nexi');
-            if (!rightPanelOpen) toggleRightPanel();
+            if (rightPanelType === 'nexi' && rightPanelOpen) {
+              toggleRightPanel();
+            } else {
+              setRightPanelType('nexi');
+              if (!rightPanelOpen) toggleRightPanel();
+            }
           }}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all font-bold uppercase text-xs tracking-wider font-tech ${
             rightPanelType === 'nexi' && rightPanelOpen
               ? 'text-black bg-gradient-neon border-sui-cyan shadow-neon-lg' 
               : 'text-sui-cyan bg-sui-cyan/10 border-sui-cyan/30 hover:bg-gradient-neon hover:text-black hover:shadow-neon'
           }`}
-          title="Open Nexi AI Assistant"
+          title="Toggle Nexi AI Assistant"
         >
           <Bot size={18} />
           <span>Nexi AI</span>
@@ -257,8 +265,12 @@ const Toolbar: React.FC = () => {
             <div className="absolute right-0 mt-2 w-48 bg-dark-surface border border-sui-cyan/30 rounded-lg shadow-neon-lg py-1 z-50">
               <button
                 onClick={() => {
-                  setRightPanelType('nexi');
-                  if (!rightPanelOpen) toggleRightPanel();
+                  if (rightPanelType === 'nexi' && rightPanelOpen) {
+                    toggleRightPanel();
+                  } else {
+                    setRightPanelType('nexi');
+                    if (!rightPanelOpen) toggleRightPanel();
+                  }
                   setShowRightPanelMenu(false);
                 }}
                 className={`w-full flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all ${
@@ -273,8 +285,12 @@ const Toolbar: React.FC = () => {
               <div className="h-px bg-sui-cyan/10 my-1" />
               <button
                 onClick={() => {
-                  setRightPanelType('deployment');
-                  if (!rightPanelOpen) toggleRightPanel();
+                  if (rightPanelType === 'deployment' && rightPanelOpen) {
+                    toggleRightPanel();
+                  } else {
+                    setRightPanelType('deployment');
+                    if (!rightPanelOpen) toggleRightPanel();
+                  }
                   setShowRightPanelMenu(false);
                 }}
                 className={`w-full flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all ${
@@ -288,8 +304,12 @@ const Toolbar: React.FC = () => {
               </button>
               <button
                 onClick={() => {
-                  setRightPanelType('gas');
-                  if (!rightPanelOpen) toggleRightPanel();
+                  if (rightPanelType === 'gas' && rightPanelOpen) {
+                    toggleRightPanel();
+                  } else {
+                    setRightPanelType('gas');
+                    if (!rightPanelOpen) toggleRightPanel();
+                  }
                   setShowRightPanelMenu(false);
                 }}
                 className={`w-full flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all ${
@@ -303,10 +323,14 @@ const Toolbar: React.FC = () => {
               </button>
               <button
                 onClick={() => {
-                  setRightPanelType('collaboration');
-                  if (!rightPanelOpen) toggleRightPanel();
+                  if (rightPanelType === 'collaboration' && rightPanelOpen) {
+                    toggleRightPanel();
+                  } else {
+                    setRightPanelType('collaboration');
+                    if (!rightPanelOpen) toggleRightPanel();
+                    if (!collaborationEnabled) toggleCollaboration();
+                  }
                   setShowRightPanelMenu(false);
-                  if (!collaborationEnabled) toggleCollaboration();
                 }}
                 className={`w-full flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all ${
                   rightPanelType === 'collaboration' && rightPanelOpen
@@ -319,8 +343,12 @@ const Toolbar: React.FC = () => {
               </button>
               <button
                 onClick={() => {
-                  setRightPanelType('stats');
-                  if (!rightPanelOpen) toggleRightPanel();
+                  if (rightPanelType === 'stats' && rightPanelOpen) {
+                    toggleRightPanel();
+                  } else {
+                    setRightPanelType('stats');
+                    if (!rightPanelOpen) toggleRightPanel();
+                  }
                   setShowRightPanelMenu(false);
                 }}
                 className={`w-full flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all ${
@@ -334,8 +362,12 @@ const Toolbar: React.FC = () => {
               </button>
               <button
                 onClick={() => {
-                  setRightPanelType('extensions');
-                  if (!rightPanelOpen) toggleRightPanel();
+                  if (rightPanelType === 'extensions' && rightPanelOpen) {
+                    toggleRightPanel();
+                  } else {
+                    setRightPanelType('extensions');
+                    if (!rightPanelOpen) toggleRightPanel();
+                  }
                   setShowRightPanelMenu(false);
                 }}
                 className={`w-full flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all ${
@@ -349,8 +381,12 @@ const Toolbar: React.FC = () => {
               </button>
               <button
                 onClick={() => {
-                  setRightPanelType('settings');
-                  if (!rightPanelOpen) toggleRightPanel();
+                  if (rightPanelType === 'settings' && rightPanelOpen) {
+                    toggleRightPanel();
+                  } else {
+                    setRightPanelType('settings');
+                    if (!rightPanelOpen) toggleRightPanel();
+                  }
                   setShowRightPanelMenu(false);
                 }}
                 className={`w-full flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all ${
@@ -374,11 +410,15 @@ const Toolbar: React.FC = () => {
         </button>
         <button 
           onClick={() => {
-            setRightPanelType('settings');
-            if (!rightPanelOpen) toggleRightPanel();
+            if (rightPanelType === 'settings' && rightPanelOpen) {
+              toggleRightPanel();
+            } else {
+              setRightPanelType('settings');
+              if (!rightPanelOpen) toggleRightPanel();
+            }
           }}
           className="p-2 text-slate-500 hover:text-neon-purple hover:bg-neon-purple/10 rounded-lg border border-transparent hover:border-neon-purple/30 transition-all"
-          title="Settings"
+          title="Toggle Settings"
         >
           <Settings size={18} />
         </button>
