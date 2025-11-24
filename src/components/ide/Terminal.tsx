@@ -1,11 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Terminal as TerminalIcon, X, Plus, ChevronDown, CheckCircle, Play, Send } from 'lucide-react';
 import { useIDEStore } from '../../store/ideStore';
+import { apiService } from '../../services/apiService';
 
 const Terminal: React.FC = () => {
-  const { terminals, activeTerminal, setActiveTerminal, addTerminalOutput, addTerminal } = useIDEStore();
+  const { terminals, activeTerminal, setActiveTerminal, addTerminalOutput, addTerminal, clearTerminal } = useIDEStore();
   const [input, setInput] = useState('');
+  const [commandHistory, setCommandHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [isExecuting, setIsExecuting] = useState(false);
   const outputRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const currentTerminal = terminals.find(t => t.id === activeTerminal);
 
@@ -15,23 +20,85 @@ const Terminal: React.FC = () => {
     }
   }, [currentTerminal?.output]);
 
+  const executeCommand = async (command: string) => {
+    if (!activeTerminal) return;
+
+    setIsExecuting(true);
+    addTerminalOutput(activeTerminal, `$ ${command}`);
+
+    try {
+      // Handle built-in commands
+      if (command === 'clear') {
+        clearTerminal(activeTerminal);
+        setIsExecuting(false);
+        return;
+      }
+
+      if (command === 'help') {
+        addTerminalOutput(activeTerminal, 'Available commands:');
+        addTerminalOutput(activeTerminal, '  sui move build    - Build the current Move package');
+        addTerminalOutput(activeTerminal, '  sui move test     - Run Move tests');
+        addTerminalOutput(activeTerminal, '  sui client        - Sui client commands');
+        addTerminalOutput(activeTerminal, '  clear             - Clear terminal');
+        addTerminalOutput(activeTerminal, '  help              - Show this help message');
+        setIsExecuting(false);
+        return;
+      }
+
+      // Execute command via backend
+      const result = await apiService.executeCommand(command);
+      
+      if (result.success) {
+        // Add output line by line
+        const lines = result.output.split('\n');
+        lines.forEach(line => {
+          if (line.trim()) {
+            addTerminalOutput(activeTerminal, line);
+          }
+        });
+      } else {
+        addTerminalOutput(activeTerminal, `Error: ${result.error}`);
+      }
+    } catch (error: any) {
+      addTerminalOutput(activeTerminal, `Error: ${error.message}`);
+    } finally {
+      setIsExecuting(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !activeTerminal) return;
+    if (!input.trim() || !activeTerminal || isExecuting) return;
 
-    addTerminalOutput(activeTerminal, `$ ${input}`);
-    
-    // Simulate command execution
-    setTimeout(() => {
-      if (input === 'clear') {
-        // Clear terminal logic would go here
-      } else {
-        addTerminalOutput(activeTerminal, `Command executed: ${input}`);
-      }
-      addTerminalOutput(activeTerminal, '$ ');
-    }, 100);
+    // Add to history
+    setCommandHistory(prev => [...prev, input]);
+    setHistoryIndex(-1);
 
+    executeCommand(input);
     setInput('');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (commandHistory.length > 0) {
+        const newIndex = historyIndex === -1 ? commandHistory.length - 1 : Math.max(0, historyIndex - 1);
+        setHistoryIndex(newIndex);
+        setInput(commandHistory[newIndex]);
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (historyIndex !== -1) {
+        const newIndex = historyIndex + 1;
+        if (newIndex >= commandHistory.length) {
+          setHistoryIndex(-1);
+          setInput('');
+        } else {
+          setHistoryIndex(newIndex);
+          setInput(commandHistory[newIndex]);
+        }
+      }
+    }
   };
 
   const handleNewTerminal = () => {
@@ -69,52 +136,56 @@ const Terminal: React.FC = () => {
         </div>
       </div>
 
-      {/* Test Results Area */}
+      {/* Terminal Output */}
       <div
         ref={outputRef}
-        className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-sui-cyan/30 scrollbar-track-transparent p-4 font-mono text-sm"
+        className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-sui-cyan/30 scrollbar-track-transparent p-4 font-mono text-sm bg-[#0a0e13]"
+        onClick={() => inputRef.current?.focus()}
       >
-        {/* Test Cases */}
-        <div className="space-y-3">
-          <div className="bg-dark-panel rounded-lg p-4 border border-sui-cyan/20 hover:border-sui-cyan/40 transition-all">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-white font-bold font-tech">Test 1</h3>
-              <button className="text-slate-500 hover:text-sui-cyan transition-colors">
-                <ChevronDown size={16} />
-              </button>
-            </div>
-            <div className="space-y-1 text-sm">
-              <div className="text-slate-400">
-                <span className="text-sui-cyan font-semibold">Input:</span> a: [2, 4, 7]
-              </div>
-              <div className="text-slate-400">
-                <span className="text-neon-green font-semibold">Expected Output:</span> 4
-              </div>
-            </div>
+        {currentTerminal?.output.length === 0 ? (
+          <div className="text-slate-500">
+            <p>Sui Studio Terminal v1.0</p>
+            <p className="mt-2">Type 'help' for available commands</p>
+            <p className="mt-1">Type 'sui move build' to build your Move package</p>
+            <p className="mt-1">Type 'sui move test' to run tests</p>
           </div>
-
-          <div className="bg-dark-panel rounded-lg p-4 border border-sui-cyan/20 hover:border-sui-cyan/40 transition-all">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-white font-bold font-tech">Test 2</h3>
-              <button className="text-slate-500 hover:text-sui-cyan transition-colors">
-                <ChevronDown size={16} />
-              </button>
-            </div>
-            <div className="text-sm text-slate-400">
-              Test case details...
-            </div>
+        ) : (
+          <div className="space-y-1">
+            {currentTerminal?.output.map((line, index) => (
+              <div 
+                key={index} 
+                className={`${
+                  line.startsWith('$') ? 'text-sui-cyan font-bold' :
+                  line.includes('Error') || line.includes('error') ? 'text-neon-pink' :
+                  line.includes('Success') || line.includes('BUILDING') ? 'text-neon-green' :
+                  'text-slate-300'
+                }`}
+              >
+                {line}
+              </div>
+            ))}
           </div>
-        </div>
-
-        {/* Terminal Output */}
-        <div className="mt-4 space-y-1">
-          {currentTerminal?.output.map((line, index) => (
-            <div key={index} className="text-slate-400">
-              {line}
-            </div>
-          ))}
-        </div>
+        )}
       </div>
+
+      {/* Command Input */}
+      <form onSubmit={handleSubmit} className="border-t border-sui-cyan/20 px-4 py-3 bg-dark-header flex items-center gap-2">
+        <span className="text-sui-cyan font-bold">$</span>
+        <input
+          ref={inputRef}
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={isExecuting}
+          placeholder={isExecuting ? "Executing..." : "Enter command..."}
+          className="flex-1 bg-transparent text-white outline-none font-mono text-sm disabled:opacity-50"
+          autoFocus
+        />
+        {isExecuting && (
+          <div className="animate-spin h-4 w-4 border-2 border-sui-cyan border-t-transparent rounded-full" />
+        )}
+      </form>
 
       {/* Bottom Status Bar */}
       <div className="border-t border-sui-cyan/20 px-4 py-3 bg-dark-header flex items-center justify-between relative">

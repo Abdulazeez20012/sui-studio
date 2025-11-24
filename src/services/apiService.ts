@@ -249,6 +249,16 @@ class APIService {
     });
     return this.handleResponse(response);
   }
+
+  // Terminal command execution
+  async executeCommand(command: string, workingDir?: string) {
+    const response = await fetch(`${API_URL}/api/terminal/execute`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ command, workingDir }),
+    });
+    return this.handleResponse(response);
+  }
 }
 
 export const apiService = new APIService();

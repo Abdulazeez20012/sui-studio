@@ -17,6 +17,7 @@ import suiRoutes from './routes/sui';
 import analyticsRoutes from './routes/analytics';
 import aiRoutes from './routes/ai';
 import extensionsRoutes from './routes/extensions';
+import terminalRoutes from './routes/terminal';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -56,6 +57,7 @@ app.use('/api/sui', suiRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/extensions', extensionsRoutes);
+app.use('/api/terminal', terminalRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

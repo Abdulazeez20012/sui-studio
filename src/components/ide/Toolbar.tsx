@@ -46,21 +46,47 @@ const Toolbar: React.FC = () => {
     
     setIsBuilding(true);
     setBuildStatus('idle');
+    
+    // Show terminal and add build command
+    if (!bottomPanelOpen) toggleBottomPanel();
+    if (activeTerminal) {
+      addTerminalOutput(activeTerminal, '$ sui move build');
+    }
+    
     try {
-      const result = await apiService.compileCode(currentTab.content, currentTab.name.replace('.move', ''));
+      // Save current file to workspace first
+      await apiService.executeCommand('save-file', currentTab.content);
+      
+      // Execute build command
+      const result = await apiService.executeCommand('sui move build');
+      
+      if (activeTerminal) {
+        const lines = result.output.split('\n');
+        lines.forEach(line => {
+          if (line.trim()) {
+            addTerminalOutput(activeTerminal, line);
+          }
+        });
+      }
+      
       if (result.success) {
         setBuildStatus('success');
-        console.log('Build successful!');
+        if (activeTerminal) {
+          addTerminalOutput(activeTerminal, '✓ Build successful!');
+        }
         setTimeout(() => setBuildStatus('idle'), 3000);
       } else {
         setBuildStatus('error');
-        console.error('Build failed. Check console for errors.');
-        console.error('Build errors:', result.errors);
+        if (activeTerminal) {
+          addTerminalOutput(activeTerminal, '✗ Build failed. Check errors above.');
+        }
         setTimeout(() => setBuildStatus('idle'), 3000);
       }
     } catch (error: any) {
       setBuildStatus('error');
-      console.error('Build failed:', error.message);
+      if (activeTerminal) {
+        addTerminalOutput(activeTerminal, `✗ Error: ${error.message}`);
+      }
       setTimeout(() => setBuildStatus('idle'), 3000);
     } finally {
       setIsBuilding(false);
@@ -72,15 +98,44 @@ const Toolbar: React.FC = () => {
     
     setIsTesting(true);
     setTestStatus('idle');
+    
+    // Show terminal and add test command
+    if (!bottomPanelOpen) toggleBottomPanel();
+    if (activeTerminal) {
+      addTerminalOutput(activeTerminal, '$ sui move test');
+    }
+    
     try {
-      // Simulate running tests
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setTestStatus('success');
-      console.log('All tests passed!');
-      setTimeout(() => setTestStatus('idle'), 3000);
+      // Execute test command
+      const result = await apiService.executeCommand('sui move test');
+      
+      if (activeTerminal) {
+        const lines = result.output.split('\n');
+        lines.forEach(line => {
+          if (line.trim()) {
+            addTerminalOutput(activeTerminal, line);
+          }
+        });
+      }
+      
+      if (result.success && !result.output.includes('FAILED')) {
+        setTestStatus('success');
+        if (activeTerminal) {
+          addTerminalOutput(activeTerminal, '✓ All tests passed!');
+        }
+        setTimeout(() => setTestStatus('idle'), 3000);
+      } else {
+        setTestStatus('error');
+        if (activeTerminal) {
+          addTerminalOutput(activeTerminal, '✗ Some tests failed. Check output above.');
+        }
+        setTimeout(() => setTestStatus('idle'), 3000);
+      }
     } catch (error: any) {
       setTestStatus('error');
-      console.error('Tests failed:', error.message);
+      if (activeTerminal) {
+        addTerminalOutput(activeTerminal, `✗ Error: ${error.message}`);
+      }
       setTimeout(() => setTestStatus('idle'), 3000);
     } finally {
       setIsTesting(false);

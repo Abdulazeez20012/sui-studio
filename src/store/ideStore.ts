@@ -44,6 +44,7 @@ interface IDEState {
   addTerminal: (terminal: Terminal) => void;
   setActiveTerminal: (id: string) => void;
   addTerminalOutput: (id: string, output: string) => void;
+  clearTerminal: (id: string) => void;
   
   setViewMode: (mode: ViewMode) => void;
 }
@@ -112,6 +113,12 @@ export const useIDEStore = create<IDEState>((set) => ({
   addTerminalOutput: (id, output) => set((state) => ({
     terminals: state.terminals.map(t =>
       t.id === id ? { ...t, output: [...t.output, output] } : t
+    )
+  })),
+
+  clearTerminal: (id) => set((state) => ({
+    terminals: state.terminals.map(t =>
+      t.id === id ? { ...t, output: [] } : t
     )
   })),
   
