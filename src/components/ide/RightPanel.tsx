@@ -1,5 +1,6 @@
 import React from 'react';
 import { useIDEStore } from '../../store/ideStore';
+import NexiAI from './NexiAI';
 import DeploymentPanel from './DeploymentPanel';
 import GasAnalyzer from './GasAnalyzer';
 import CollaborationPanel from './CollaborationPanel';
@@ -12,6 +13,8 @@ const RightPanel: React.FC = () => {
 
   const renderPanel = () => {
     switch (rightPanelType) {
+      case 'nexi':
+        return <NexiAI />;
       case 'deployment':
         return <DeploymentPanel />;
       case 'gas':
@@ -32,7 +35,7 @@ const RightPanel: React.FC = () => {
           </div>
         );
       default:
-        return <StatsPanel />;
+        return <NexiAI />;
     }
   };
 

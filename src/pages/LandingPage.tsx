@@ -5,6 +5,7 @@ import Partners from '../../components/Partners';
 import EcosystemOrbit from '../../components/EcosystemOrbit';
 import PlatformShowcase from '../../components/PlatformShowcase';
 import WalrusIntegration from '../../components/WalrusIntegration';
+import WorkflowIntegration from '../../components/WorkflowIntegration';
 import Stats from '../../components/Stats';
 import Personas from '../../components/Personas';
 import Roadmap from '../../components/Roadmap';
@@ -24,6 +25,7 @@ const LandingPage: React.FC = () => {
         <Partners />
         <PlatformShowcase />
         <WalrusIntegration />
+        <WorkflowIntegration />
         <Stats />
         <Personas />
         <Roadmap />

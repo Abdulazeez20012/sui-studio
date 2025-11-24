@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   Menu, Save, Play, Bug, Settings, 
   Layout, LogOut, User, Rocket, Zap, PanelRightOpen, PanelRightClose, Users,
-  Hammer, TestTube, Loader, TrendingUp, CheckCircle, XCircle, PanelBottom, PanelBottomClose, Package
+  Hammer, TestTube, Loader, TrendingUp, CheckCircle, XCircle, PanelBottom, PanelBottomClose, Package, Bot
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
@@ -151,6 +151,23 @@ const Toolbar: React.FC = () => {
 
         <div className="h-8 w-px bg-sui-cyan/20"></div>
         
+        {/* Nexi AI Quick Access */}
+        <button
+          onClick={() => {
+            setRightPanelType('nexi');
+            if (!rightPanelOpen) toggleRightPanel();
+          }}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all font-bold uppercase text-xs tracking-wider font-tech ${
+            rightPanelType === 'nexi' && rightPanelOpen
+              ? 'text-black bg-gradient-neon border-sui-cyan shadow-neon-lg' 
+              : 'text-sui-cyan bg-sui-cyan/10 border-sui-cyan/30 hover:bg-gradient-neon hover:text-black hover:shadow-neon'
+          }`}
+          title="Open Nexi AI Assistant"
+        >
+          <Bot size={18} />
+          <span>Nexi AI</span>
+        </button>
+        
         {/* Bottom Panel Toggle */}
         <button
           onClick={toggleBottomPanel}
@@ -181,6 +198,22 @@ const Toolbar: React.FC = () => {
           {/* Right Panel Menu */}
           {showRightPanelMenu && (
             <div className="absolute right-0 mt-2 w-48 bg-dark-surface border border-sui-cyan/30 rounded-lg shadow-neon-lg py-1 z-50">
+              <button
+                onClick={() => {
+                  setRightPanelType('nexi');
+                  if (!rightPanelOpen) toggleRightPanel();
+                  setShowRightPanelMenu(false);
+                }}
+                className={`w-full flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all ${
+                  rightPanelType === 'nexi' && rightPanelOpen
+                    ? 'text-sui-cyan bg-sui-cyan/10'
+                    : 'text-slate-400 hover:text-sui-cyan hover:bg-sui-cyan/5'
+                }`}
+              >
+                <Bot size={16} />
+                <span>Nexi AI</span>
+              </button>
+              <div className="h-px bg-sui-cyan/10 my-1" />
               <button
                 onClick={() => {
                   setRightPanelType('deployment');
