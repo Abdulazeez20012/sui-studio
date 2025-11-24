@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Download, Star, TrendingUp, Package, ExternalLink, Filter, X } from 'lucide-react';
+import { Search, Download, Star, TrendingUp, Package, ExternalLink, Filter, X, Check } from 'lucide-react';
 
 interface Extension {
   id: string;
@@ -19,6 +19,8 @@ const ExtensionsMarketplace: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState<'downloads' | 'rating' | 'recent'>('downloads');
+  const [installedExtensions, setInstalledExtensions] = useState<Set<string>>(new Set(['core-analyzer', 'move-syntax']));
 
   const extensions: Extension[] = [
     {
@@ -124,12 +126,19 @@ const ExtensionsMarketplace: React.FC = () => {
 
   const categories = ['all', 'Analysis', 'Language', 'Debugging', 'Formatting', 'Snippets', 'Linting', 'Testing', 'Documentation'];
 
-  const filteredExtensions = extensions.filter(ext => {
-    const matchesSearch = ext.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         ext.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || ext.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredExtensions = extensions
+    .filter(ext => {
+      const matchesSearch = ext.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           ext.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           ext.publisher.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || ext.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'downloads') return b.downloads - a.downloads;
+      if (sortBy === 'rating') return b.rating - a.rating;
+      return 0; // 'recent' would need timestamp
+    });
 
   const featuredExtensions = extensions.filter(ext => ext.featured);
 
@@ -176,22 +185,42 @@ const ExtensionsMarketplace: React.FC = () => {
           )}
         </div>
 
-        {/* Category Filters */}
+        {/* Category Filters & Sort */}
         {showFilters && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider transition-all font-tech ${
-                  selectedCategory === category
-                    ? 'bg-sui-cyan/20 text-sui-cyan border border-sui-cyan/50'
-                    : 'bg-dark-panel text-slate-400 border border-sui-cyan/10 hover:text-sui-cyan hover:border-sui-cyan/30'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
+          <div className="mt-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-500 font-tech uppercase">Sort By</span>
+              <div className="flex gap-2">
+                {(['downloads', 'rating', 'recent'] as const).map((sort) => (
+                  <button
+                    key={sort}
+                    onClick={() => setSortBy(sort)}
+                    className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider transition-all font-tech ${
+                      sortBy === sort
+                        ? 'bg-neon-purple/20 text-neon-purple border border-neon-purple/50'
+                        : 'bg-dark-panel text-slate-500 border border-sui-cyan/10 hover:text-sui-cyan hover:border-sui-cyan/30'
+                    }`}
+                  >
+                    {sort}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider transition-all font-tech ${
+                    selectedCategory === category
+                      ? 'bg-sui-cyan/20 text-sui-cyan border border-sui-cyan/50'
+                      : 'bg-dark-panel text-slate-400 border border-sui-cyan/10 hover:text-sui-cyan hover:border-sui-cyan/30'
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -217,12 +246,27 @@ const ExtensionsMarketplace: React.FC = () => {
 
         {/* All Extensions */}
         <div className="p-4">
-          <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3 font-tech">
-            {filteredExtensions.length} Extensions
-          </h4>
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider font-tech">
+              {filteredExtensions.length} Extensions
+            </h4>
+            <div className="flex items-center gap-2 text-xs text-slate-500 font-tech">
+              <span>{installedExtensions.size} Installed</span>
+            </div>
+          </div>
           <div className="grid gap-3">
             {filteredExtensions.map((ext) => (
-              <ExtensionCard key={ext.id} extension={ext} />
+              <ExtensionCard 
+                key={ext.id} 
+                extension={ext} 
+                isInstalled={installedExtensions.has(ext.id)}
+                onInstall={() => setInstalledExtensions(prev => new Set([...prev, ext.id]))}
+                onUninstall={() => setInstalledExtensions(prev => {
+                  const next = new Set(prev);
+                  next.delete(ext.id);
+                  return next;
+                })}
+              />
             ))}
           </div>
 
@@ -241,9 +285,12 @@ const ExtensionsMarketplace: React.FC = () => {
 interface ExtensionCardProps {
   extension: Extension;
   featured?: boolean;
+  isInstalled?: boolean;
+  onInstall?: () => void;
+  onUninstall?: () => void;
 }
 
-const ExtensionCard: React.FC<ExtensionCardProps> = ({ extension, featured }) => {
+const ExtensionCard: React.FC<ExtensionCardProps> = ({ extension, featured, isInstalled, onInstall, onUninstall }) => {
   return (
     <div className={`p-4 rounded-lg border transition-all hover:shadow-neon group ${
       featured
@@ -295,24 +342,33 @@ const ExtensionCard: React.FC<ExtensionCardProps> = ({ extension, featured }) =>
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            <a
-              href={extension.marketplaceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-all font-tech ${
-                featured
-                  ? 'bg-neon-purple hover:bg-neon-purple/90 text-white shadow-purple-glow hover:shadow-[0_0_30px_rgba(176,38,255,0.5)]'
-                  : 'bg-sui-cyan hover:bg-sui-cyan/90 text-black shadow-neon hover:shadow-neon-lg'
-              }`}
-            >
-              <Download size={14} />
-              <span>Install</span>
-            </a>
+            {isInstalled ? (
+              <button
+                onClick={onUninstall}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-all font-tech bg-dark-bg border border-neon-green/50 text-neon-green hover:bg-neon-green/10"
+              >
+                <Check size={14} />
+                <span>Installed</span>
+              </button>
+            ) : (
+              <button
+                onClick={onInstall}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-all font-tech ${
+                  featured
+                    ? 'bg-neon-purple hover:bg-neon-purple/90 text-white shadow-purple-glow hover:shadow-[0_0_30px_rgba(176,38,255,0.5)]'
+                    : 'bg-sui-cyan hover:bg-sui-cyan/90 text-black shadow-neon hover:shadow-neon-lg'
+                }`}
+              >
+                <Download size={14} />
+                <span>Install</span>
+              </button>
+            )}
             <a
               href={extension.marketplaceUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 border border-sui-cyan/30 rounded-lg text-slate-400 hover:text-sui-cyan hover:border-sui-cyan/60 transition-all"
+              title="View in marketplace"
             >
               <ExternalLink size={14} />
             </a>

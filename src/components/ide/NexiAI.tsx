@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, Code, Book, Zap, Loader, Copy, Check, Bot } from 'lucide-react';
+import { Send, Sparkles, Code, Book, Zap, Loader, Copy, Check, Bot, Trash2, RotateCcw } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -33,10 +33,19 @@ const NexiAI: React.FC = () => {
   }, [messages]);
 
   const quickActions = [
-    { icon: <Code size={16} />, label: 'Generate Move Code', prompt: 'Help me create a Sui Move smart contract for...' },
-    { icon: <Zap size={16} />, label: 'Optimize Gas', prompt: 'How can I optimize gas costs in my Move contract?' },
-    { icon: <Book size={16} />, label: 'Explain Concept', prompt: 'Explain how zkLogin works in Sui' },
-    { icon: <Sparkles size={16} />, label: 'Debug Error', prompt: 'I\'m getting this error in my Move code:' },
+    { icon: <Code size={16} />, label: 'Generate Move Code', prompt: 'Help me create a Sui Move smart contract for...', color: 'sui-cyan' },
+    { icon: <Zap size={16} />, label: 'Optimize Gas', prompt: 'How can I optimize gas costs in my Move contract?', color: 'neon-green' },
+    { icon: <Book size={16} />, label: 'Explain Concept', prompt: 'Explain how zkLogin works in Sui', color: 'neon-purple' },
+    { icon: <Sparkles size={16} />, label: 'Debug Error', prompt: 'I\'m getting this error in my Move code:', color: 'neon-pink' },
+  ];
+
+  const suggestionChips = [
+    'Create NFT collection',
+    'Implement token swap',
+    'Add access control',
+    'Setup Walrus storage',
+    'Integrate zkLogin',
+    'Deploy to testnet',
   ];
 
   const handleSend = async () => {
@@ -118,19 +127,30 @@ const NexiAI: React.FC = () => {
     <div className="h-full bg-dark-surface flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-sui-cyan/20 bg-dark-header">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-neon rounded-lg flex items-center justify-center shadow-neon">
-            <Bot size={24} className="text-black" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-neon rounded-lg flex items-center justify-center shadow-neon">
+              <Bot size={24} className="text-black" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-white uppercase tracking-wider font-tech flex items-center gap-2">
+                NEXI AI
+                <span className="px-2 py-0.5 bg-neon-green/20 text-neon-green text-xs font-bold rounded border border-neon-green/30">
+                  BETA
+                </span>
+              </h3>
+              <p className="text-xs text-slate-400 font-tech">Sui Ecosystem Expert • {messages.length - 1} messages</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-black text-white uppercase tracking-wider font-tech flex items-center gap-2">
-              NEXI AI
-              <span className="px-2 py-0.5 bg-neon-green/20 text-neon-green text-xs font-bold rounded border border-neon-green/30">
-                BETA
-              </span>
-            </h3>
-            <p className="text-xs text-slate-400 font-tech">Sui Ecosystem Expert</p>
-          </div>
+          {messages.length > 1 && (
+            <button
+              onClick={() => setMessages([messages[0]])}
+              className="p-2 text-slate-400 hover:text-neon-pink hover:bg-neon-pink/10 rounded-lg border border-transparent hover:border-neon-pink/30 transition-all"
+              title="Clear conversation"
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -214,24 +234,52 @@ const NexiAI: React.FC = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Quick Actions */}
+      {/* Quick Actions & Suggestions */}
       {messages.length === 1 && (
-        <div className="px-4 pb-4">
-          <div className="grid grid-cols-2 gap-2">
-            {quickActions.map((action, index) => (
-              <button
-                key={index}
-                onClick={() => handleQuickAction(action.prompt)}
-                className="flex items-center gap-2 p-3 bg-dark-panel border border-sui-cyan/20 rounded-lg hover:border-sui-cyan/50 hover:bg-sui-cyan/5 transition-all text-left group"
-              >
-                <div className="text-sui-cyan group-hover:scale-110 transition-transform">
-                  {action.icon}
-                </div>
-                <span className="text-xs font-bold text-slate-300 group-hover:text-white font-tech">
-                  {action.label}
-                </span>
-              </button>
-            ))}
+        <div className="px-4 pb-4 space-y-4">
+          <div>
+            <h4 className="text-xs text-slate-500 uppercase tracking-wider mb-2 font-tech">Quick Actions</h4>
+            <div className="grid grid-cols-2 gap-2">
+              {quickActions.map((action, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleQuickAction(action.prompt)}
+                  className={`flex items-center gap-2 p-3 bg-dark-panel border rounded-lg hover:shadow-neon transition-all text-left group ${
+                    action.color === 'sui-cyan' ? 'border-sui-cyan/20 hover:border-sui-cyan/50' :
+                    action.color === 'neon-green' ? 'border-neon-green/20 hover:border-neon-green/50' :
+                    action.color === 'neon-purple' ? 'border-neon-purple/20 hover:border-neon-purple/50' :
+                    'border-neon-pink/20 hover:border-neon-pink/50'
+                  }`}
+                >
+                  <div className={`group-hover:scale-110 transition-transform ${
+                    action.color === 'sui-cyan' ? 'text-sui-cyan' :
+                    action.color === 'neon-green' ? 'text-neon-green' :
+                    action.color === 'neon-purple' ? 'text-neon-purple' :
+                    'text-neon-pink'
+                  }`}>
+                    {action.icon}
+                  </div>
+                  <span className="text-xs font-bold text-slate-300 group-hover:text-white font-tech">
+                    {action.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div>
+            <h4 className="text-xs text-slate-500 uppercase tracking-wider mb-2 font-tech">Popular Topics</h4>
+            <div className="flex flex-wrap gap-2">
+              {suggestionChips.map((chip, index) => (
+                <button
+                  key={index}
+                  onClick={() => setInput(chip)}
+                  className="px-3 py-1.5 bg-sui-cyan/10 border border-sui-cyan/30 rounded-full text-xs font-bold text-sui-cyan hover:bg-sui-cyan/20 hover:border-sui-cyan/50 transition-all font-tech"
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}

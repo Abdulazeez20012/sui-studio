@@ -18,6 +18,8 @@ const Toolbar: React.FC = () => {
   const [isBuilding, setIsBuilding] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
+  const [buildStatus, setBuildStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [testStatus, setTestStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
   const currentTab = tabs.find(t => t.id === activeTab);
 
@@ -30,18 +32,23 @@ const Toolbar: React.FC = () => {
     if (!currentTab || isBuilding) return;
     
     setIsBuilding(true);
+    setBuildStatus('idle');
     try {
       const result = await apiService.compileCode(currentTab.content, currentTab.name.replace('.move', ''));
       if (result.success) {
-        // Show success notification
+        setBuildStatus('success');
         console.log('Build successful!');
+        setTimeout(() => setBuildStatus('idle'), 3000);
       } else {
-        // Show error notification
+        setBuildStatus('error');
         console.error('Build failed. Check console for errors.');
         console.error('Build errors:', result.errors);
+        setTimeout(() => setBuildStatus('idle'), 3000);
       }
     } catch (error: any) {
+      setBuildStatus('error');
       console.error('Build failed:', error.message);
+      setTimeout(() => setBuildStatus('idle'), 3000);
     } finally {
       setIsBuilding(false);
     }
@@ -51,12 +58,17 @@ const Toolbar: React.FC = () => {
     if (!currentTab || isTesting) return;
     
     setIsTesting(true);
+    setTestStatus('idle');
     try {
       // Simulate running tests
       await new Promise(resolve => setTimeout(resolve, 2000));
+      setTestStatus('success');
       console.log('All tests passed!');
+      setTimeout(() => setTestStatus('idle'), 3000);
     } catch (error: any) {
+      setTestStatus('error');
       console.error('Tests failed:', error.message);
+      setTimeout(() => setTestStatus('idle'), 3000);
     } finally {
       setIsTesting(false);
     }
@@ -101,13 +113,29 @@ const Toolbar: React.FC = () => {
           <button
             onClick={handleBuild}
             disabled={isBuilding || !currentTab}
-            className="flex items-center gap-2 px-4 py-2 bg-dark-bg border border-blue-500/30 hover:border-blue-500 text-blue-400 hover:text-white rounded-lg hover:shadow-neon disabled:opacity-50 disabled:cursor-not-allowed transition-all font-bold uppercase text-xs tracking-wider font-tech"
+            className={`flex items-center gap-2 px-4 py-2 bg-dark-bg border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all font-bold uppercase text-xs tracking-wider font-tech ${
+              buildStatus === 'success' 
+                ? 'border-neon-green text-neon-green shadow-[0_0_20px_rgba(0,255,148,0.3)]'
+                : buildStatus === 'error'
+                ? 'border-neon-pink text-neon-pink shadow-[0_0_20px_rgba(255,20,147,0.3)]'
+                : 'border-blue-500/30 hover:border-blue-500 text-blue-400 hover:text-white hover:shadow-neon'
+            }`}
             title="Build project (Ctrl+B)"
           >
             {isBuilding ? (
               <>
                 <Loader size={16} className="animate-spin" />
                 <span>Building...</span>
+              </>
+            ) : buildStatus === 'success' ? (
+              <>
+                <CheckCircle size={16} />
+                <span>Built</span>
+              </>
+            ) : buildStatus === 'error' ? (
+              <>
+                <XCircle size={16} />
+                <span>Failed</span>
               </>
             ) : (
               <>
@@ -121,13 +149,29 @@ const Toolbar: React.FC = () => {
           <button
             onClick={handleTest}
             disabled={isTesting || !currentTab}
-            className="flex items-center gap-2 px-4 py-2 bg-dark-bg border border-neon-green/30 hover:border-neon-green text-neon-green hover:text-white rounded-lg hover:shadow-[0_0_20px_rgba(0,255,148,0.3)] disabled:opacity-50 disabled:cursor-not-allowed transition-all font-bold uppercase text-xs tracking-wider font-tech"
+            className={`flex items-center gap-2 px-4 py-2 bg-dark-bg border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all font-bold uppercase text-xs tracking-wider font-tech ${
+              testStatus === 'success'
+                ? 'border-neon-green text-neon-green shadow-[0_0_20px_rgba(0,255,148,0.3)]'
+                : testStatus === 'error'
+                ? 'border-neon-pink text-neon-pink shadow-[0_0_20px_rgba(255,20,147,0.3)]'
+                : 'border-neon-green/30 hover:border-neon-green text-neon-green hover:text-white hover:shadow-[0_0_20px_rgba(0,255,148,0.3)]'
+            }`}
             title="Run tests (Ctrl+T)"
           >
             {isTesting ? (
               <>
                 <Loader size={16} className="animate-spin" />
                 <span>Testing...</span>
+              </>
+            ) : testStatus === 'success' ? (
+              <>
+                <CheckCircle size={16} />
+                <span>Passed</span>
+              </>
+            ) : testStatus === 'error' ? (
+              <>
+                <XCircle size={16} />
+                <span>Failed</span>
               </>
             ) : (
               <>
