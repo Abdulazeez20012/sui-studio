@@ -18,7 +18,7 @@ const NexiAI: React.FC = () => {
     {
       id: '1',
       role: 'assistant',
-      content: "👋 Hi! I'm **Nexi AI**, your Sui ecosystem expert. I can help you with:\n\n• **Sui Move** - Smart contract development\n• **Seal** - Privacy and encryption\n• **Walrus** - Decentralized storage\n• **zkLogin** - Zero-knowledge authentication\n• **Suiet Wallet** - Wallet integration\n• **Sui SDK** - TypeScript/JavaScript SDK\n• **Gas Optimization** - Cost reduction\n• **Debugging** - Error resolution\n\nWhat would you like to build today?",
+      content: " Hi! I'm **Nexi AI**, your Sui ecosystem expert. I can help you with:\n\n• **Sui Move** - Smart contract development\n• **Seal** - Privacy and encryption\n• **Walrus** - Decentralized storage\n• **zkLogin** - Zero-knowledge authentication\n• **Suiet Wallet** - Wallet integration\n• **Sui SDK** - TypeScript/JavaScript SDK\n• **Gas Optimization** - Cost reduction\n• **Debugging** - Error resolution\n\nWhat would you like to build today?",
       timestamp: new Date(),
     },
   ]);
