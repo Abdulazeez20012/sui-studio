@@ -1,10 +1,19 @@
-import express from 'express';
-import { PrismaClient } from '@prisma/client';
+import express, { Router } from 'express';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { z } from 'zod';
 
-const router = express.Router();
-const prisma = new PrismaClient();
+const router: Router = express.Router();
+
+// Mock Prisma client for now - will be replaced with actual DB
+const prisma = {
+  userExtension: {
+    findMany: async () => [],
+    findFirst: async () => null,
+    create: async (data: any) => ({ id: 'mock-id', ...data.data }),
+    update: async (params: any) => ({ id: params.where.id, ...params.data }),
+    delete: async () => ({ id: 'mock-id' }),
+  },
+};
 
 router.use(authenticateToken);
 

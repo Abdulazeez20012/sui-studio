@@ -11,6 +11,7 @@ dotenv.config();
 // Import routes
 import authRoutes from './routes/auth';
 import projectRoutes from './routes/projects';
+import projectInitRoutes from './routes/project-init';
 import compileRoutes from './routes/compile';
 import deployRoutes from './routes/deploy';
 import suiRoutes from './routes/sui';
@@ -51,6 +52,7 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/project-init', projectInitRoutes);
 app.use('/api/compile', compileRoutes);
 app.use('/api/deploy', deployRoutes);
 app.use('/api/sui', suiRoutes);

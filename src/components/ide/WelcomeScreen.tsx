@@ -1,12 +1,14 @@
 import React, { useState, useRef } from 'react';
-import { FileText, Folder, Download, Package, X } from 'lucide-react';
+import { FileText, Folder, Download, Package, X, Plus } from 'lucide-react';
 import { useIDEStore } from '../../store/ideStore';
 import { templates, TemplateKey } from '../../data/templates';
 import { FileNode } from '../../types/ide';
+import NewProjectDialog from './NewProjectDialog';
 
 const WelcomeScreen: React.FC = () => {
   const { setFiles } = useIDEStore();
   const [showCloneDialog, setShowCloneDialog] = useState(false);
+  const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const [repoUrl, setRepoUrl] = useState('');
   const [isCloning, setIsCloning] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -204,6 +206,14 @@ const WelcomeScreen: React.FC = () => {
 
         <div className="flex items-center justify-center gap-4 mb-8">
           <button 
+            onClick={() => setShowNewProjectDialog(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-neon hover:shadow-neon-lg text-black rounded-lg transition-all font-bold uppercase text-sm tracking-wider"
+            style={{ fontFamily: "'Rajdhani', sans-serif" }}
+          >
+            <Plus size={20} />
+            <span>New Project</span>
+          </button>
+          <button 
             onClick={handleOpenFolder}
             className="flex items-center gap-2 px-6 py-3 bg-dark-panel border border-sui-cyan/30 rounded-lg hover:border-sui-cyan hover:shadow-neon transition-all text-slate-300 hover:text-sui-cyan font-bold uppercase text-sm tracking-wider"
             style={{ fontFamily: "'Rajdhani', sans-serif" }}
@@ -213,7 +223,7 @@ const WelcomeScreen: React.FC = () => {
           </button>
           <button 
             onClick={() => setShowCloneDialog(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-neon hover:shadow-neon-lg text-black rounded-lg transition-all font-bold uppercase text-sm tracking-wider"
+            className="flex items-center gap-2 px-6 py-3 bg-dark-panel border border-sui-cyan/30 rounded-lg hover:border-sui-cyan hover:shadow-neon transition-all text-slate-300 hover:text-sui-cyan font-bold uppercase text-sm tracking-wider"
             style={{ fontFamily: "'Rajdhani', sans-serif" }}
           >
             <Download size={20} />
@@ -232,6 +242,11 @@ const WelcomeScreen: React.FC = () => {
           onChange={handleFolderSelect}
           className="hidden"
         />
+
+        {/* New Project Dialog */}
+        {showNewProjectDialog && (
+          <NewProjectDialog onClose={() => setShowNewProjectDialog(false)} />
+        )}
 
         {/* Clone Repository Dialog */}
         {showCloneDialog && (

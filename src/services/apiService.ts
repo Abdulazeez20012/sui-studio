@@ -259,6 +259,23 @@ class APIService {
     });
     return this.handleResponse(response);
   }
+
+  // Project initialization
+  async createProject(name: string, template?: string) {
+    const response = await fetch(`${API_URL}/api/project-init/create`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ name, template }),
+    });
+    return this.handleResponse(response);
+  }
+
+  async getProjectStructure(projectName: string) {
+    const response = await fetch(`${API_URL}/api/project-init/structure/${projectName}`, {
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse(response);
+  }
 }
 
 export const apiService = new APIService();
