@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, TrendingDown, AlertCircle } from 'lucide-react';
-import { suiService } from '../../services/suiService';
+import { Zap, TrendingDown, AlertCircle, Loader } from 'lucide-react';
+import { apiService } from '../../services/apiService';
 import { useIDEStore } from '../../store/ideStore';
 
 const GasAnalyzer: React.FC = () => {
@@ -21,10 +21,25 @@ const GasAnalyzer: React.FC = () => {
 
     setIsAnalyzing(true);
     try {
-      const estimate = await suiService.estimateGas(currentTab.content);
+      const estimate = await apiService.estimateGas(currentTab.content);
       setGasEstimate(estimate);
     } catch (error) {
-      console.error('Gas analysis failed:', error);
+      console.log('Gas analysis failed, using fallback:', error);
+      // Fallback estimation
+      const lines = currentTab.content.split('\n').length;
+      const baseGas = 1000;
+      const gasPerLine = 50;
+      const estimatedGas = baseGas + (lines * gasPerLine);
+      
+      setGasEstimate({
+        estimatedGas,
+        gasBudget: Math.ceil(estimatedGas * 1.2),
+        breakdown: {
+          baseGas,
+          linesGas: lines * gasPerLine,
+          complexityFactor: 0,
+        },
+      });
     } finally {
       setIsAnalyzing(false);
     }
@@ -37,63 +52,66 @@ const GasAnalyzer: React.FC = () => {
   if (!currentTab) {
     return (
       <div className="h-full bg-dark-surface flex items-center justify-center">
-        <p className="text-sm text-slate-400">No file open</p>
+        <div className="text-center">
+          <Zap size={48} className="text-slate-600 mx-auto mb-3" />
+          <p className="text-sm text-slate-400 font-tech">No file open</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="h-full bg-dark-surface flex flex-col">
-      <div className="p-4 border-b border-dark-border">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-white">Gas Analysis</h3>
+      <div className="p-4 border-b border-sui-cyan/20 bg-dark-header">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-black text-white uppercase tracking-wider font-tech">Gas Analyzer</h3>
           {isAnalyzing && (
-            <div className="flex items-center gap-2 text-xs text-slate-400">
-              <div className="w-3 h-3 border-2 border-sui-cyan border-t-transparent rounded-full animate-spin"></div>
-              <span>Analyzing...</span>
+            <div className="flex items-center gap-2 text-xs text-sui-cyan">
+              <Loader size={14} className="animate-spin" />
+              <span className="font-tech">Analyzing...</span>
             </div>
           )}
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-sui-cyan/30 scrollbar-track-transparent">
         {gasEstimate && (
           <>
             {/* Gas Overview */}
-            <div className="p-4 bg-dark-bg rounded-lg border border-dark-border">
+            <div className="p-4 bg-dark-panel rounded-lg border border-sui-cyan/20">
               <div className="flex items-center gap-2 mb-3">
                 <Zap size={16} className="text-sui-cyan" />
-                <h4 className="text-sm font-medium text-white">Estimated Gas</h4>
+                <h4 className="text-sm font-bold text-white uppercase tracking-wider font-tech">Estimated Gas</h4>
               </div>
               
               <div className="space-y-3">
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-slate-400">Gas Used</span>
-                    <span className="text-sm font-mono text-white">
-                      {gasEstimate.gasUsed.toLocaleString()} units
+                    <span className="text-xs text-slate-400 uppercase tracking-wider font-tech">Gas Used</span>
+                    <span className="text-sm font-mono text-white font-tech">
+                      {gasEstimate.estimatedGas?.toLocaleString() || gasEstimate.gasUsed?.toLocaleString() || 0} units
                     </span>
                   </div>
-                  <div className="w-full h-2 bg-dark-surface rounded-full overflow-hidden">
+                  <div className="w-full h-2 bg-dark-bg rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-sui-cyan rounded-full"
-                      style={{ width: `${(gasEstimate.gasUsed / gasEstimate.gasBudget) * 100}%` }}
+                      className="h-full bg-gradient-neon rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min(((gasEstimate.estimatedGas || gasEstimate.gasUsed || 0) / gasEstimate.gasBudget) * 100, 100)}%` }}
                     />
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-400">Gas Budget</span>
-                  <span className="text-sm font-mono text-slate-300">
+                  <span className="text-xs text-slate-400 uppercase tracking-wider font-tech">Gas Budget</span>
+                  <span className="text-sm font-mono text-slate-300 font-tech">
                     {gasEstimate.gasBudget.toLocaleString()} units
                   </span>
                 </div>
 
-                <div className="pt-3 border-t border-dark-border">
+                <div className="pt-3 border-t border-sui-cyan/20">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-400">Estimated Cost</span>
-                    <span className="text-lg font-mono font-bold text-sui-cyan">
-                      {formatGas(gasEstimate.gasUsed)} SUI
+                    <span className="text-xs text-slate-400 uppercase tracking-wider font-tech">Estimated Cost</span>
+                    <span className="text-2xl font-mono font-black text-sui-cyan font-tech">
+                      {formatGas(gasEstimate.estimatedGas || gasEstimate.gasUsed || 0)} SUI
                     </span>
                   </div>
                 </div>

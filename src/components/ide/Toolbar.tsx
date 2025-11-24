@@ -12,7 +12,20 @@ import { apiService } from '../../services/apiService';
 const Toolbar: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
-  const { rightPanelOpen, toggleRightPanel, setRightPanelType, rightPanelType, collaborationEnabled, toggleCollaboration, tabs, activeTab, bottomPanelOpen, toggleBottomPanel } = useIDEStore();
+  const { 
+    rightPanelOpen, 
+    toggleRightPanel, 
+    setRightPanelType, 
+    rightPanelType, 
+    collaborationEnabled, 
+    toggleCollaboration, 
+    tabs, 
+    activeTab, 
+    bottomPanelOpen, 
+    toggleBottomPanel,
+    activeTerminal,
+    addTerminalOutput
+  } = useIDEStore();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showRightPanelMenu, setShowRightPanelMenu] = useState(false);
   const [isBuilding, setIsBuilding] = useState(false);
