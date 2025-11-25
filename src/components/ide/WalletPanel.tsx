@@ -97,6 +97,7 @@ export const WalletPanel: React.FC = () => {
                     <li>Sui Wallet</li>
                     <li>Suiet Wallet</li>
                     <li>Ethos Wallet</li>
+                    <li>Slush Wallet</li>
                   </ul>
                 </div>
               </div>

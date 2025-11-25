@@ -31,6 +31,9 @@ export const useWallet = () => {
       if ((window as any).suiWallet) wallets.push('Sui Wallet');
       if ((window as any).suiet) wallets.push('Suiet');
       if ((window as any).ethos) wallets.push('Ethos');
+      if ((window as any).slush) wallets.push('Slush');
+      // Generic check for any wallet with standard interface
+      if ((window as any).sui && !wallets.length) wallets.push('Sui Wallet');
     }
     return wallets;
   };
@@ -41,13 +44,19 @@ export const useWallet = () => {
     try {
       let wallet: any;
       
-      if (walletType === 'Sui Wallet' && (window as any).suiWallet) {
-        wallet = (window as any).suiWallet;
+      if (walletType === 'Sui Wallet') {
+        wallet = (window as any).suiWallet || (window as any).sui;
       } else if (walletType === 'Suiet' && (window as any).suiet) {
         wallet = (window as any).suiet;
       } else if (walletType === 'Ethos' && (window as any).ethos) {
         wallet = (window as any).ethos;
+      } else if (walletType === 'Slush' && (window as any).slush) {
+        wallet = (window as any).slush;
       } else {
+        throw new Error(`${walletType} not found. Please install the wallet extension.`);
+      }
+      
+      if (!wallet) {
         throw new Error(`${walletType} not found. Please install the wallet extension.`);
       }
 
@@ -113,12 +122,14 @@ export const useWallet = () => {
     try {
       let wallet: any;
       
-      if (walletName === 'Sui Wallet' && (window as any).suiWallet) {
-        wallet = (window as any).suiWallet;
-      } else if (walletName === 'Suiet' && (window as any).suiet) {
+      if (walletName === 'Sui Wallet') {
+        wallet = (window as any).suiWallet || (window as any).sui;
+      } else if (walletName === 'Suiet') {
         wallet = (window as any).suiet;
-      } else if (walletName === 'Ethos' && (window as any).ethos) {
+      } else if (walletName === 'Ethos') {
         wallet = (window as any).ethos;
+      } else if (walletName === 'Slush') {
+        wallet = (window as any).slush;
       }
 
       const result = await wallet.signAndExecuteTransactionBlock({
