@@ -1,51 +1,46 @@
 import React, { useState } from 'react';
 import { Wallet, LogOut, RefreshCw, Copy, Check, ChevronDown } from 'lucide-react';
-import { useWallet } from '../../hooks/useWallet';
+import { useSuiWallet } from '../../hooks/useSuiWallet';
 
 export const WalletPanel: React.FC = () => {
   const {
     connected,
-    connecting,
     account,
+    address,
     balance,
-    walletName,
+    availableWallets,
     connect,
     disconnect,
-    getAvailableWallets,
     refreshBalance,
-  } = useWallet();
+    formatAddress,
+    loading,
+  } = useSuiWallet();
 
   const [showWalletMenu, setShowWalletMenu] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
 
-  const availableWallets = getAvailableWallets();
-
-  const handleConnect = async (wallet: string) => {
+  const handleConnect = (walletName: string) => {
     setError('');
     try {
-      await connect(wallet);
+      connect(walletName);
       setShowWalletMenu(false);
     } catch (err: any) {
       setError(err.message || 'Failed to connect wallet');
     }
   };
 
-  const handleDisconnect = async () => {
-    await disconnect();
+  const handleDisconnect = () => {
+    disconnect();
     setError('');
   };
 
   const copyAddress = () => {
-    if (account?.address) {
-      navigator.clipboard.writeText(account.address);
+    if (address) {
+      navigator.clipboard.writeText(address);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
-  };
-
-  const formatAddress = (address: string) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
   if (!connected) {
@@ -78,13 +73,15 @@ export const WalletPanel: React.FC = () => {
               <div className="space-y-2">
                 {availableWallets.map((wallet) => (
                   <button
-                    key={wallet}
-                    onClick={() => handleConnect(wallet)}
-                    disabled={connecting}
+                    key={wallet.name}
+                    onClick={() => handleConnect(wallet.name)}
+                    disabled={loading}
                     className="w-full px-4 py-3 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    <Wallet className="w-4 h-4" />
-                    {connecting ? 'Connecting...' : `Connect ${wallet}`}
+                    {wallet.icon && (
+                      <img src={wallet.icon} alt={wallet.name} className="w-5 h-5" />
+                    )}
+                    {loading ? 'Connecting...' : `Connect ${wallet.name}`}
                   </button>
                 ))}
               </div>
@@ -135,8 +132,8 @@ export const WalletPanel: React.FC = () => {
         {/* Wallet Info */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-400">Connected to</span>
-            <span className="text-cyan-400 font-medium">{walletName}</span>
+            <span className="text-gray-400">Connected</span>
+            <span className="text-cyan-400 font-medium">✓</span>
           </div>
         </div>
       </div>
@@ -148,7 +145,7 @@ export const WalletPanel: React.FC = () => {
           <label className="text-xs text-gray-400 mb-1 block">Address</label>
           <div className="flex items-center gap-2">
             <code className="flex-1 px-3 py-2 bg-gray-900 text-cyan-400 rounded text-sm font-mono">
-              {account && formatAddress(account.address)}
+              {address && formatAddress(address)}
             </code>
             <button
               onClick={copyAddress}

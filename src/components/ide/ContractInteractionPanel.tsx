@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Code, Play, Eye, FileText, Activity, Box } from 'lucide-react';
-import { useWallet } from '../../hooks/useWallet';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { useSuiWallet } from '../../hooks/useSuiWallet';
+import { Transaction } from '@mysten/sui/transactions';
 
 interface ContractFunction {
   name: string;
@@ -10,7 +10,7 @@ interface ContractFunction {
 }
 
 export const ContractInteractionPanel: React.FC = () => {
-  const { connected, account, signAndExecuteTransaction, client } = useWallet();
+  const { connected, address, signAndExecuteTransactionBlock, suiClient } = useSuiWallet();
   const [activeTab, setActiveTab] = useState<'call' | 'view' | 'events' | 'objects'>('call');
   
   // Call Function Tab
@@ -41,7 +41,7 @@ export const ContractInteractionPanel: React.FC = () => {
 
   // Execute contract function
   const executeFunction = async () => {
-    if (!connected || !account) {
+    if (!connected || !address) {
       setResult({ error: 'Please connect your wallet first' });
       return;
     }
@@ -55,7 +55,7 @@ export const ContractInteractionPanel: React.FC = () => {
     setResult(null);
 
     try {
-      const tx = new TransactionBlock();
+      const tx = new Transaction();
       
       // Parse arguments
       let args: any[] = [];
@@ -74,13 +74,14 @@ export const ContractInteractionPanel: React.FC = () => {
       });
 
       // Execute transaction
-      const response = await signAndExecuteTransaction(tx);
+      const response = await signAndExecuteTransactionBlock({
+        transaction: tx,
+      });
       
       setResult({
         success: true,
         digest: response.digest,
         effects: response.effects,
-        events: response.events,
       });
     } catch (error: any) {
       setResult({
@@ -99,7 +100,7 @@ export const ContractInteractionPanel: React.FC = () => {
     setObjectData(null);
 
     try {
-      const data = await client.getObject({
+      const data = await suiClient.getObject({
         id: objectId,
         options: {
           showContent: true,
@@ -117,12 +118,12 @@ export const ContractInteractionPanel: React.FC = () => {
 
   // Fetch owned objects
   const fetchOwnedObjects = async () => {
-    if (!connected || !account) return;
+    if (!connected || !address) return;
 
     setLoading(true);
     try {
-      const objects = await client.getOwnedObjects({
-        owner: account.address,
+      const objects = await suiClient.getOwnedObjects({
+        owner: address,
       });
       setOwnedObjects(objects.data);
     } catch (error) {
@@ -138,7 +139,7 @@ export const ContractInteractionPanel: React.FC = () => {
 
     setLoading(true);
     try {
-      const eventData = await client.queryEvents({
+      const eventData = await suiClient.queryEvents({
         query: { MoveModule: { package: packageId, module: moduleName } },
       });
       setEvents(eventData.data);
