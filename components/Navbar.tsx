@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import Button from './ui/Button';
 import { useAuthStore } from '../src/store/authStore';
 import AuthModal from '../src/components/auth/AuthModal';
+import { useWallet } from '../src/hooks/useWallet';
 
 type NavItem = {
   label: string;
@@ -55,14 +56,15 @@ const NAV_MENU: NavItem[] = [
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuthStore();
+  const { connected, connecting, account, connect, disconnect, getAvailableWallets } = useWallet();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
   const [network, setNetwork] = useState('Testnet');
   const [lang, setLang] = useState('EN');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showWalletMenu, setShowWalletMenu] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
@@ -70,8 +72,39 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleConnect = () => {
-    setIsConnected(!isConnected);
+  const handleConnect = async () => {
+    if (connected) {
+      await disconnect();
+      setShowWalletMenu(false);
+    } else {
+      const wallets = getAvailableWallets();
+      if (wallets.length === 1) {
+        // Auto-connect if only one wallet available
+        try {
+          await connect(wallets[0]);
+        } catch (error) {
+          console.error('Failed to connect wallet:', error);
+        }
+      } else if (wallets.length > 1) {
+        // Show wallet selection menu
+        setShowWalletMenu(true);
+      } else {
+        alert('No Sui wallet detected. Please install Sui Wallet, Suiet, or Ethos.');
+      }
+    }
+  };
+
+  const handleWalletSelect = async (walletName: string) => {
+    try {
+      await connect(walletName);
+      setShowWalletMenu(false);
+    } catch (error) {
+      console.error('Failed to connect wallet:', error);
+    }
+  };
+
+  const formatAddress = (address: string) => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
   const handleAuthSuccess = () => {
@@ -240,15 +273,48 @@ const Navbar: React.FC = () => {
             )}
 
             {/* Wallet Connect */}
-            <Button 
-              variant={isConnected ? 'outline' : 'outline'}
-              size="sm"
-              onClick={handleConnect}
-              className={isConnected ? "border-sui-cyan/30 text-sui-cyan bg-sui-cyan/5" : ""}
-            >
-              <Wallet className="w-4 h-4 mr-2" />
-              {isConnected ? '0x71...39a' : 'Connect Wallet'}
-            </Button>
+            <div className="relative">
+              <Button 
+                variant={connected ? 'outline' : 'outline'}
+                size="sm"
+                onClick={handleConnect}
+                disabled={connecting}
+                className={connected ? "border-sui-cyan/30 text-sui-cyan bg-sui-cyan/5" : ""}
+              >
+                <Wallet className="w-4 h-4 mr-2" />
+                {connecting ? 'Connecting...' : connected && account ? formatAddress(account.address) : 'Connect Wallet'}
+              </Button>
+
+              {/* Wallet Selection Menu */}
+              {showWalletMenu && !connected && (
+                <div className="absolute right-0 mt-2 w-56 bg-[#161b22] border border-white/10 rounded-xl shadow-2xl py-2 z-50">
+                  <div className="px-4 py-2 border-b border-white/10">
+                    <p className="text-sm font-medium text-white">Select Wallet</p>
+                  </div>
+                  {getAvailableWallets().map((wallet) => (
+                    <button
+                      key={wallet}
+                      onClick={() => handleWalletSelect(wallet)}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                    >
+                      <Wallet size={16} />
+                      <span>{wallet}</span>
+                    </button>
+                  ))}
+                  {getAvailableWallets().length === 0 && (
+                    <div className="px-4 py-2 text-sm text-slate-400">
+                      No wallets detected
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setShowWalletMenu(false)}
+                    className="w-full px-4 py-2 text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-colors border-t border-white/10 mt-2"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Settings Toggles */}
             <div className="flex items-center gap-1 border-l border-white/10 pl-4">
@@ -342,9 +408,10 @@ const Navbar: React.FC = () => {
                        variant="primary" 
                        className="w-full justify-center"
                        onClick={handleConnect}
+                       disabled={connecting}
                      >
                        <Wallet className="w-4 h-4 mr-2" />
-                       {isConnected ? '0x71...39a' : 'Connect Wallet'}
+                       {connecting ? 'Connecting...' : connected && account ? formatAddress(account.address) : 'Connect Wallet'}
                      </Button>
                      
                      <div className="grid grid-cols-2 gap-4">
