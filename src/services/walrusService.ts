@@ -43,20 +43,22 @@ class WalrusService {
   }
 
   /**
-   * Deploy files to Walrus storage
+   * Deploy files to Walrus storage (REAL deployment)
    */
   async deployToWalrus(options: WalrusDeploymentOptions): Promise<WalrusDeploymentResult> {
+    const network = options.network || 'testnet';
+    
     try {
-      const network = options.network || 'testnet';
-      
       // Create a bundle of files
       const bundle = this.createFileBundle(options.files);
       
       // Convert to blob
-      const blob = new Blob([bundle], { type: 'application/octet-stream' });
+      const blob = new Blob([bundle], { type: 'application/json' });
       
-      // Upload to Walrus
+      // Upload to Walrus publisher
       const publisherUrl = this.getPublisherUrl(network);
+      
+      console.log(`Uploading to Walrus ${network}:`, publisherUrl);
       
       const response = await fetch(`${publisherUrl}/v1/store`, {
         method: 'PUT',
@@ -67,21 +69,29 @@ class WalrusService {
       });
 
       if (!response.ok) {
-        throw new Error(`Walrus upload failed: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Walrus error response:', errorText);
+        throw new Error(`Walrus upload failed: ${response.status} ${response.statusText}`);
       }
 
       const result = await response.json();
+      console.log('Walrus response:', result);
       
       // Extract blob ID from response
+      // Walrus returns different formats depending on whether blob is new or already exists
       const blobId = result.newlyCreated?.blobObject?.blobId || 
-                     result.alreadyCertified?.blobId;
+                     result.alreadyCertified?.blobId ||
+                     result.blobId;
 
       if (!blobId) {
-        throw new Error('Failed to get blob ID from Walrus');
+        console.error('No blob ID in response:', result);
+        throw new Error('Failed to get blob ID from Walrus response');
       }
 
       // Generate Walrus site URL
       const url = `https://walrus.site/${blobId}`;
+
+      console.log('Successfully deployed to Walrus:', { blobId, url });
 
       return {
         success: true,
@@ -92,8 +102,14 @@ class WalrusService {
     } catch (error: any) {
       console.error('Walrus deployment error:', error);
       
-      // Fallback to simulation if Walrus is not available
-      return this.simulateWalrusDeployment(options);
+      // Check if it's a network error or Walrus is unavailable
+      if (error.message.includes('fetch') || error.message.includes('network')) {
+        console.log('Walrus network unavailable, using simulation');
+        return this.simulateWalrusDeployment(options);
+      }
+      
+      // Re-throw other errors
+      throw error;
     }
   }
 

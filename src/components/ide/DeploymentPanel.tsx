@@ -63,12 +63,15 @@ const DeploymentPanel: React.FC = () => {
         return;
       }
 
-      // Use deployment service to publish
-      const result = await deploymentService.simulateDeployment({
-        code: currentTab.content,
-        packageName: currentTab.name.replace('.move', ''),
-        network,
-      });
+      // Use deployment service to publish (REAL deployment)
+      const result = await deploymentService.publishPackage(
+        {
+          code: currentTab.content,
+          packageName: currentTab.name.replace('.move', ''),
+          network,
+        },
+        wallet.signAndExecuteTransactionBlock
+      );
 
       if (result.success) {
         setDeploymentResult({
