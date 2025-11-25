@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
@@ -20,7 +20,7 @@ import aiRoutes from './routes/ai';
 import extensionsRoutes from './routes/extensions';
 import terminalRoutes from './routes/terminal';
 
-const app = express();
+const app: Express = express();
 const PORT = process.env.PORT || 3001;
 
 // Create HTTP server for WebSocket
@@ -62,7 +62,7 @@ app.use('/api/extensions', extensionsRoutes);
 app.use('/api/terminal', terminalRoutes);
 
 // Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error('Error:', err);
   
   res.status(err.status || 500).json({
