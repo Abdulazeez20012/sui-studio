@@ -1,8 +1,22 @@
 # 🔨 Move Code Compilation System
 
+## 🎯 Zero Installation Promise
+
+**For Users**: 
+- ✅ **No installation required** - Just open the website
+- ✅ **No configuration needed** - Start coding immediately  
+- ✅ **Works in any browser** - Chrome, Firefox, Safari, Edge
+- ✅ **Always functional** - Build and test work out of the box
+
+**For Backend Admins** (Optional):
+- You can optionally install Sui CLI on the server for real compilation
+- But it's not required - simulation mode works perfectly!
+
+---
+
 ## Overview
 
-Sui Studio has a robust compilation system that works in multiple modes to ensure users can always build and test their Move code.
+Sui Studio has a robust compilation system that works in multiple modes to ensure users can always build and test their Move code **without installing anything**.
 
 ---
 
@@ -216,11 +230,48 @@ Build Successful`,
 
 ---
 
-## 🚀 Installation Guide (For Real Compilation)
+## 🚀 Installation Guide (For Backend Owners Only)
+
+> **⚠️ IMPORTANT**: Users never need to install anything! This section is only for backend server administrators who want to enable real Move compilation instead of simulation.
+
+**For Users**: Just open the website and start coding. Zero installation required!
+
+**For Backend Admins**: Choose your deployment mode:
+
+### Deployment Mode 1: Simulation (Recommended for Launch)
+
+**Setup**: Deploy backend as-is (no Sui CLI needed)
+
+**Advantages**:
+- ✅ Zero setup complexity
+- ✅ Fast deployment
+- ✅ Works perfectly for learning
+- ✅ No maintenance overhead
+- ✅ Users get instant feedback
+
+**Perfect for**:
+- Initial launch
+- Educational platforms
+- Demos and prototypes
+- Quick testing
+
+### Deployment Mode 2: Real Compilation (Optional)
+
+**Setup**: Install Sui CLI on backend server
+
+**Advantages**:
+- ✅ Real Move compiler validation
+- ✅ Actual bytecode for deployment
+- ✅ Production-ready output
+
+**Perfect for**:
+- Production deployments
+- Advanced users
+- Real contract deployment
 
 ### On Render (Production Backend)
 
-**Option 1: Docker with Sui CLI** (Recommended)
+**Option 1: Docker with Sui CLI** (For Real Compilation)
 
 Create `backend/Dockerfile`:
 ```dockerfile
@@ -269,7 +320,9 @@ Update Render Build Command:
 bash setup.sh && npm install && npm run build
 ```
 
-### On Local Development
+### On Local Development (Backend Only)
+
+> **Note**: This is only if YOU want to run the backend locally with real compilation. Users never do this!
 
 **macOS**:
 ```bash
@@ -293,6 +346,8 @@ cargo install --git https://github.com/MystenLabs/sui.git --branch mainnet sui
 ```bash
 sui --version
 ```
+
+**Or Just Skip It**: Backend works fine without Sui CLI (simulation mode)
 
 ---
 
