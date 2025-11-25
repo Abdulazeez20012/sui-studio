@@ -1,6 +1,7 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
-import { JsonRpcProvider, Connection, TransactionBlock } from '@mysten/sui.js';
+import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { z } from 'zod';
 

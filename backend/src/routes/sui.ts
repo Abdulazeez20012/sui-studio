@@ -1,5 +1,5 @@
 import express from 'express';
-import { JsonRpcProvider, Connection } from '@mysten/sui.js';
+import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client';
 import { authenticateToken } from '../middleware/auth';
 
 const router = express.Router();

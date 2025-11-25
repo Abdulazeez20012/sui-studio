@@ -91,7 +91,6 @@ ${packageName} = "0x0"
           codeHash,
           bytecode,
           success: true,
-          errors: null,
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
         },
       });

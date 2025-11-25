@@ -26,7 +26,7 @@ router.post('/chat', async (req: AuthRequest, res) => {
     // Create or get conversation
     let conversation;
     if (conversationId) {
-      conversation = await prisma.aiConversation.findFirst({
+      conversation = await prisma.aIConversation.findFirst({
         where: {
           id: conversationId,
           userId: req.userId!,
@@ -35,7 +35,7 @@ router.post('/chat', async (req: AuthRequest, res) => {
     }
 
     if (!conversation) {
-      conversation = await prisma.aiConversation.create({
+      conversation = await prisma.aIConversation.create({
         data: {
           userId: req.userId!,
           title: message.substring(0, 50),
@@ -44,7 +44,7 @@ router.post('/chat', async (req: AuthRequest, res) => {
     }
 
     // Save user message
-    await prisma.aiMessage.create({
+    await prisma.aIMessage.create({
       data: {
         conversationId: conversation.id,
         role: 'user',
@@ -57,7 +57,7 @@ router.post('/chat', async (req: AuthRequest, res) => {
     const aiResponse = await generateAIResponse(message, context);
 
     // Save AI message
-    const aiMessage = await prisma.aiMessage.create({
+    const aiMessage = await prisma.aIMessage.create({
       data: {
         conversationId: conversation.id,
         role: 'assistant',
@@ -77,7 +77,7 @@ router.post('/chat', async (req: AuthRequest, res) => {
 // Get conversation history
 router.get('/conversations', async (req: AuthRequest, res) => {
   try {
-    const conversations = await prisma.aiConversation.findMany({
+    const conversations = await prisma.aIConversation.findMany({
       where: { userId: req.userId! },
       include: {
         messages: {
@@ -98,7 +98,7 @@ router.get('/conversations', async (req: AuthRequest, res) => {
 // Get conversation messages
 router.get('/conversations/:id', async (req: AuthRequest, res) => {
   try {
-    const conversation = await prisma.aiConversation.findFirst({
+    const conversation = await prisma.aIConversation.findFirst({
       where: {
         id: req.params.id,
         userId: req.userId!,
@@ -123,7 +123,7 @@ router.get('/conversations/:id', async (req: AuthRequest, res) => {
 // Delete conversation
 router.delete('/conversations/:id', async (req: AuthRequest, res) => {
   try {
-    await prisma.aiConversation.delete({
+    await prisma.aIConversation.delete({
       where: {
         id: req.params.id,
         userId: req.userId!,
