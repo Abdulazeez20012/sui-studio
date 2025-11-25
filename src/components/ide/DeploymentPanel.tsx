@@ -268,7 +268,7 @@ const DeploymentPanel: React.FC = () => {
                             <Copy size={14} className="text-slate-400 hover:text-sui-cyan" />
                           </button>
                           <a
-                            href={`https://suiexplorer.com/object/${deploymentResult.packageId}?network=${deploymentResult.network || network}`}
+                            href={`https://suiscan.com/object/${deploymentResult.packageId}?network=${deploymentResult.network || network}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1 hover:bg-sui-cyan/10 rounded transition-colors"
