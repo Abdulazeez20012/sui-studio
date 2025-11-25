@@ -398,6 +398,48 @@ const Toolbar: React.FC = () => {
               </button>
               <button
                 onClick={() => {
+                  if (rightPanelType === 'wallet' && rightPanelOpen) {
+                    toggleRightPanel();
+                  } else {
+                    setRightPanelType('wallet');
+                    if (!rightPanelOpen) toggleRightPanel();
+                  }
+                  setShowRightPanelMenu(false);
+                }}
+                className={`w-full flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all ${
+                  rightPanelType === 'wallet' && rightPanelOpen
+                    ? 'text-sui-cyan bg-sui-cyan/10'
+                    : 'text-slate-400 hover:text-sui-cyan hover:bg-sui-cyan/5'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                </svg>
+                <span>Wallet</span>
+              </button>
+              <button
+                onClick={() => {
+                  if (rightPanelType === 'contract' && rightPanelOpen) {
+                    toggleRightPanel();
+                  } else {
+                    setRightPanelType('contract');
+                    if (!rightPanelOpen) toggleRightPanel();
+                  }
+                  setShowRightPanelMenu(false);
+                }}
+                className={`w-full flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all ${
+                  rightPanelType === 'contract' && rightPanelOpen
+                    ? 'text-sui-cyan bg-sui-cyan/10'
+                    : 'text-slate-400 hover:text-sui-cyan hover:bg-sui-cyan/5'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
+                </svg>
+                <span>Contract Interaction</span>
+              </button>
+              <button
+                onClick={() => {
                   if (rightPanelType === 'stats' && rightPanelOpen) {
                     toggleRightPanel();
                   } else {

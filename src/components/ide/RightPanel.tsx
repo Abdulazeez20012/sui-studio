@@ -7,6 +7,8 @@ import CollaborationPanel from './CollaborationPanel';
 import SettingsPanel from './SettingsPanel';
 import StatsPanel from './StatsPanel';
 import ExtensionsMarketplace from './ExtensionsMarketplace';
+import { WalletPanel } from './WalletPanel';
+import { ContractInteractionPanel } from './ContractInteractionPanel';
 
 const RightPanel: React.FC = () => {
   const { rightPanelType } = useIDEStore();
@@ -27,6 +29,10 @@ const RightPanel: React.FC = () => {
         return <StatsPanel />;
       case 'extensions':
         return <ExtensionsMarketplace />;
+      case 'wallet':
+        return <WalletPanel />;
+      case 'contract':
+        return <ContractInteractionPanel />;
       case 'docs':
         return (
           <div className="h-full bg-dark-surface p-4">
