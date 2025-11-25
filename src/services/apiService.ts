@@ -261,7 +261,7 @@ class APIService {
   }
 
   // Project initialization
-  async createProject(name: string, template?: string) {
+  async initializeProject(name: string, template?: string) {
     const response = await fetch(`${API_URL}/api/project-init/create`, {
       method: 'POST',
       headers: this.getHeaders(),

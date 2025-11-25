@@ -143,3 +143,44 @@ h1, h2, h3, h4, h5, h6 {
   transform: scale(1.02);
   box-shadow: 0 0 20px rgba(77, 169, 255, 0.2);
 }
+
+/* Fix for input fields - ensure text is visible */
+input, textarea {
+  color: #ffffff !important;
+  background-color: transparent;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #6b7280 !important;
+  opacity: 1;
+}
+
+input:focus, textarea:focus {
+  color: #ffffff !important;
+  outline: none;
+}
+
+/* Specific fix for white backgrounds */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+textarea {
+  color: #1f2937 !important;
+}
+
+/* Dark background inputs should have white text */
+.bg-black input,
+.bg-gray-800 input,
+.bg-gray-900 input,
+[class*="bg-black"] input,
+[class*="bg-gray-8"] input,
+[class*="bg-gray-9"] input,
+.bg-black textarea,
+.bg-gray-800 textarea,
+.bg-gray-900 textarea,
+[class*="bg-black"] textarea,
+[class*="bg-gray-8"] textarea,
+[class*="bg-gray-9"] textarea {
+  color: #ffffff !important;
+}

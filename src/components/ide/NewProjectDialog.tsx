@@ -64,7 +64,7 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({ onClose }) => {
     setError('');
 
     try {
-      const result = await apiService.createProject(projectName, template);
+      const result = await apiService.initializeProject(projectName, template);
 
       if (result.success) {
         // Convert structure to FileNode format
