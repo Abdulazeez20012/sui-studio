@@ -48,8 +48,7 @@ router.post('/', async (req: AuthRequest, res) => {
     try {
       // Get RPC URL for network
       const rpcUrl = getRpcUrl(network);
-      const connection = new Connection({ fullnode: rpcUrl });
-      const provider = new JsonRpcProvider(connection);
+      const client = new SuiClient({ url: rpcUrl });
 
       // Note: In production, you would need the user's wallet private key
       // For now, we'll simulate the deployment

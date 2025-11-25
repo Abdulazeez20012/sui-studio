@@ -12,11 +12,10 @@ router.get('/network/:network', async (req, res) => {
     const { network } = req.params;
     const rpcUrl = getRpcUrl(network);
     
-    const connection = new Connection({ fullnode: rpcUrl });
-    const provider = new JsonRpcProvider(connection);
+    const client = new SuiClient({ url: rpcUrl });
 
-    const chainId = await provider.getChainIdentifier();
-    const latestCheckpoint = await provider.getLatestCheckpointSequenceNumber();
+    const chainId = await client.getChainIdentifier();
+    const latestCheckpoint = await client.getLatestCheckpointSequenceNumber();
 
     res.json({
       network,
@@ -36,10 +35,9 @@ router.get('/transaction/:digest', async (req, res) => {
     const network = req.query.network as string || 'testnet';
     
     const rpcUrl = getRpcUrl(network);
-    const connection = new Connection({ fullnode: rpcUrl });
-    const provider = new JsonRpcProvider(connection);
+    const client = new SuiClient({ url: rpcUrl });
 
-    const transaction = await provider.getTransactionBlock({
+    const transaction = await client.getTransactionBlock({
       digest,
       options: {
         showInput: true,
@@ -61,10 +59,9 @@ router.get('/object/:objectId', async (req, res) => {
     const network = req.query.network as string || 'testnet';
     
     const rpcUrl = getRpcUrl(network);
-    const connection = new Connection({ fullnode: rpcUrl });
-    const provider = new JsonRpcProvider(connection);
+    const client = new SuiClient({ url: rpcUrl });
 
-    const object = await provider.getObject({
+    const object = await client.getObject({
       id: objectId,
       options: {
         showContent: true,
@@ -85,10 +82,9 @@ router.get('/gas-price/:network', async (req, res) => {
     const { network } = req.params;
     const rpcUrl = getRpcUrl(network);
     
-    const connection = new Connection({ fullnode: rpcUrl });
-    const provider = new JsonRpcProvider(connection);
+    const client = new SuiClient({ url: rpcUrl });
 
-    const gasPrice = await provider.getReferenceGasPrice();
+    const gasPrice = await client.getReferenceGasPrice();
 
     res.json({
       network,
