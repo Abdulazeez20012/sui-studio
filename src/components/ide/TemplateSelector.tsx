@@ -42,12 +42,12 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onClose }) =
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {templates.map((template) => {
+          {Object.entries(templates).map(([templateId, template]: [string, Template]) => {
             const Icon = getIcon(template.category);
             return (
               <button
-                key={template.id}
-                onClick={() => handleSelectTemplate(template.id)}
+                key={templateId}
+                onClick={() => handleSelectTemplate(templateId)}
                 className="group bg-black/40 border border-cyan-500/20 rounded-lg p-6 text-left hover:border-cyan-500/50 hover:bg-black/60 transition-all"
               >
                 <div className="flex items-start gap-4">
@@ -62,7 +62,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onClose }) =
                       {template.description}
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {template.features.slice(0, 3).map((feature, idx) => (
+                      {template.features.slice(0, 3).map((feature: string, idx: number) => (
                         <span
                           key={idx}
                           className="text-xs px-2 py-1 bg-cyan-500/10 text-cyan-400 rounded"
