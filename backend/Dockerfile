@@ -1,10 +1,13 @@
 FROM node:20-slim
 
-# Install system dependencies
+# Install system dependencies including build tools for Rust compilation
 RUN apt-get update && apt-get install -y \
     curl \
     git \
     ca-certificates \
+    build-essential \
+    pkg-config \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Rust and compile Sui CLI from source
