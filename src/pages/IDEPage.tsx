@@ -9,6 +9,7 @@ import Terminal from '../components/ide/Terminal';
 import StatusBar from '../components/ide/StatusBar';
 import Toolbar from '../components/ide/Toolbar';
 import BuildStatus from '../components/ide/BuildStatus';
+import { BackendWakeUp } from '../components/BackendWakeUp';
 import { useIDEStore } from '../store/ideStore';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 
@@ -16,6 +17,7 @@ const IDEPage: React.FC = () => {
   const { leftPanelOpen, rightPanelOpen, bottomPanelOpen, toggleLeftPanel, toggleBottomPanel, toggleRightPanel, setRightPanelType, addTab } = useIDEStore();
   const [buildStatus, setBuildStatus] = useState<'idle' | 'building' | 'success' | 'error'>('idle');
   const [buildMessage, setBuildMessage] = useState('');
+  const [backendReady, setBackendReady] = useState(false);
   
   // Enable keyboard shortcuts
   useKeyboardShortcuts();
@@ -95,9 +97,13 @@ const IDEPage: React.FC = () => {
   }, [addTab, toggleLeftPanel, toggleBottomPanel, toggleRightPanel, setRightPanelType, rightPanelOpen]);
 
   return (
-    <div className="h-screen flex flex-col bg-black text-white">
-      {/* Menu Bar */}
-      <MenuBar />
+    <>
+      {/* Backend Wake-Up Screen */}
+      {!backendReady && <BackendWakeUp onReady={() => setBackendReady(true)} />}
+      
+      <div className="h-screen flex flex-col bg-black text-white">
+        {/* Menu Bar */}
+        <MenuBar />
       
       {/* Top Header Bar with Gradient */}
       <div className="h-14 bg-dark-header border-b border-sui-cyan/20 flex items-center justify-between px-4 relative">
@@ -154,7 +160,8 @@ const IDEPage: React.FC = () => {
         message={buildMessage}
         onClose={() => setBuildStatus('idle')}
       />
-    </div>
+      </div>
+    </>
   );
 };
 

@@ -1,6 +1,33 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 class APIService {
+  private wakeUpInProgress = false;
+
+  // Wake up the backend (for Render free tier that sleeps after inactivity)
+  async wakeUpBackend(): Promise<boolean> {
+    if (this.wakeUpInProgress) return false;
+    
+    this.wakeUpInProgress = true;
+    
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      const response = await fetch(`${API_URL}/health`, {
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      this.wakeUpInProgress = false;
+      
+      return response.ok;
+    } catch (error) {
+      this.wakeUpInProgress = false;
+      console.log('Backend wake-up in progress or unavailable');
+      return false;
+    }
+  }
+
   private getHeaders(includeAuth = true): HeadersInit {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
