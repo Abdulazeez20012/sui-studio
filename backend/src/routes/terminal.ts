@@ -1,7 +1,7 @@
 import express, { Router } from 'express';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { optionalAuth, AuthRequest } from '../middleware/auth';
 import { z } from 'zod';
 import * as path from 'path';
 import * as fs from 'fs/promises';
@@ -9,7 +9,7 @@ import * as fs from 'fs/promises';
 const router: Router = express.Router();
 const execAsync = promisify(exec);
 
-router.use(authenticateToken);
+router.use(optionalAuth);
 
 const executeSchema = z.object({
   command: z.string(),

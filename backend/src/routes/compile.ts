@@ -1,6 +1,6 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { optionalAuth, AuthRequest } from '../middleware/auth';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as crypto from 'crypto';
@@ -12,7 +12,7 @@ const router = express.Router();
 const prisma = new PrismaClient();
 const execAsync = promisify(exec);
 
-router.use(authenticateToken);
+router.use(optionalAuth);
 
 const compileSchema = z.object({
   code: z.string(),

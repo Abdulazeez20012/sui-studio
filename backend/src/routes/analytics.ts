@@ -1,10 +1,30 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { authenticateToken, optionalAuth, AuthRequest } from '../middleware/auth';
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
+// Track endpoint should be public (optional auth)
+router.post('/track', optionalAuth, async (req: AuthRequest, res) => {
+  try {
+    const { event, metadata } = req.body;
+
+    // Log analytics event (in production, send to analytics service)
+    console.log('Analytics Event:', {
+      userId: req.userId,
+      event,
+      metadata,
+      timestamp: new Date(),
+    });
+
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Other routes require authentication
 router.use(authenticateToken);
 
 // Get user analytics
@@ -146,25 +166,6 @@ router.get('/project/:projectId', async (req: AuthRequest, res) => {
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
-  }
-});
-
-// Track code execution event
-router.post('/track', async (req: AuthRequest, res) => {
-  try {
-    const { event, metadata } = req.body;
-
-    // Log analytics event (in production, send to analytics service)
-    console.log('Analytics Event:', {
-      userId: req.userId,
-      event,
-      metadata,
-      timestamp: new Date(),
-    });
-
-    res.json({ success: true });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
   }
 });
 

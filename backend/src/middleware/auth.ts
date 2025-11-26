@@ -39,3 +39,29 @@ export const generateToken = (userId: string, user: any): string => {
     { expiresIn: '7d' }
   );
 };
+
+// Optional authentication - allows guest users
+export const optionalAuth = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+      req.userId = decoded.userId;
+      req.user = decoded.user;
+    } catch (error) {
+      // Invalid token, but continue as guest
+      req.userId = undefined;
+    }
+  } else {
+    // No token, continue as guest with temporary ID
+    req.userId = `guest-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+  }
+
+  next();
+};

@@ -2,13 +2,13 @@ import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { optionalAuth, AuthRequest } from '../middleware/auth';
 import { z } from 'zod';
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
-router.use(authenticateToken);
+router.use(optionalAuth);
 
 const deploySchema = z.object({
   projectId: z.string(),
