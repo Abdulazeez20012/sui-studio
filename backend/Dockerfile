@@ -8,6 +8,9 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     pkg-config \
     libssl-dev \
+    clang \
+    libclang-dev \
+    llvm-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Rust and compile Sui CLI from source
