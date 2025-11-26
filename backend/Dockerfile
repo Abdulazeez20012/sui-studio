@@ -4,17 +4,15 @@ FROM node:20-slim
 RUN apt-get update && apt-get install -y \
     curl \
     git \
-    build-essential \
-    pkg-config \
-    libssl-dev \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Rust
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH="/root/.cargo/bin:${PATH}"
-
-# Install Sui CLI
-RUN cargo install --locked --git https://github.com/MystenLabs/sui.git --branch mainnet sui
+# Download pre-built Sui CLI binary (much faster than compiling)
+RUN curl -L https://github.com/MystenLabs/sui/releases/download/mainnet-v1.14.2/sui-mainnet-v1.14.2-ubuntu-x86_64.tgz -o sui.tgz \
+    && tar -xzf sui.tgz \
+    && mv sui-mainnet-v1.14.2-ubuntu-x86_64/sui /usr/local/bin/sui \
+    && chmod +x /usr/local/bin/sui \
+    && rm -rf sui.tgz sui-mainnet-v1.14.2-ubuntu-x86_64
 
 # Verify Sui installation
 RUN sui --version
