@@ -9,13 +9,22 @@ RUN apt-get update && apt-get install -y \
 
 # Download and install Sui CLI binary
 RUN curl -L https://github.com/MystenLabs/sui/releases/download/mainnet-v1.14.2/sui-mainnet-v1.14.2-ubuntu-x86_64.tgz -o sui.tgz \
-    && tar -tzf sui.tgz | head -20 \
+    && echo "=== Listing tar contents ===" \
+    && tar -tzf sui.tgz | head -30 \
+    && echo "=== Extracting ===" \
     && tar -xzf sui.tgz \
+    && echo "=== Current directory contents ===" \
     && ls -la \
-    && find . -name "sui" -type f -exec ls -lh {} \; \
-    && (cp ./target/release/sui /usr/local/bin/sui || cp ./sui /usr/local/bin/sui || (find . -type f -name "sui" -exec cp {} /usr/local/bin/sui \;)) \
+    && echo "=== Finding sui binary ===" \
+    && find . -maxdepth 5 -name "sui" -type f 2>/dev/null | head -10 \
+    && echo "=== Copying sui binary ===" \
+    && (cp ./target/release/sui /usr/local/bin/sui 2>/dev/null || \
+        cp ./sui /usr/local/bin/sui 2>/dev/null || \
+        find . -maxdepth 5 -name "sui" -type f -exec cp {} /usr/local/bin/sui \; 2>/dev/null) \
     && chmod +x /usr/local/bin/sui \
+    && echo "=== Cleaning up ===" \
     && rm -rf sui.tgz target external-crates crates sui-mainnet-* \
+    && echo "=== Verifying installation ===" \
     && sui --version
 
 # Set working directory
