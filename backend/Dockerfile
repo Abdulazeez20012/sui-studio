@@ -7,14 +7,15 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Rust and cargo-binstall for faster Sui CLI installation
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
-    && . $HOME/.cargo/env \
-    && curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash \
-    && cargo binstall sui --no-confirm --locked \
-    && sui --version
-
+# Install Rust and compile Sui CLI from source
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Install Sui CLI by compiling from source (this takes ~10 minutes)
+RUN cargo install --locked --git https://github.com/MystenLabs/sui.git --branch mainnet sui
+
+# Verify installation
+RUN sui --version
 
 # Set working directory
 WORKDIR /app
