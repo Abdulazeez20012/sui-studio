@@ -7,25 +7,14 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Download and install Sui CLI binary
-RUN curl -L https://github.com/MystenLabs/sui/releases/download/mainnet-v1.14.2/sui-mainnet-v1.14.2-ubuntu-x86_64.tgz -o sui.tgz \
-    && echo "=== Listing tar contents ===" \
-    && tar -tzf sui.tgz | head -30 \
-    && echo "=== Extracting ===" \
-    && tar -xzf sui.tgz \
-    && echo "=== Current directory contents ===" \
-    && ls -la \
-    && echo "=== Finding sui binary ===" \
-    && find . -maxdepth 5 -name "sui" -type f 2>/dev/null | head -10 \
-    && echo "=== Copying sui binary ===" \
-    && (cp ./target/release/sui /usr/local/bin/sui 2>/dev/null || \
-        cp ./sui /usr/local/bin/sui 2>/dev/null || \
-        find . -maxdepth 5 -name "sui" -type f -exec cp {} /usr/local/bin/sui \; 2>/dev/null) \
-    && chmod +x /usr/local/bin/sui \
-    && echo "=== Cleaning up ===" \
-    && rm -rf sui.tgz target external-crates crates sui-mainnet-* \
-    && echo "=== Verifying installation ===" \
+# Install Rust and cargo-binstall for faster Sui CLI installation
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
+    && . $HOME/.cargo/env \
+    && curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash \
+    && cargo binstall sui --no-confirm --locked \
     && sui --version
+
+ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Set working directory
 WORKDIR /app
