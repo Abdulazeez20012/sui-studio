@@ -1,8 +1,8 @@
-import express from 'express';
+import express, { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken, optionalAuth, AuthRequest } from '../middleware/auth';
 
-const router = express.Router();
+const router: Router = express.Router();
 const prisma = new PrismaClient();
 
 // Track endpoint should be public (optional auth)

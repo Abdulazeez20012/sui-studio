@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { optionalAuth, AuthRequest } from '../middleware/auth';
 import { exec } from 'child_process';
@@ -8,7 +8,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { z } from 'zod';
 
-const router = express.Router();
+const router: Router = express.Router();
 const prisma = new PrismaClient();
 const execAsync = promisify(exec);
 
