@@ -1,25 +1,21 @@
 #!/bin/bash
+set -e
 
 echo "🚀 Setting up Sui Studio Backend..."
 
 # Check if .env exists
 if [ ! -f .env ]; then
     echo "📝 Creating .env file from .env.example..."
-    cp .env.example .env
-    echo "⚠️  Please update .env with your configuration"
+    cp .env.example .env 2>/dev/null || echo "⚠️  No .env.example found"
 fi
 
 # Install dependencies
 echo "📦 Installing dependencies..."
 npm install
 
-# Generate Prisma client
-echo "🔧 Generating Prisma client..."
-npm run prisma:generate
-
-# Run migrations
-echo "🗄️  Running database migrations..."
-npm run prisma:migrate
+# Build TypeScript
+echo "🔨 Building TypeScript..."
+npm run build
 
 echo "✅ Backend setup complete!"
 echo ""
