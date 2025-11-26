@@ -58,20 +58,23 @@ describe('WalrusService', () => {
     });
 
     it('should fallback to simulation on network error', async () => {
-      (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
+      // Mock fetch to reject with network error
+      (global.fetch as any).mockRejectedValueOnce(new Error('fetch failed'));
 
       const result = await walrusService.deployToWalrus({
         projectName: 'test',
         files: [{ name: 'test.move', content: 'test' }],
       });
 
+      // Should fallback to simulation
       expect(result.success).toBe(true);
       expect(result.blobId).toBeDefined();
       expect(result.url).toContain('walrus.site');
     });
 
     it('should calculate file size correctly', async () => {
-      (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
+      // Mock fetch to reject so it uses simulation
+      (global.fetch as any).mockRejectedValueOnce(new Error('fetch failed'));
 
       const content = 'a'.repeat(1000);
       const result = await walrusService.deployToWalrus({
@@ -79,6 +82,8 @@ describe('WalrusService', () => {
         files: [{ name: 'test.move', content }],
       });
 
+      // Simulation should still calculate size
+      expect(result.success).toBe(true);
       expect(result.size).toBeGreaterThan(0);
     });
   });
