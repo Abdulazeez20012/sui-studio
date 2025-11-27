@@ -120,7 +120,7 @@ const Pricing: React.FC = () => {
   const [platform, setPlatform] = useState<Platform>('web');
 
   return (
-    <Section id="pricing" className="bg-[#0B0F14] relative overflow-hidden py-32">
+    <Section id="pricing" className="bg-white dark:bg-[#0B0F14] relative overflow-hidden py-32 transition-colors duration-300">
       {/* Ambient Background */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-sui-cyan/5 rounded-full blur-[120px] pointer-events-none" />

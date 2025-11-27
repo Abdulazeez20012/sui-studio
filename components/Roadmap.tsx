@@ -118,7 +118,7 @@ const Roadmap: React.FC = () => {
   );
 
   return (
-    <Section id="roadmap" className="bg-[#0E1217] py-24 overflow-hidden">
+    <Section id="roadmap" className="bg-gray-50 dark:bg-[#0E1217] py-24 overflow-hidden transition-colors duration-300">
       <div className="text-center mb-16 px-4">
         <motion.div
           initial={{ opacity: 0, y: 10 }}

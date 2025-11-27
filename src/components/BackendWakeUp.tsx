@@ -43,10 +43,10 @@ export const BackendWakeUp = ({ onReady }: { onReady: () => void }) => {
         <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto" />
         <div className="space-y-2">
           <h2 className="text-xl font-semibold text-white">
-            Waking up backend{dots}
+            sui studio ide {dots}
           </h2>
           <p className="text-gray-400 text-sm max-w-md">
-            The backend is starting up. This may take 30-60 seconds on first load.
+            sui studio coming up . This may take 30-60 seconds on first load.
           </p>
         </div>
       </div>

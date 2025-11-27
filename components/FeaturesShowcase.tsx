@@ -99,10 +99,10 @@ const FeaturesShowcase: React.FC = () => {
   const CategoryIcon = categories[activeTab as keyof typeof categories].icon;
 
   return (
-    <section className="py-32 px-6 relative overflow-hidden">
+    <section className="py-32 px-6 relative overflow-hidden bg-gray-50 dark:bg-transparent transition-colors duration-300">
       {/* Background Effects */}
-      <div className="absolute inset-0 grid-bg opacity-30" />
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-walrus-cyan/5 rounded-full blur-[150px]" />
+      <div className="absolute inset-0 grid-bg opacity-10 dark:opacity-30" />
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-sui-cyan/10 dark:bg-walrus-cyan/5 rounded-full blur-[150px]" />
 
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Section Header */}

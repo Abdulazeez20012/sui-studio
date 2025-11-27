@@ -9,7 +9,7 @@
   }
 
   /* Light mode */
-  .light body {
+  html.light body {
     @apply bg-neo-bg text-neo-black;
     background: linear-gradient(to bottom, #F0F0F0, #E5E5E5);
   }
@@ -23,12 +23,12 @@
     @apply font-heading font-bold text-white;
   }
 
-  .light h1,
-  .light h2,
-  .light h3,
-  .light h4,
-  .light h5,
-  .light h6 {
+  html.light h1,
+  html.light h2,
+  html.light h3,
+  html.light h4,
+  html.light h5,
+  html.light h6 {
     @apply text-neo-black;
   }
 

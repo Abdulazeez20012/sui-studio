@@ -40,7 +40,7 @@ const Counter = ({ value, suffix }: { value: string, suffix: string }) => {
 
 const Stats: React.FC = () => {
   return (
-    <Section className="border-y border-white/5 bg-[#0E1217] relative overflow-hidden">
+    <Section className="border-y border-gray-200 dark:border-white/5 bg-gray-100 dark:bg-[#0E1217] relative overflow-hidden transition-colors duration-300">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 relative z-10">
         {/* Vertical Dividers (Desktop) */}
         <div className="hidden md:block absolute left-1/4 top-4 bottom-4 w-px bg-white/5" />

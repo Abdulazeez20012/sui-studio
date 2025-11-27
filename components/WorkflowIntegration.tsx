@@ -38,7 +38,7 @@ const WorkflowIntegration: React.FC = () => {
   const currentPhase = phases.find(p => p.id === activePhase) || phases[0];
 
   return (
-    <section className="relative py-20 px-6 overflow-hidden bg-[#0B0F14]">
+    <section className="relative py-20 px-6 overflow-hidden bg-white dark:bg-[#0B0F14] transition-colors duration-300">
       {/* Background */}
       <div className="absolute inset-0 grid-bg opacity-20" />
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sui-cyan/5 rounded-full blur-[150px]" />

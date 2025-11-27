@@ -24,7 +24,7 @@ const HeroNew: React.FC = () => {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-[#0B0F14] via-[#0f1419] to-[#0B0F14]">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-white via-gray-50 to-white dark:from-[#0B0F14] dark:via-[#0f1419] dark:to-[#0B0F14] transition-colors duration-300">
       {/* Subtle Background Elements */}
       <div className="absolute inset-0 opacity-30">
         <div className="absolute top-20 left-10 w-72 h-72 bg-sui-cyan/20 rounded-full blur-3xl animate-pulse" />
@@ -57,7 +57,7 @@ const HeroNew: React.FC = () => {
 
             {/* Main Headline */}
             <h1 className="text-6xl md:text-7xl lg:text-8xl font-black mb-6 leading-tight font-display">
-              <span className="bg-gradient-to-r from-white to-slate-200 bg-clip-text text-transparent">Build the</span>
+              <span className="text-gray-900 dark:text-white">Build the</span>
               <br />
               <span className="bg-gradient-to-r from-[#4DA8FF] via-[#6FB6FF] to-[#00D4FF] bg-clip-text text-transparent animate-pulse-slow">
                 Future of Web3
@@ -67,7 +67,7 @@ const HeroNew: React.FC = () => {
             </h1>
 
             {/* Subheadline */}
-            <p className="text-xl md:text-2xl text-slate-300 mb-8 leading-relaxed max-w-2xl font-sans">
+            <p className="text-xl md:text-2xl text-gray-600 dark:text-slate-300 mb-8 leading-relaxed max-w-2xl font-sans">
               The first Web3 IDE with built-in video collaboration, real-time code sharing, and everything you need to build on Sui—all in your browser.
             </p>
 
