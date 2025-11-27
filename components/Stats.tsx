@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import Section from './ui/Section';
 import { motion, useInView, useSpring, useMotionValue } from 'framer-motion';
+import { StaggerContainer, ScaleReveal, FadeUp } from '../src/lib/animations';
 
 const STATS = [
   { label: 'Active Developers', value: '12', suffix: 'k+' },
@@ -47,7 +48,7 @@ const Stats: React.FC = () => {
         <div className="hidden md:block absolute left-3/4 top-4 bottom-4 w-px bg-white/5" />
 
         {STATS.map((stat, index) => (
-          <motion.div 
+          <motion.div
             key={index}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -55,10 +56,10 @@ const Stats: React.FC = () => {
             transition={{ delay: index * 0.1 }}
             className="text-center group"
           >
-            <div className="font-heading font-bold text-4xl md:text-5xl text-white mb-2 group-hover:text-sui-cyan transition-colors duration-500 drop-shadow-[0_0_15px_rgba(60,185,255,0.3)]">
+            <div className="font-heading font-bold text-4xl md:text-5xl bg-gradient-to-r from-white to-sui-cyan bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform duration-500 drop-shadow-[0_0_20px_rgba(77,168,255,0.4)]">
               <Counter value={stat.value} suffix={stat.suffix} />
             </div>
-            <div className="text-sm text-slate-500 uppercase tracking-widest font-medium group-hover:text-white transition-colors">
+            <div className="text-sm text-slate-400 uppercase tracking-widest font-medium group-hover:text-sui-cyan transition-colors">
               {stat.label}
             </div>
           </motion.div>

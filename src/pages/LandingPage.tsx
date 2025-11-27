@@ -18,10 +18,9 @@ import MouseFollower from '../../components/ui/MouseFollower';
 
 const LandingPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[#0B0F14] text-white selection:bg-sui-cyan/30 overflow-x-hidden relative">
-      <MouseFollower />
+    <div className="min-h-screen bg-neo-bg dark:bg-[#0B0F14] text-neo-black dark:text-white overflow-x-hidden relative font-sans transition-colors duration-300">
       <Navbar />
-      
+
       <main className="relative z-10">
         <Hero />
         <FeaturesShowcase />

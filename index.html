@@ -6,10 +6,31 @@
     <title>Sui Studio | The Unified Development Platform</title>
     <meta name="description" content="The default development environment for every Sui developer. From web-based exploration to desktop-grade power." />
     
-    <!-- Google Fonts - Web3 Style -->
+    <!-- Theme initialization script -->
+    <script>
+      (function() {
+        const theme = localStorage.getItem('theme-storage');
+        if (theme) {
+          try {
+            const parsed = JSON.parse(theme);
+            if (parsed.state && parsed.state.theme) {
+              document.documentElement.classList.add(parsed.state.theme);
+            } else {
+              document.documentElement.classList.add('dark');
+            }
+          } catch (e) {
+            document.documentElement.classList.add('dark');
+          }
+        } else {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+    
+    <!-- Google Fonts - Latest Web3 Standard -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,9 +39,10 @@
         theme: {
           extend: {
             fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-              heading: ['Space Grotesk', 'sans-serif'],
-              mono: ['JetBrains Mono', 'monospace'],
+              sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+              heading: ['Space Grotesk', 'Inter', 'sans-serif'],
+              display: ['Syne', 'Space Grotesk', 'sans-serif'],
+              mono: ['IBM Plex Mono', 'Menlo', 'Monaco', 'monospace'],
             },
             colors: {
               sui: {

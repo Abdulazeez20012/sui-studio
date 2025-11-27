@@ -48,17 +48,17 @@ const NewStats: React.FC = () => {
   ];
 
   return (
-    <section className="py-20 px-6 relative overflow-hidden">
+    <section className="py-20 px-6 relative overflow-hidden bg-neo-bg">
       {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-dark-bg via-sui-cyan/5 to-dark-bg" />
-      
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000010_1px,transparent_1px),linear-gradient(to_bottom,#00000010_1px,transparent_1px)] bg-[size:20px_20px]" />
+
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Header */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-black mb-4 bg-gradient-to-r from-white to-sui-cyan bg-clip-text text-transparent">
+          <h2 className="text-4xl md:text-5xl font-black mb-4 text-neo-black uppercase tracking-tighter font-display">
             Built for Performance
           </h2>
-          <p className="text-slate-400 text-lg">
+          <p className="text-neo-black text-lg font-medium font-sans">
             Industry-leading features that set Sui Studio apart
           </p>
         </div>
@@ -68,32 +68,29 @@ const NewStats: React.FC = () => {
           {stats.map((stat, index) => (
             <div
               key={index}
-              className="group relative bg-dark-surface/50 backdrop-blur-sm border border-dark-border rounded-xl p-6 hover:border-sui-cyan/50 transition-all duration-300 hover:shadow-neon hover:-translate-y-1"
+              className="group relative bg-neo-white border-3 border-neo-black rounded-none p-6 hover:shadow-neo-lg hover:-translate-y-1 transition-all duration-200"
             >
               {/* Icon */}
-              <div className={`inline-flex p-3 rounded-lg bg-gradient-to-br ${stat.gradient} mb-4 group-hover:scale-110 transition-transform`}>
-                <div className="text-white">
+              <div className={`inline-flex p-3 bg-neo-bg border-2 border-neo-black mb-4 group-hover:scale-110 transition-transform shadow-neo-sm`}>
+                <div className="text-neo-black">
                   {stat.icon}
                 </div>
               </div>
 
               {/* Value */}
-              <div className="text-3xl font-black text-white mb-1 group-hover:text-sui-cyan transition-colors">
+              <div className="text-3xl font-black text-neo-black mb-1 font-display">
                 {stat.value}
               </div>
 
               {/* Label */}
-              <div className="text-sm font-semibold text-slate-300 mb-2">
+              <div className="text-sm font-bold text-neo-black mb-2 uppercase font-heading">
                 {stat.label}
               </div>
 
               {/* Description */}
-              <div className="text-xs text-slate-500">
+              <div className="text-xs text-neo-black font-medium font-sans">
                 {stat.description}
               </div>
-
-              {/* Glow Effect */}
-              <div className="absolute inset-0 bg-gradient-to-br from-sui-cyan/0 to-sui-cyan/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
             </div>
           ))}
         </div>

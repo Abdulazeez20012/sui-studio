@@ -2,9 +2,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Section from './ui/Section';
 import { motion } from 'framer-motion';
-import { 
-  Zap, Droplets, Waves, Box, Hexagon, Anchor, 
-  Cloud, Shield, MapPin, Cpu, Globe, Activity, 
+import {
+  Zap, Droplets, Waves, Box, Hexagon, Anchor,
+  Cloud, Shield, MapPin, Cpu, Globe, Activity,
   Database, Share2, Radio
 } from 'lucide-react';
 
@@ -44,7 +44,7 @@ const EcosystemOrbit: React.FC = () => {
     const newNodes = NODES.map((node, i) => {
       const phi = Math.acos(-1 + (2 * i) / NODES.length);
       const theta = Math.sqrt(NODES.length * Math.PI) * phi;
-      
+
       return {
         ...node,
         baseX: RADIUS * Math.cos(theta) * Math.sin(phi),
@@ -67,14 +67,14 @@ const EcosystemOrbit: React.FC = () => {
       if (!isHovered) {
         rotationRef.current.y += 0.002; // Rotate Y
       }
-      
+
       const width = canvas.width;
       const height = canvas.height;
       const cx = width / 2;
       const cy = height / 2;
 
       ctx.clearRect(0, 0, width, height);
-      
+
       // Rotation Matrix Values
       const rx = rotationRef.current.x;
       const ry = rotationRef.current.y;
@@ -99,9 +99,9 @@ const EcosystemOrbit: React.FC = () => {
             z = radius * Math.sin(theta);
             y = 0; // Need to offset y for multiple rings
           } else if (axis === 'x') { // Vertical rings (Longitude)
-             x = radius * Math.cos(theta);
-             y = radius * Math.sin(theta);
-             z = 0;
+            x = radius * Math.cos(theta);
+            y = radius * Math.sin(theta);
+            z = 0;
           }
 
           // Apply Rotation
@@ -124,79 +124,79 @@ const EcosystemOrbit: React.FC = () => {
 
       // Draw Latitudes
       [0, 0.5, 0.8, -0.5, -0.8].forEach(scale => {
-          // We simulate latitude by drawing circles at different Y heights with scaled radii
-          // Simplified: Just draw a few key wireframe rings
-          // Actually, drawing rotated circles is complex. Let's draw points and connect them or just simple great circles.
-          // Better: Draw 3 Longitude Great Circles
-          // And 1 Equator
+        // We simulate latitude by drawing circles at different Y heights with scaled radii
+        // Simplified: Just draw a few key wireframe rings
+        // Actually, drawing rotated circles is complex. Let's draw points and connect them or just simple great circles.
+        // Better: Draw 3 Longitude Great Circles
+        // And 1 Equator
       });
 
       // Draw 3 meridian circles rotated differently to form a sphere shape
       // We will simply draw 3 circles on X/Y/Z planes rotated by the global rotation
       const sphereSteps = 3;
-      for(let i=0; i<sphereSteps; i++) {
-         // Hacky way to draw wireframe lines: just pre-calculate points on sphere and rotate them
+      for (let i = 0; i < sphereSteps; i++) {
+        // Hacky way to draw wireframe lines: just pre-calculate points on sphere and rotate them
       }
 
       // Custom Globe Drawing Logic
       // Draw Latitude Lines
       for (let lat = -60; lat <= 60; lat += 30) {
-         const latRad = lat * Math.PI / 180;
-         const r = RADIUS * Math.cos(latRad);
-         const yBase = RADIUS * Math.sin(latRad);
-         
-         ctx.beginPath();
-         for(let lng = 0; lng <= 360; lng += 5) {
-             const lngRad = lng * Math.PI / 180;
-             let x = r * Math.cos(lngRad);
-             let z = r * Math.sin(lngRad);
-             let y = yBase;
+        const latRad = lat * Math.PI / 180;
+        const r = RADIUS * Math.cos(latRad);
+        const yBase = RADIUS * Math.sin(latRad);
 
-             // Rotate
-             let x1 = x * cosY - z * sinY;
-             let z1 = z * cosY + x * sinY;
-             let y1 = y * cosX - z1 * sinX;
-             let z2 = z1 * cosX + y * sinX;
+        ctx.beginPath();
+        for (let lng = 0; lng <= 360; lng += 5) {
+          const lngRad = lng * Math.PI / 180;
+          let x = r * Math.cos(lngRad);
+          let z = r * Math.sin(lngRad);
+          let y = yBase;
 
-             const scale = PERSPECTIVE / (PERSPECTIVE + z2);
-             const x2d = cx + x1 * scale;
-             const y2d = cy + y1 * scale;
-             
-             // Fading for back of globe
-             ctx.globalAlpha = z2 < 0 ? 0.05 : 0.15; 
-             
-             if(lng === 0) ctx.moveTo(x2d, y2d);
-             else ctx.lineTo(x2d, y2d);
-         }
-         ctx.stroke();
+          // Rotate
+          let x1 = x * cosY - z * sinY;
+          let z1 = z * cosY + x * sinY;
+          let y1 = y * cosX - z1 * sinX;
+          let z2 = z1 * cosX + y * sinX;
+
+          const scale = PERSPECTIVE / (PERSPECTIVE + z2);
+          const x2d = cx + x1 * scale;
+          const y2d = cy + y1 * scale;
+
+          // Fading for back of globe
+          ctx.globalAlpha = z2 < 0 ? 0.05 : 0.15;
+
+          if (lng === 0) ctx.moveTo(x2d, y2d);
+          else ctx.lineTo(x2d, y2d);
+        }
+        ctx.stroke();
       }
-      
+
       // Draw Longitude Lines
       for (let lng = 0; lng < 360; lng += 45) {
-         const lngRad = lng * Math.PI / 180;
-         ctx.beginPath();
-         for(let lat = -90; lat <= 90; lat += 5) {
-             const latRad = lat * Math.PI / 180;
-             let x = RADIUS * Math.cos(latRad) * Math.cos(lngRad);
-             let z = RADIUS * Math.cos(latRad) * Math.sin(lngRad);
-             let y = RADIUS * Math.sin(latRad);
+        const lngRad = lng * Math.PI / 180;
+        ctx.beginPath();
+        for (let lat = -90; lat <= 90; lat += 5) {
+          const latRad = lat * Math.PI / 180;
+          let x = RADIUS * Math.cos(latRad) * Math.cos(lngRad);
+          let z = RADIUS * Math.cos(latRad) * Math.sin(lngRad);
+          let y = RADIUS * Math.sin(latRad);
 
-             // Rotate
-             let x1 = x * cosY - z * sinY;
-             let z1 = z * cosY + x * sinY;
-             let y1 = y * cosX - z1 * sinX;
-             let z2 = z1 * cosX + y * sinX;
+          // Rotate
+          let x1 = x * cosY - z * sinY;
+          let z1 = z * cosY + x * sinY;
+          let y1 = y * cosX - z1 * sinX;
+          let z2 = z1 * cosX + y * sinX;
 
-             const scale = PERSPECTIVE / (PERSPECTIVE + z2);
-             const x2d = cx + x1 * scale;
-             const y2d = cy + y1 * scale;
+          const scale = PERSPECTIVE / (PERSPECTIVE + z2);
+          const x2d = cx + x1 * scale;
+          const y2d = cy + y1 * scale;
 
-             ctx.globalAlpha = z2 < 0 ? 0.05 : 0.15;
+          ctx.globalAlpha = z2 < 0 ? 0.05 : 0.15;
 
-             if(lat === -90) ctx.moveTo(x2d, y2d);
-             else ctx.lineTo(x2d, y2d);
-         }
-         ctx.stroke();
+          if (lat === -90) ctx.moveTo(x2d, y2d);
+          else ctx.lineTo(x2d, y2d);
+        }
+        ctx.stroke();
       }
       ctx.globalAlpha = 1; // Reset alpha
 
@@ -210,7 +210,7 @@ const EcosystemOrbit: React.FC = () => {
 
         // Project
         const scale = PERSPECTIVE / (PERSPECTIVE + z2);
-        
+
         return {
           ...node,
           x: x1 * scale,
@@ -230,58 +230,58 @@ const EcosystemOrbit: React.FC = () => {
   }, [isHovered]);
 
   return (
-    <Section className="py-32 overflow-hidden relative" id="ecosystem-orbit">
+    <Section className="py-32 overflow-hidden relative bg-neo-white border-y-3 border-neo-black" id="ecosystem-orbit">
       {/* Background Elements */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-radial from-sui-cyan/5 to-transparent opacity-20 pointer-events-none rounded-full blur-3xl" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000005_1px,transparent_1px),linear-gradient(to_bottom,#00000005_1px,transparent_1px)] bg-[size:40px_40px]" />
 
       <div className="text-center mb-16 relative z-10">
-        <motion.h2 
+        <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="font-heading font-bold text-3xl md:text-4xl mb-4 text-white"
+          className="font-heading font-black text-3xl md:text-5xl mb-4 text-neo-black uppercase tracking-tighter"
         >
-          Global <span className="text-sui-cyan">Ecosystem</span>
+          Global <span className="text-neo-primary bg-neo-black px-2 text-white">Ecosystem</span>
         </motion.h2>
-        <motion.p 
+        <motion.p
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
-          className="text-slate-400 max-w-2xl mx-auto"
+          className="text-neo-black font-medium max-w-2xl mx-auto text-lg"
         >
           Join a rapidly expanding universe of DeFi, Gaming, and Infrastructure projects built on Sui.
         </motion.p>
       </div>
 
       {/* 3D Scene Container */}
-      <div 
+      <div
         ref={containerRef}
         className="relative h-[600px] w-full flex items-center justify-center perspective-1000"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Canvas for Wireframe Globe */}
-        <canvas 
-          ref={canvasRef} 
-          width={800} 
+        <canvas
+          ref={canvasRef}
+          width={800}
           height={800}
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-60"
         />
 
         {/* Central SUI Hub */}
-        <div className="absolute z-20 w-28 h-28 rounded-full bg-[#0E1217] border border-sui-cyan flex items-center justify-center shadow-[0_0_60px_-10px_rgba(60,185,255,0.4)] animate-float">
+        <div className="absolute z-20 w-28 h-28 rounded-full bg-neo-black border-4 border-neo-primary flex items-center justify-center shadow-neo animate-float">
           {/* Orbital Rings */}
-          <div className="absolute inset-[-10px] border border-sui-cyan/20 rounded-full animate-spin-slow" />
-          <div className="absolute inset-[-20px] border border-sui-cyan/10 rounded-full animate-spin-reverse-slower" />
-          
+          <div className="absolute inset-[-15px] border-2 border-neo-black/20 rounded-full animate-spin-slow" />
+          <div className="absolute inset-[-30px] border-2 border-neo-black/10 rounded-full animate-spin-reverse-slower" />
+
           <div className="flex flex-col items-center justify-center z-10">
-             <img 
-               src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763580906/sui-sui-logo_gmux9g.png"
-               alt="Sui Logo"
-               className="w-12 h-12 object-contain"
-             />
-             <span className="text-xs font-bold tracking-[0.2em] text-white mt-2">SUI</span>
+            <img
+              src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763580906/sui-sui-logo_gmux9g.png"
+              alt="Sui Logo"
+              className="w-12 h-12 object-contain"
+            />
+            <span className="text-xs font-black tracking-[0.2em] text-white mt-2">SUI</span>
           </div>
         </div>
 
@@ -301,25 +301,25 @@ const EcosystemOrbit: React.FC = () => {
               {/* <div className="absolute top-1/2 left-1/2 w-px h-[300px] bg-gradient-to-b from-sui-cyan/10 to-transparent origin-top -translate-y-full -z-10 opacity-20" style={{ transform: `rotate(${Math.atan2(node.y, node.x)}rad)`}} /> */}
 
               <div className="relative">
-                 {/* Icon Circle */}
-                 <div 
-                   className="w-10 h-10 rounded-full bg-[#161b22] border border-white/10 flex items-center justify-center shadow-lg group-hover:border-sui-cyan group-hover:shadow-[0_0_20px_rgba(60,185,255,0.6)] group-hover:scale-110 transition-all duration-300 backdrop-blur-md"
-                 >
-                    <div style={{ color: node.color }}>{node.icon}</div>
-                 </div>
+                {/* Icon Circle */}
+                <div
+                  className="w-10 h-10 rounded-full bg-neo-white border-2 border-neo-black flex items-center justify-center shadow-neo-sm group-hover:shadow-neo group-hover:scale-110 transition-all duration-200"
+                >
+                  <div style={{ color: '#000' }}>{node.icon}</div>
+                </div>
 
-                 {/* Label Tooltip */}
-                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20">
-                    <div className="px-3 py-1.5 bg-sui-dark/90 border border-white/10 rounded-lg text-center whitespace-nowrap backdrop-blur-md shadow-xl">
-                       <div className="text-xs font-bold text-white">{node.name}</div>
-                       <div className="text-[10px] text-sui-cyan">{node.type}</div>
-                    </div>
-                 </div>
-                 
-                 {/* Simple Label for Distance Visibility */}
-                 <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-2 text-[10px] font-medium text-slate-400 whitespace-nowrap transition-opacity duration-300 ${node.zIndex < 50 ? 'opacity-0' : 'opacity-100'} group-hover:opacity-0`}>
-                    {node.name}
-                 </div>
+                {/* Label Tooltip */}
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">
+                  <div className="px-3 py-1.5 bg-neo-black border-2 border-neo-primary rounded-none text-center whitespace-nowrap shadow-neo-sm">
+                    <div className="text-xs font-bold text-white">{node.name}</div>
+                    <div className="text-[10px] text-neo-primary font-bold uppercase">{node.type}</div>
+                  </div>
+                </div>
+
+                {/* Simple Label for Distance Visibility */}
+                <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-2 text-[10px] font-bold text-neo-black whitespace-nowrap transition-opacity duration-300 ${node.zIndex < 50 ? 'opacity-0' : 'opacity-100'} group-hover:opacity-0`}>
+                  {node.name}
+                </div>
               </div>
             </div>
           ))}

@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import Section from './ui/Section';
 import Button from './ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, Sparkles, Zap, Shield } from 'lucide-react';
+import { StaggerContainer, FoldInOut, ScaleReveal, FadeUp } from '../src/lib/animations';
 
 type BillingCycle = 'monthly' | 'yearly';
 type Platform = 'web' | 'desktop';
@@ -128,15 +128,17 @@ const Pricing: React.FC = () => {
       <div className="relative z-10 max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="font-heading font-bold text-4xl md:text-5xl text-white mb-6"
+            className="font-heading font-bold text-4xl md:text-5xl mb-6"
           >
-            Simple, transparent pricing.
+            <span className="text-white">Simple, </span>
+            <span className="bg-gradient-to-r from-[#4DA8FF] via-[#6FB6FF] to-[#00D4FF] bg-clip-text text-transparent">transparent</span>
+            <span className="text-white"> pricing.</span>
           </motion.h2>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
@@ -151,7 +153,7 @@ const Pricing: React.FC = () => {
         <div className="flex flex-col items-center gap-8 mb-20">
           {/* Platform Toggle */}
           <div className="p-1 bg-[#161b22] border border-white/10 rounded-xl inline-flex relative">
-            <motion.div 
+            <motion.div
               className="absolute inset-y-1 bg-[#0B0F14] rounded-lg border border-white/10 shadow-sm"
               layoutId="platform-highlight"
               initial={false}
@@ -161,13 +163,13 @@ const Pricing: React.FC = () => {
                 left: platform === 'web' ? '4px' : '50%'
               }}
             />
-            <button 
+            <button
               onClick={() => setPlatform('web')}
               className={`relative z-10 px-8 py-2.5 text-sm font-medium transition-colors duration-300 ${platform === 'web' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
             >
               Web Cloud
             </button>
-            <button 
+            <button
               onClick={() => setPlatform('desktop')}
               className={`relative z-10 px-8 py-2.5 text-sm font-medium transition-colors duration-300 ${platform === 'desktop' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
             >
@@ -179,7 +181,7 @@ const Pricing: React.FC = () => {
           <div className="flex items-center gap-4 cursor-pointer" onClick={() => setBilling(b => b === 'monthly' ? 'yearly' : 'monthly')}>
             <span className={`text-sm font-medium transition-colors ${billing === 'monthly' ? 'text-white' : 'text-slate-500'}`}>Monthly</span>
             <div className="w-12 h-6 bg-[#161b22] border border-white/10 rounded-full relative transition-colors hover:border-sui-cyan/30">
-              <motion.div 
+              <motion.div
                 className="absolute top-1 left-1 w-4 h-4 bg-sui-cyan rounded-full shadow-[0_0_10px_rgba(60,185,255,0.5)]"
                 animate={{ x: billing === 'yearly' ? 24 : 0 }}
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
@@ -204,11 +206,10 @@ const Pricing: React.FC = () => {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -20, scale: 0.95 }}
                 transition={{ duration: 0.4, delay: idx * 0.1 }}
-                className={`relative flex flex-col p-8 rounded-2xl backdrop-blur-sm border transition-all duration-500 group ${
-                  tier.popular 
-                    ? 'bg-[#12171D]/80 border-sui-cyan/30 shadow-[0_0_40px_-10px_rgba(60,185,255,0.15)]' 
+                className={`relative flex flex-col p-8 rounded-2xl backdrop-blur-sm border transition-all duration-500 group ${tier.popular
+                    ? 'bg-[#12171D]/80 border-sui-cyan/30 shadow-[0_0_40px_-10px_rgba(60,185,255,0.15)]'
                     : 'bg-[#0B0F14]/60 border-white/5 hover:border-white/10 hover:bg-[#12171D]/40'
-                }`}
+                  }`}
               >
                 {tier.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-sui-cyan text-[#0B0F14] text-xs font-bold rounded-full shadow-[0_0_20px_rgba(60,185,255,0.4)] flex items-center gap-1">
@@ -218,12 +219,15 @@ const Pricing: React.FC = () => {
                 )}
 
                 <div className="mb-8">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-4 ${
-                    tier.popular ? 'bg-sui-cyan/20 text-sui-cyan' : 'bg-white/5 text-slate-400'
-                  }`}>
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-4 ${tier.popular ? 'bg-sui-cyan/20 text-sui-cyan' : 'bg-white/5 text-slate-400'
+                    }`}>
                     {tier.icon}
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">{tier.name}</h3>
+                  <h3 className="text-xl font-bold mb-2">
+                    <span className={tier.popular ? "bg-gradient-to-r from-white to-sui-cyan bg-clip-text text-transparent" : "text-white"}>
+                      {tier.name}
+                    </span>
+                  </h3>
                   <p className="text-sm text-slate-500 min-h-[40px]">{tier.description}</p>
                 </div>
 
@@ -264,7 +268,7 @@ const Pricing: React.FC = () => {
                   </ul>
                 </div>
 
-                <Button 
+                <Button
                   variant={tier.popular ? 'primary' : 'outline'}
                   className="w-full justify-center"
                 >
@@ -276,7 +280,7 @@ const Pricing: React.FC = () => {
         </div>
 
         {/* Enterprise Banner */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -288,7 +292,10 @@ const Pricing: React.FC = () => {
               <Shield className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-lg font-bold text-white mb-1">Need specific compliance?</h4>
+              <h4 className="text-lg font-bold mb-1">
+                <span className="text-white">Need </span>
+                <span className="text-sui-cyan">specific compliance?</span>
+              </h4>
               <p className="text-sm text-slate-400">We offer on-premise deployment, SLA guarantees, and dedicated support engineers.</p>
             </div>
           </div>

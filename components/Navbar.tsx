@@ -1,14 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Menu, X, Hexagon, Wallet, Globe, Moon, Sun, 
-  ChevronDown, ChevronRight, ExternalLink, 
+import {
+  Menu, X, Hexagon, Wallet, Globe, Moon, Sun,
+  ChevronDown, ChevronRight, ExternalLink,
   Layout, Terminal, Cpu, Book, Users, FileText, LifeBuoy, Shield, Zap, Code2, Rocket, MessageSquare, User, LogOut
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Button from './ui/Button';
 import { useAuthStore } from '../src/store/authStore';
+import { useThemeStore } from '../src/store/themeStore';
 import AuthModal from '../src/components/auth/AuthModal';
 import { useSuiWallet } from '../src/hooks/useSuiWallet';
 
@@ -56,6 +57,7 @@ const NAV_MENU: NavItem[] = [
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuthStore();
+  const { theme, toggleTheme } = useThemeStore();
   const { connected, address, availableWallets, connect, disconnect, formatAddress, loading } = useSuiWallet();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -105,47 +107,46 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <nav 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b ${
-        isScrolled || isMobileMenuOpen
-          ? 'bg-[#0B0F14]/80 backdrop-blur-xl border-white/10 py-4' 
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b-3 ${isScrolled || isMobileMenuOpen
+          ? 'bg-neo-bg border-neo-black py-4 shadow-neo'
           : 'bg-transparent border-transparent py-6'
-      }`}
+        }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-8">
-          
+
           {/* Logo Area */}
           <div className="flex items-center gap-3 shrink-0 cursor-pointer">
             <div className="relative group">
-               <img 
-                 src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763580906/sui-sui-logo_gmux9g.png"
-                 alt="Sui Logo"
-                 className="w-8 h-8 object-contain transition-transform group-hover:scale-110 duration-500"
-               />
-               <div className="absolute inset-0 bg-sui-cyan/40 blur-lg opacity-50 group-hover:opacity-80 transition-opacity duration-500" />
+              <img
+                src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763580906/sui-sui-logo_gmux9g.png"
+                alt="Sui Logo"
+                className="w-8 h-8 object-contain transition-transform group-hover:scale-110 duration-200"
+              />
             </div>
-            <span className="font-heading font-bold text-xl tracking-tight text-white">Sui Studio</span>
+            <span className="font-display font-black text-xl tracking-tight text-neo-black uppercase">Sui Studio</span>
           </div>
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-1">
             {NAV_MENU.map((item) => (
-              <div 
-                key={item.label} 
+              <div
+                key={item.label}
                 className="relative group"
                 onMouseEnter={() => setActiveDropdown(item.label)}
                 onMouseLeave={() => setActiveDropdown(null)}
               >
-                <a 
+                <a
                   href={item.href || '#'}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center gap-1.5 transition-colors ${
-                    activeDropdown === item.label ? 'text-white bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'
-                  }`}
+                  className={`px-4 py-2 text-sm font-bold rounded-none flex items-center gap-1.5 transition-colors border-2 ${activeDropdown === item.label
+                      ? 'bg-neo-primary text-neo-black border-neo-black shadow-neo-sm'
+                      : 'text-neo-black border-transparent hover:bg-neo-accent hover:border-neo-black hover:shadow-neo-sm'
+                    }`}
                 >
                   {item.label}
                   {item.children && (
-                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${activeDropdown === item.label ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 text-neo-black ${activeDropdown === item.label ? 'rotate-180' : ''}`} />
                   )}
                 </a>
 
@@ -157,27 +158,25 @@ const Navbar: React.FC = () => {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 5, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute top-full left-0 mt-2 w-72 bg-[#161b22] border border-white/10 rounded-xl shadow-2xl p-2 overflow-hidden z-50 ring-1 ring-black/50"
+                      className="absolute top-full left-0 mt-2 w-72 bg-neo-white border-3 border-neo-black shadow-neo p-2 overflow-hidden z-50"
                     >
-                      {/* Glow Effect */}
-                      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-sui-cyan/50 to-transparent opacity-50" />
-                      
+
                       <div className="grid gap-1">
                         {item.children.map((child) => (
-                          <a 
-                            key={child.name} 
+                          <a
+                            key={child.name}
                             href={child.href}
-                            className="flex items-start gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors group/item"
+                            className="flex items-start gap-3 p-3 hover:bg-neo-bg border-2 border-transparent hover:border-neo-black transition-all group/item"
                           >
-                            <div className="p-2 rounded-md bg-[#0B0F14] border border-white/10 text-slate-400 group-hover/item:text-sui-cyan group-hover/item:border-sui-cyan/30 transition-colors">
+                            <div className="p-2 bg-neo-secondary border-2 border-neo-black text-neo-black group-hover/item:shadow-neo-sm transition-all">
                               {child.icon && <child.icon className="w-4 h-4" />}
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-white group-hover/item:text-sui-cyan transition-colors">
+                              <div className="text-sm font-bold text-neo-black">
                                 {child.name}
                               </div>
                               {child.description && (
-                                <div className="text-xs text-slate-500 mt-0.5">
+                                <div className="text-xs text-gray-600 mt-0.5 font-medium">
                                   {child.description}
                                 </div>
                               )}
@@ -195,13 +194,13 @@ const Navbar: React.FC = () => {
           {/* Web3 Toolbar (Desktop) */}
           <div className="hidden lg:flex items-center gap-4 shrink-0">
             {/* Network Status */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#161b22] border border-white/10">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-neo-white border-2 border-neo-black shadow-neo-sm">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
               </span>
-              <span className="text-xs font-mono font-medium text-slate-300">{network}</span>
-              <ChevronDown className="w-3 h-3 text-slate-500 cursor-pointer hover:text-white" />
+              <span className="text-xs font-mono font-bold text-neo-black">{network}</span>
+              <ChevronDown className="w-3 h-3 text-neo-black cursor-pointer" />
             </div>
 
             {/* Auth / User Profile */}
@@ -212,9 +211,9 @@ const Navbar: React.FC = () => {
                   className="flex items-center gap-2 px-3 py-1.5 bg-[#161b22] border border-white/10 rounded-lg hover:border-sui-cyan/30 transition-colors"
                 >
                   {user.picture ? (
-                    <img 
-                      src={user.picture} 
-                      alt={user.name} 
+                    <img
+                      src={user.picture}
+                      alt={user.name}
                       className="w-6 h-6 rounded-full"
                     />
                   ) : (
@@ -249,7 +248,7 @@ const Navbar: React.FC = () => {
                 )}
               </div>
             ) : (
-              <Button 
+              <Button
                 variant="secondary"
                 size="sm"
                 onClick={() => setShowAuthModal(true)}
@@ -261,7 +260,7 @@ const Navbar: React.FC = () => {
 
             {/* Wallet Connect */}
             <div className="relative">
-              <Button 
+              <Button
                 variant={connected ? 'outline' : 'outline'}
                 size="sm"
                 onClick={handleConnect}
@@ -308,21 +307,25 @@ const Navbar: React.FC = () => {
             </div>
 
             {/* Settings Toggles */}
-            <div className="flex items-center gap-1 border-l border-white/10 pl-4">
-              <button className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
-                 <Globe className="w-4 h-4" />
-                 <span className="sr-only">Language</span>
+            <div className="flex items-center gap-1 border-l-2 border-neo-black pl-4">
+              <button className="p-2 text-neo-black hover:bg-neo-accent border-2 border-transparent hover:border-neo-black hover:shadow-neo-sm transition-all">
+                <Globe className="w-4 h-4" />
+                <span className="sr-only">Language</span>
               </button>
-              <button className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
-                 <Moon className="w-4 h-4" />
-                 <span className="sr-only">Theme</span>
+              <button 
+                onClick={toggleTheme}
+                className="p-2 text-neo-black hover:bg-neo-accent border-2 border-transparent hover:border-neo-black hover:shadow-neo-sm transition-all"
+                aria-label="Toggle theme"
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                <span className="sr-only">Theme</span>
               </button>
             </div>
           </div>
 
           {/* Mobile Toggle */}
-          <button 
-            className="lg:hidden text-white p-2 hover:bg-white/5 rounded-lg transition-colors relative z-50"
+          <button
+            className="lg:hidden text-neo-black p-2 hover:bg-neo-accent border-2 border-transparent hover:border-neo-black hover:shadow-neo-sm transition-all relative z-50"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -334,96 +337,99 @@ const Navbar: React.FC = () => {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMobileMenuOpen(false)}
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
             />
-            <motion.div 
+            <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
               className="fixed top-0 right-0 bottom-0 w-full max-w-sm bg-[#0B0F14] border-l border-white/10 z-50 overflow-y-auto lg:hidden"
             >
-               <div className="p-6 pt-24 space-y-8">
-                  {/* Mobile Nav Items */}
-                  <div className="space-y-2">
-                    {NAV_MENU.map((item) => (
-                      <div key={item.label} className="border-b border-white/5 pb-2">
-                        {item.children ? (
-                          <div className="space-y-2">
-                            <div className="text-sm font-bold text-slate-500 uppercase tracking-wider px-2 py-1">
-                              {item.label}
-                            </div>
-                            <div className="pl-2 space-y-1">
-                               {item.children.map((child) => (
-                                 <a 
-                                   key={child.name}
-                                   href={child.href}
-                                   onClick={() => setIsMobileMenuOpen(false)}
-                                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 text-slate-300 hover:text-white transition-colors"
-                                 >
-                                   {child.icon && <child.icon className="w-4 h-4 text-sui-cyan" />}
-                                   <span className="text-base font-medium">{child.name}</span>
-                                 </a>
-                               ))}
-                            </div>
-                          </div>
-                        ) : (
-                          <a 
-                            href={item.href}
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            className="block p-3 rounded-lg text-lg font-medium text-white hover:bg-white/5 transition-colors"
-                          >
+              <div className="p-6 pt-24 space-y-8">
+                {/* Mobile Nav Items */}
+                <div className="space-y-2">
+                  {NAV_MENU.map((item) => (
+                    <div key={item.label} className="border-b border-white/5 pb-2">
+                      {item.children ? (
+                        <div className="space-y-2">
+                          <div className="text-sm font-bold text-slate-500 uppercase tracking-wider px-2 py-1">
                             {item.label}
-                          </a>
-                        )}
-                      </div>
-                    ))}
+                          </div>
+                          <div className="pl-2 space-y-1">
+                            {item.children.map((child) => (
+                              <a
+                                key={child.name}
+                                href={child.href}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 text-slate-300 hover:text-white transition-colors"
+                              >
+                                {child.icon && <child.icon className="w-4 h-4 text-sui-cyan" />}
+                                <span className="text-base font-medium">{child.name}</span>
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <a
+                          href={item.href}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="block p-3 rounded-lg text-lg font-medium text-white hover:bg-white/5 transition-colors"
+                        >
+                          {item.label}
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Mobile Actions */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-[#161b22] border border-white/10">
+                    <span className="text-sm text-slate-400">Network</span>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="text-sm font-mono text-white">{network}</span>
+                    </div>
                   </div>
 
-                  {/* Mobile Actions */}
-                  <div className="space-y-4">
-                     <div className="flex items-center justify-between p-3 rounded-lg bg-[#161b22] border border-white/10">
-                        <span className="text-sm text-slate-400">Network</span>
-                        <div className="flex items-center gap-2">
-                           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                           <span className="text-sm font-mono text-white">{network}</span>
-                        </div>
-                     </div>
-                     
-                     <Button 
-                       variant="primary" 
-                       className="w-full justify-center"
-                       onClick={handleConnect}
-                       disabled={loading}
-                     >
-                       <Wallet className="w-4 h-4 mr-2" />
-                       {loading ? 'Connecting...' : connected && address ? formatAddress(address) : 'Connect Wallet'}
-                     </Button>
-                     
-                     <div className="grid grid-cols-2 gap-4">
-                        <button className="flex items-center justify-center gap-2 p-3 rounded-lg border border-white/10 hover:bg-white/5 text-slate-300 transition-colors">
-                           <Globe className="w-4 h-4" />
-                           English
-                        </button>
-                        <button className="flex items-center justify-center gap-2 p-3 rounded-lg border border-white/10 hover:bg-white/5 text-slate-300 transition-colors">
-                           <Moon className="w-4 h-4" />
-                           Dark
-                        </button>
-                     </div>
+                  <Button
+                    variant="primary"
+                    className="w-full justify-center"
+                    onClick={handleConnect}
+                    disabled={loading}
+                  >
+                    <Wallet className="w-4 h-4 mr-2" />
+                    {loading ? 'Connecting...' : connected && address ? formatAddress(address) : 'Connect Wallet'}
+                  </Button>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <button className="flex items-center justify-center gap-2 p-3 rounded-lg border border-white/10 hover:bg-white/5 text-slate-300 transition-colors">
+                      <Globe className="w-4 h-4" />
+                      English
+                    </button>
+                    <button 
+                      onClick={toggleTheme}
+                      className="flex items-center justify-center gap-2 p-3 rounded-lg border border-white/10 hover:bg-white/5 text-slate-300 transition-colors"
+                    >
+                      {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                      {theme === 'dark' ? 'Light' : 'Dark'}
+                    </button>
                   </div>
-               </div>
+                </div>
+              </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
       {/* Auth Modal */}
-      <AuthModal 
+      <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         onSuccess={handleAuthSuccess}

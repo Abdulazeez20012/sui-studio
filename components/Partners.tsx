@@ -17,13 +17,12 @@ const METRICS = [
 
 const Partners: React.FC = () => {
   return (
-    <section className="w-full bg-[#0B0F14] border-y border-white/5 py-24 relative overflow-hidden">
+    <section className="w-full bg-neo-bg border-b-3 border-neo-black py-24 relative overflow-hidden">
       {/* Background Texture */}
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-sui-cyan/5 rounded-full blur-[100px] pointer-events-none" />
-      
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000010_1px,transparent_1px),linear-gradient(to_bottom,#00000010_1px,transparent_1px)] bg-[size:20px_20px]" />
+
       <div className="max-w-7xl mx-auto px-4 relative z-10 text-center">
-        
+
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -31,16 +30,16 @@ const Partners: React.FC = () => {
           viewport={{ once: true }}
           className="mb-16"
         >
-          <h2 className="font-heading font-bold text-3xl md:text-5xl text-white mb-6 tracking-tight">
-            Trusted by teams shipping on <span className="text-sui-cyan">mainnet</span>
+          <h2 className="font-heading font-black text-3xl md:text-5xl text-neo-black mb-6 tracking-tighter uppercase">
+            Trusted by teams shipping on <span className="text-neo-primary bg-neo-black px-2 text-white transform -rotate-1 inline-block">mainnet</span>
           </h2>
-          <p className="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
+          <p className="text-neo-black text-lg max-w-2xl mx-auto leading-relaxed font-medium">
             See how developers across the globe use Sui Studio to build, test, and deploy Move applications with confidence.
           </p>
         </motion.div>
 
         {/* Metrics Grid */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -48,12 +47,12 @@ const Partners: React.FC = () => {
           className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto mb-20"
         >
           {METRICS.map((m, i) => (
-            <div key={i} className="flex flex-col items-center justify-center p-6 rounded-2xl bg-[#12171D]/50 border border-white/5 hover:border-sui-cyan/30 hover:bg-[#12171D] transition-all duration-300 group">
-               <div className="p-3 rounded-xl bg-white/5 text-slate-400 group-hover:scale-110 group-hover:bg-sui-cyan/10 group-hover:text-sui-cyan transition-all duration-300 mb-3">
-                 {m.icon}
-               </div>
-               <div className="text-2xl font-bold text-white font-mono mb-1 group-hover:text-sui-cyan transition-colors">{m.value}</div>
-               <div className="text-xs text-slate-500 uppercase tracking-wider font-medium">{m.label}</div>
+            <div key={i} className="flex flex-col items-center justify-center p-6 bg-neo-white border-3 border-neo-black shadow-neo hover:shadow-neo-lg hover:-translate-y-1 transition-all duration-200 group">
+              <div className="p-3 bg-neo-secondary border-2 border-neo-black text-neo-black mb-3 shadow-neo-sm">
+                {m.icon}
+              </div>
+              <div className="text-2xl font-black text-neo-black font-mono mb-1">{m.value}</div>
+              <div className="text-xs text-neo-black uppercase tracking-wider font-bold">{m.label}</div>
             </div>
           ))}
         </motion.div>
@@ -71,33 +70,32 @@ const Partners: React.FC = () => {
         </div>
 
         {/* Conversion CTA */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
           className="relative max-w-lg mx-auto"
         >
-          <div className="absolute inset-0 bg-sui-cyan/20 blur-2xl -z-10 rounded-full opacity-50" />
-          <div className="bg-[#12171D] border border-white/10 rounded-2xl p-2 flex flex-col sm:flex-row gap-2 shadow-2xl shadow-black/50 ring-1 ring-white/5">
-            <input 
-              type="text" 
-              placeholder="github.com/org/sui-project" 
-              className="flex-1 bg-transparent border-none text-white placeholder:text-slate-600 focus:ring-0 px-4 py-3 font-mono text-sm min-w-0"
+          <div className="bg-neo-white border-3 border-neo-black p-2 flex flex-col sm:flex-row gap-2 shadow-neo-lg">
+            <input
+              type="text"
+              placeholder="github.com/org/sui-project"
+              className="flex-1 bg-neo-bg border-2 border-neo-black text-neo-black placeholder:text-gray-500 focus:outline-none focus:shadow-neo px-4 py-3 font-mono text-sm min-w-0 font-bold"
             />
-            <button className="px-6 py-3 rounded-xl bg-sui-cyan text-[#0B0F14] font-bold text-sm hover:bg-[#2ba6eb] transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-sui-cyan/20 hover:scale-[1.02] whitespace-nowrap">
+            <button className="px-6 py-3 bg-neo-primary text-neo-black font-black border-2 border-neo-black hover:shadow-neo hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2 whitespace-nowrap">
               Get Visibility Snapshot
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
-          
-          <div className="mt-4 flex items-center justify-center gap-6 text-xs text-slate-500">
+
+          <div className="mt-4 flex items-center justify-center gap-6 text-xs text-neo-black font-bold">
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-neo-black" />
               Free analysis
             </span>
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-neo-black" />
               No access tokens needed
             </span>
           </div>

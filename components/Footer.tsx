@@ -4,146 +4,143 @@ import { motion } from 'framer-motion';
 import { Hexagon, Github, Twitter, Disc, ArrowRight, Sparkles } from 'lucide-react';
 
 const Footer: React.FC = () => {
-  return (
-    <footer className="relative bg-[#0B0F14] border-t border-white/5 overflow-hidden">
-       {/* Ambient Glow at bottom */}
-       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-sui-cyan/5 rounded-full blur-[120px] pointer-events-none" />
+   return (
+      <footer className="relative bg-neo-white border-t-3 border-neo-black overflow-hidden">
+         {/* Ambient Glow at bottom - REMOVED for Neo-Brutalism */}
 
-       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-24 pb-12">
-          
-          {/* Analytics CTA Section */}
-          <div className="flex flex-col items-center text-center mb-24">
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/5 text-xs font-mono text-sui-cyan mb-6"
-            >
-               <Sparkles className="w-3 h-3" />
-               <span>Free Ecosystem Audit</span>
-            </motion.div>
-            
-            <motion.h2 
-               initial={{ opacity: 0, y: 20 }}
-               whileInView={{ opacity: 1, y: 0 }}
-               viewport={{ once: true }}
-               transition={{ delay: 0.1 }}
-               className="font-heading font-bold text-4xl md:text-6xl text-white mb-6 tracking-tight"
-            >
-               Get your Sui <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-sui-cyan to-sui-indigo">development score.</span>
-            </motion.h2>
-            
-            <motion.p 
-               initial={{ opacity: 0, y: 20 }}
-               whileInView={{ opacity: 1, y: 0 }}
-               viewport={{ once: true }}
-               transition={{ delay: 0.2 }}
-               className="text-slate-400 mb-10 max-w-2xl text-lg leading-relaxed"
-            >
-               See how your Move project stacks up. Get actionable insights to improve your deployment success and gas efficiency.
-            </motion.p>
+         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-24 pb-12">
 
-            {/* Input Action */}
-            <motion.div 
-               initial={{ opacity: 0, scale: 0.95 }}
-               whileInView={{ opacity: 1, scale: 1 }}
-               viewport={{ once: true }}
-               transition={{ delay: 0.3 }}
-               className="flex flex-col sm:flex-row gap-3 w-full max-w-md relative"
-            >
-               <input 
-                 type="text" 
-                 placeholder="Enter project repository URL..." 
-                 className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder:text-slate-500 focus:outline-none focus:border-sui-cyan/50 focus:ring-1 focus:ring-sui-cyan/50 transition-all"
-               />
-               <button className="px-6 py-3 rounded-lg bg-gradient-to-r from-[#FF8F3C] to-[#FF5F3C] text-white font-bold shadow-[0_0_20px_-5px_rgba(255,143,60,0.4)] hover:shadow-[0_0_30px_-5px_rgba(255,143,60,0.6)] hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap">
-                  Get Score
-                  <ArrowRight className="w-4 h-4" />
-               </button>
-            </motion.div>
-          </div>
+            {/* Analytics CTA Section */}
+            <div className="flex flex-col items-center text-center mb-24">
+               <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  className="inline-flex items-center gap-2 px-3 py-1 bg-neo-accent border-2 border-neo-black text-xs font-bold text-neo-black mb-6 shadow-neo-sm"
+               >
+                  <Sparkles className="w-3 h-3" />
+                  <span>FREE ECOSYSTEM AUDIT</span>
+               </motion.div>
 
-          {/* Divider */}
-          <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-16" />
+               <motion.h2
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.1 }}
+                  className="font-display font-black text-4xl md:text-6xl text-neo-black mb-6 tracking-tighter uppercase"
+               >
+                  Get your Sui <br /> <span className="text-neo-primary bg-neo-black px-2 text-white inline-block transform -rotate-1">development score.</span>
+               </motion.h2>
 
-          {/* Links Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
-             {/* Brand Column */}
-             <div className="md:col-span-4">
-               <div className="flex items-center gap-3 mb-6">
-                  <div className="relative">
-                     <img 
-                       src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763580906/sui-sui-logo_gmux9g.png"
-                       alt="Sui Logo"
-                       className="w-8 h-8 object-contain"
-                     />
-                     <div className="absolute inset-0 bg-sui-cyan/20 blur-lg" />
+               <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.2 }}
+                  className="text-neo-black font-medium mb-10 max-w-2xl text-lg leading-relaxed font-sans"
+               >
+                  See how your Move project stacks up. Get actionable insights to improve your deployment success and gas efficiency.
+               </motion.p>
+
+               {/* Input Action */}
+               <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.3 }}
+                  className="flex flex-col sm:flex-row gap-3 w-full max-w-md relative"
+               >
+                  <input type="text"
+                     placeholder="Enter project repository URL..."
+                     className="flex-1 bg-neo-bg border-3 border-neo-black px-4 py-3 text-neo-black placeholder:text-gray-500 focus:outline-none focus:shadow-neo transition-all font-bold"
+                  />
+                  <button className="px-6 py-3 bg-neo-primary text-neo-black font-black border-3 border-neo-black shadow-neo hover:shadow-neo-lg hover:-translate-y-1 transition-all duration-200 flex items-center justify-center gap-2 whitespace-nowrap">
+                     GET SCORE
+                     <ArrowRight className="w-4 h-4" />
+                  </button>
+               </motion.div>
+            </div>
+
+            {/* Divider */}
+            <div className="w-full h-1 bg-neo-black mb-16" />
+
+            {/* Links Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
+               {/* Brand Column */}
+               <div className="md:col-span-4">
+                  <div className="flex items-center gap-3 mb-6">
+                     <div className="relative">
+                        <img
+                           src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763580906/sui-sui-logo_gmux9g.png"
+                           alt="Sui Logo"
+                           className="w-8 h-8 object-contain"
+                        />
+                     </div>
+                     <span className="font-display font-black text-xl text-neo-black uppercase">Sui Studio</span>
                   </div>
-                  <span className="font-heading font-bold text-xl text-white">Sui Studio</span>
+                  <p className="text-neo-black font-medium leading-relaxed mb-6 font-sans">
+                     The complete development environment for the Sui ecosystem. Built for performance, designed for scale.
+                  </p>
+                  <div className="flex gap-4">
+                     <a href="#" className="w-10 h-10 flex items-center justify-center bg-neo-white border-2 border-neo-black text-neo-black hover:bg-neo-accent hover:shadow-neo-sm transition-all">
+                        <Twitter className="w-5 h-5" />
+                     </a>
+                     <a href="#" className="w-10 h-10 flex items-center justify-center bg-neo-white border-2 border-neo-black text-neo-black hover:bg-neo-accent hover:shadow-neo-sm transition-all">
+                        <Github className="w-5 h-5" />
+                     </a>
+                     <a href="#" className="w-10 h-10 flex items-center justify-center bg-neo-white border-2 border-neo-black text-neo-black hover:bg-neo-accent hover:shadow-neo-sm transition-all">
+                        <Disc className="w-5 h-5" />
+                     </a>
+                  </div>
                </div>
-               <p className="text-slate-500 leading-relaxed mb-6">
-                 The complete development environment for the Sui ecosystem. Built for performance, designed for scale.
+
+               {/* Links Columns */}
+               <div className="md:col-span-2 md:col-start-6">
+                  <h4 className="font-black text-neo-black mb-6 uppercase font-heading">Platform</h4>
+                  <ul className="space-y-4 text-sm text-neo-black font-medium">
+                     <li><a href="#" className="hover:text-neo-primary hover:underline decoration-2 transition-all">Web Studio</a></li>
+                     <li><a href="#" className="hover:text-neo-primary hover:underline decoration-2 transition-all">Desktop App</a></li>
+                     <li><a href="#" className="hover:text-neo-primary hover:underline decoration-2 transition-all">Templates</a></li>
+                     <li><a href="#" className="hover:text-neo-primary hover:underline decoration-2 transition-all">Extensions</a></li>
+                  </ul>
+               </div>
+
+               <div className="md:col-span-2">
+                  <h4 className="font-black text-neo-black mb-6 uppercase font-heading">Resources</h4>
+                  <ul className="space-y-4 text-sm text-neo-black font-medium">
+                     <li><a href="#" className="hover:text-neo-primary hover:underline decoration-2 transition-all">Documentation</a></li>
+                     <li><a href="#" className="hover:text-neo-primary hover:underline decoration-2 transition-all">Blog</a></li>
+                     <li><a href="#" className="hover:text-neo-primary hover:underline decoration-2 transition-all">Tutorials</a></li>
+                     <li><a href="#" className="hover:text-neo-primary hover:underline decoration-2 transition-all">Community</a></li>
+                  </ul>
+               </div>
+
+               <div className="md:col-span-2">
+                  <h4 className="font-black text-neo-black mb-6 uppercase font-heading">Company</h4>
+                  <ul className="space-y-4 text-sm text-neo-black font-medium">
+                     <li><a href="#" className="hover:text-neo-primary hover:underline decoration-2 transition-all">About</a></li>
+                     <li><a href="#" className="hover:text-neo-primary hover:underline decoration-2 transition-all">Careers</a></li>
+                     <li><a href="#" className="hover:text-neo-primary hover:underline decoration-2 transition-all">Contact</a></li>
+                     <li><a href="#" className="hover:text-neo-primary hover:underline decoration-2 transition-all">Privacy Policy</a></li>
+                  </ul>
+               </div>
+            </div>
+
+            {/* Bottom Bar */}
+            <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t-2 border-neo-black">
+               <p className="text-xs text-neo-black font-bold mb-4 md:mb-0">
+                  © 2025 Sui Studio Inc. All Rights Reserved.
                </p>
-               <div className="flex gap-4">
-                  <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:bg-white/10 hover:text-white transition-colors">
-                     <Twitter className="w-5 h-5" />
-                  </a>
-                  <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:bg-white/10 hover:text-white transition-colors">
-                     <Github className="w-5 h-5" />
-                  </a>
-                  <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:bg-white/10 hover:text-white transition-colors">
-                     <Disc className="w-5 h-5" />
-                  </a>
+               <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2">
+                     <div className="w-2 h-2 rounded-full bg-green-500 border border-neo-black animate-pulse" />
+                     <span className="text-xs text-neo-black font-mono font-bold">SYSTEMS OPERATIONAL</span>
+                  </div>
                </div>
-             </div>
-
-             {/* Links Columns */}
-             <div className="md:col-span-2 md:col-start-6">
-                <h4 className="font-bold text-white mb-6">Platform</h4>
-                <ul className="space-y-4 text-sm text-slate-400">
-                   <li><a href="#" className="hover:text-sui-cyan transition-colors">Web Studio</a></li>
-                   <li><a href="#" className="hover:text-sui-cyan transition-colors">Desktop App</a></li>
-                   <li><a href="#" className="hover:text-sui-cyan transition-colors">Templates</a></li>
-                   <li><a href="#" className="hover:text-sui-cyan transition-colors">Extensions</a></li>
-                </ul>
-             </div>
-
-             <div className="md:col-span-2">
-                <h4 className="font-bold text-white mb-6">Resources</h4>
-                <ul className="space-y-4 text-sm text-slate-400">
-                   <li><a href="#" className="hover:text-sui-cyan transition-colors">Documentation</a></li>
-                   <li><a href="#" className="hover:text-sui-cyan transition-colors">Blog</a></li>
-                   <li><a href="#" className="hover:text-sui-cyan transition-colors">Tutorials</a></li>
-                   <li><a href="#" className="hover:text-sui-cyan transition-colors">Community</a></li>
-                </ul>
-             </div>
-
-             <div className="md:col-span-2">
-                <h4 className="font-bold text-white mb-6">Company</h4>
-                <ul className="space-y-4 text-sm text-slate-400">
-                   <li><a href="#" className="hover:text-sui-cyan transition-colors">About</a></li>
-                   <li><a href="#" className="hover:text-sui-cyan transition-colors">Careers</a></li>
-                   <li><a href="#" className="hover:text-sui-cyan transition-colors">Contact</a></li>
-                   <li><a href="#" className="hover:text-sui-cyan transition-colors">Privacy Policy</a></li>
-                </ul>
-             </div>
-          </div>
-
-          {/* Bottom Bar */}
-          <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-white/5">
-             <p className="text-xs text-slate-600 mb-4 md:mb-0">
-                © 2025 Sui Studio Inc. All Rights Reserved.
-             </p>
-             <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                   <span className="text-xs text-slate-500 font-mono">Systems Operational</span>
-                </div>
-             </div>
-          </div>
-       </div>
-    </footer>
-  );
+            </div>
+         </div>
+      </footer>
+   );
 };
 
 export default Footer;
