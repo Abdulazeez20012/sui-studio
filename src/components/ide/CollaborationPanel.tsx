@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Wifi, WifiOff, Circle } from 'lucide-react';
+import { Users, Wifi, WifiOff, Circle, Video, VideoOff } from 'lucide-react';
 import { collaborationService } from '../../services/collaborationService';
+import VideoChat from './VideoChat';
 
 interface CollaborationUser {
   userId: string;
@@ -12,6 +13,8 @@ interface CollaborationUser {
 const CollaborationPanel: React.FC = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [users, setUsers] = useState<CollaborationUser[]>([]);
+  const [showVideoChat, setShowVideoChat] = useState(false);
+  const [roomId] = useState(`room-${Date.now()}`);
 
   useEffect(() => {
     // Listen for connection status
@@ -58,6 +61,10 @@ const CollaborationPanel: React.FC = () => {
     };
   }, []);
 
+  if (showVideoChat) {
+    return <VideoChat roomId={roomId} onClose={() => setShowVideoChat(false)} />;
+  }
+
   return (
     <div className="h-full bg-dark-surface flex flex-col">
       <div className="p-4 border-b border-dark-border">
@@ -81,8 +88,20 @@ const CollaborationPanel: React.FC = () => {
           </div>
         </div>
         
-        <div className="text-xs text-slate-400">
-          {users.length} {users.length === 1 ? 'user' : 'users'} online
+        <div className="flex items-center justify-between">
+          <div className="text-xs text-slate-400">
+            {users.length} {users.length === 1 ? 'user' : 'users'} online
+          </div>
+          
+          {/* Video Chat Button */}
+          <button
+            onClick={() => setShowVideoChat(true)}
+            className="flex items-center gap-2 px-3 py-1.5 bg-sui-cyan text-black rounded-lg hover:bg-[#2ba6eb] transition-colors text-xs font-semibold"
+            title="Start video call"
+          >
+            <Video size={14} />
+            <span>Video Call</span>
+          </button>
         </div>
       </div>
 
