@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { 
-  Menu, Save, Play, Bug, Settings, 
+  Menu, Save, Bug, Settings, 
   Layout, LogOut, User, Rocket, Zap, PanelRightOpen, PanelRightClose, Users,
-  Hammer, TestTube, Loader, TrendingUp, CheckCircle, XCircle, PanelBottom, PanelBottomClose, Package, Bot
+  Hammer, TestTube, Loader, TrendingUp, CheckCircle, XCircle, Package, Bot, FileCheck
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useIDEStore } from '../../store/ideStore';
 import { apiService } from '../../services/apiService';
+import BuildStatus from './BuildStatus';
 
 const Toolbar: React.FC = () => {
   const navigate = useNavigate();
@@ -29,10 +30,13 @@ const Toolbar: React.FC = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showRightPanelMenu, setShowRightPanelMenu] = useState(false);
   const [isBuilding, setIsBuilding] = useState(false);
+  const [isCompiling, setIsCompiling] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
-  const [isDeploying, setIsDeploying] = useState(false);
-  const [buildStatus, setBuildStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [buildStatus, setBuildStatus] = useState<'idle' | 'building' | 'success' | 'error'>('idle');
+  const [compileStatus, setCompileStatus] = useState<'idle' | 'building' | 'success' | 'error'>('idle');
   const [testStatus, setTestStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [buildResult, setBuildResult] = useState<any>(null);
+  const [compileResult, setCompileResult] = useState<any>(null);
 
   const currentTab = tabs.find(t => t.id === activeTab);
 
@@ -45,7 +49,8 @@ const Toolbar: React.FC = () => {
     if (!currentTab || isBuilding) return;
     
     setIsBuilding(true);
-    setBuildStatus('idle');
+    setBuildStatus('building');
+    setBuildResult(null);
     
     // Show terminal and add build command
     if (!bottomPanelOpen) toggleBottomPanel();
@@ -62,7 +67,7 @@ const Toolbar: React.FC = () => {
       
       if (activeTerminal) {
         const lines = result.output.split('\n');
-        lines.forEach(line => {
+        lines.forEach((line: string) => {
           if (line.trim()) {
             addTerminalOutput(activeTerminal, line);
           }
@@ -71,25 +76,75 @@ const Toolbar: React.FC = () => {
       
       if (result.success) {
         setBuildStatus('success');
+        setBuildResult({ status: 'success', message: 'Build completed successfully' });
         if (activeTerminal) {
           addTerminalOutput(activeTerminal, '✓ Build successful!');
         }
-        setTimeout(() => setBuildStatus('idle'), 3000);
       } else {
         setBuildStatus('error');
+        setBuildResult({ 
+          status: 'error', 
+          message: 'Build failed',
+          fullOutput: result.output 
+        });
         if (activeTerminal) {
           addTerminalOutput(activeTerminal, '✗ Build failed. Check errors above.');
         }
-        setTimeout(() => setBuildStatus('idle'), 3000);
       }
     } catch (error: any) {
       setBuildStatus('error');
+      setBuildResult({ 
+        status: 'error', 
+        message: error.message,
+        fullOutput: error.toString()
+      });
       if (activeTerminal) {
         addTerminalOutput(activeTerminal, `✗ Error: ${error.message}`);
       }
-      setTimeout(() => setBuildStatus('idle'), 3000);
     } finally {
       setIsBuilding(false);
+    }
+  };
+
+  const handleCompileCheck = async () => {
+    if (!currentTab || isCompiling) return;
+    
+    setIsCompiling(true);
+    setCompileStatus('building');
+    setCompileResult(null);
+    
+    try {
+      const packageName = currentTab.name.replace('.move', '').replace(/[^a-zA-Z0-9_]/g, '_');
+      const result = await apiService.compileCode(currentTab.content, packageName);
+      
+      if (result.success) {
+        setCompileStatus('success');
+        setCompileResult({
+          status: 'success',
+          message: result.simulated 
+            ? 'Compilation successful (simulated - Sui CLI not installed)' 
+            : 'Compilation successful',
+          bytecode: result.bytecode,
+          modules: result.modules,
+        });
+      } else {
+        setCompileStatus('error');
+        setCompileResult({
+          status: 'error',
+          message: 'Compilation failed',
+          errors: result.errors || [],
+          fullOutput: result.fullOutput,
+        });
+      }
+    } catch (error: any) {
+      setCompileStatus('error');
+      setCompileResult({
+        status: 'error',
+        message: error.message || 'Compilation failed',
+        fullOutput: error.toString(),
+      });
+    } finally {
+      setIsCompiling(false);
     }
   };
 
@@ -111,7 +166,7 @@ const Toolbar: React.FC = () => {
       
       if (activeTerminal) {
         const lines = result.output.split('\n');
-        lines.forEach(line => {
+        lines.forEach((line: string) => {
           if (line.trim()) {
             addTerminalOutput(activeTerminal, line);
           }
@@ -155,7 +210,36 @@ const Toolbar: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center justify-between w-full">
+    <>
+      {/* Build Status Notifications */}
+      {buildResult && (
+        <BuildStatus
+          status={buildStatus}
+          message={buildResult.message}
+          errors={buildResult.errors}
+          fullOutput={buildResult.fullOutput}
+          onClose={() => {
+            setBuildResult(null);
+            setBuildStatus('idle');
+          }}
+        />
+      )}
+      
+      {/* Compile Status Notifications */}
+      {compileResult && (
+        <BuildStatus
+          status={compileStatus}
+          message={compileResult.message}
+          errors={compileResult.errors}
+          fullOutput={compileResult.fullOutput}
+          onClose={() => {
+            setCompileResult(null);
+            setCompileStatus('idle');
+          }}
+        />
+      )}
+
+      <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-4">
         <button
           onClick={() => navigate('/')}
@@ -181,6 +265,42 @@ const Toolbar: React.FC = () => {
       <div className="flex items-center gap-3">
         {/* Primary Action Buttons */}
         <div className="flex items-center gap-2 px-2 py-1 bg-dark-panel rounded-lg border border-sui-cyan/20">
+          {/* Compile & Check Button */}
+          <button
+            onClick={handleCompileCheck}
+            disabled={isCompiling || !currentTab}
+            className={`flex items-center gap-2 px-4 py-2 bg-dark-bg border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all font-bold uppercase text-xs tracking-wider font-tech ${
+              compileStatus === 'success' 
+                ? 'border-neon-green text-neon-green shadow-[0_0_20px_rgba(0,255,148,0.3)]'
+                : compileStatus === 'error'
+                ? 'border-neon-pink text-neon-pink shadow-[0_0_20px_rgba(255,20,147,0.3)]'
+                : 'border-purple-500/30 hover:border-purple-500 text-purple-400 hover:text-white hover:shadow-neon'
+            }`}
+            title="Compile & Check (Ctrl+Shift+B)"
+          >
+            {isCompiling ? (
+              <>
+                <Loader size={16} className="animate-spin" />
+                <span>Checking...</span>
+              </>
+            ) : compileStatus === 'success' ? (
+              <>
+                <CheckCircle size={16} />
+                <span>Valid</span>
+              </>
+            ) : compileStatus === 'error' ? (
+              <>
+                <XCircle size={16} />
+                <span>Errors</span>
+              </>
+            ) : (
+              <>
+                <FileCheck size={16} />
+                <span>Check</span>
+              </>
+            )}
+          </button>
+
           {/* Build Button */}
           <button
             onClick={handleBuild}
@@ -557,6 +677,7 @@ const Toolbar: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

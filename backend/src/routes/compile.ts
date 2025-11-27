@@ -86,7 +86,10 @@ ${packageName} = "0x0"
       // Compile using Sui CLI
       const { stdout, stderr } = await execAsync(
         `sui move build --path ${tempDir}`,
-        { timeout: 30000 }
+        { 
+          timeout: 30000,
+          maxBuffer: 1024 * 1024 * 10 // 10MB buffer for large outputs
+        }
       );
 
       // Read compiled bytecode modules
@@ -136,8 +139,15 @@ ${packageName} = "0x0"
         cached: false,
       });
     } catch (error: any) {
-      // Parse compilation errors
-      const errors = parseCompilationErrors(error.stderr || error.message);
+      // Capture full error output with increased buffer
+      const fullOutput = [
+        error.stdout || '',
+        error.stderr || '',
+        error.message || ''
+      ].filter(Boolean).join('\n');
+
+      // Parse compilation errors with better context
+      const errors = parseCompilationErrors(fullOutput);
 
       // Cache failed compilation
       await prisma.compilationCache.create({
@@ -153,6 +163,7 @@ ${packageName} = "0x0"
       res.json({
         success: false,
         errors,
+        fullOutput, // Include full output for debugging
         message: 'Compilation failed',
         cached: false,
       });
@@ -198,17 +209,47 @@ router.post('/estimate-gas', async (req: AuthRequest, res) => {
 });
 
 // Helper functions
-function parseCompilationErrors(stderr: string): any[] {
+function parseCompilationErrors(output: string): any[] {
   const errors: any[] = [];
-  const lines = stderr.split('\n');
+  const lines = output.split('\n');
 
-  for (const line of lines) {
-    if (line.includes('error') || line.includes('Error')) {
-      errors.push({
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    
+    // Capture error lines
+    if (line.includes('error') || line.includes('Error') || line.includes('ERROR')) {
+      const error: any = {
         message: line.trim(),
         severity: 'error',
-      });
+      };
+
+      // Try to extract file location
+      const locationMatch = line.match(/([^:]+):(\d+):(\d+)/);
+      if (locationMatch) {
+        error.file = locationMatch[1];
+        error.line = parseInt(locationMatch[2]);
+        error.column = parseInt(locationMatch[3]);
+      }
+
+      // Include context lines
+      const context: string[] = [];
+      for (let j = Math.max(0, i - 2); j <= Math.min(lines.length - 1, i + 2); j++) {
+        if (lines[j].trim()) {
+          context.push(lines[j]);
+        }
+      }
+      error.context = context;
+
+      errors.push(error);
     }
+  }
+
+  // If no structured errors found, return the full output as one error
+  if (errors.length === 0 && output.trim()) {
+    errors.push({
+      message: output.trim(),
+      severity: 'error',
+    });
   }
 
   return errors;

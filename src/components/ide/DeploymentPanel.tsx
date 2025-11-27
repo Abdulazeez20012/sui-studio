@@ -97,6 +97,9 @@ const DeploymentPanel: React.FC = () => {
       setDeploymentResult({
         status: 'failed',
         errorMessage: error.message || 'Publishing failed',
+        errorDetails: error.details,
+        compilationErrors: error.compilationErrors,
+        fullOutput: error.fullOutput,
       });
       analyticsService.trackDeployment(network, false);
     } finally {
@@ -250,7 +253,62 @@ const DeploymentPanel: React.FC = () => {
                   {deploymentResult.status === 'success' ? 'Deployment Successful' : 'Deployment Failed'}
                 </p>
                 {deploymentResult.errorMessage && (
-                  <p className="text-sm text-slate-300 mb-3 font-tech">{deploymentResult.errorMessage}</p>
+                  <div className="space-y-2">
+                    <p className="text-sm text-slate-300 font-tech">{deploymentResult.errorMessage}</p>
+                    
+                    {/* Detailed Error Information */}
+                    {deploymentResult.errorDetails && (
+                      <div className="p-2 bg-black/20 rounded border border-neon-pink/20">
+                        <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider font-tech">Error Details</p>
+                        <pre className="text-xs text-slate-300 font-mono whitespace-pre-wrap">
+                          {deploymentResult.errorDetails}
+                        </pre>
+                      </div>
+                    )}
+                    
+                    {/* Compilation Errors */}
+                    {deploymentResult.compilationErrors && deploymentResult.compilationErrors.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs text-slate-400 uppercase tracking-wider font-tech">Compilation Errors:</p>
+                        {deploymentResult.compilationErrors.map((error: any, index: number) => (
+                          <div key={index} className="p-2 bg-black/20 rounded border border-neon-pink/20">
+                            <div className="text-xs text-slate-300 font-mono whitespace-pre-wrap">
+                              {error.message}
+                            </div>
+                            {error.file && (
+                              <div className="text-xs text-slate-400 mt-1">
+                                {error.file}:{error.line}:{error.column}
+                              </div>
+                            )}
+                            {error.context && error.context.length > 0 && (
+                              <details className="mt-2">
+                                <summary className="text-xs text-slate-400 cursor-pointer hover:text-slate-300">
+                                  Show context
+                                </summary>
+                                <div className="mt-1 text-xs text-slate-400 font-mono whitespace-pre-wrap bg-black/20 p-2 rounded">
+                                  {error.context.join('\n')}
+                                </div>
+                              </details>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Full Output */}
+                    {deploymentResult.fullOutput && (
+                      <details className="mt-2">
+                        <summary className="text-xs text-slate-400 cursor-pointer hover:text-slate-300 uppercase tracking-wider font-tech">
+                          Show Full Output
+                        </summary>
+                        <div className="mt-2 p-2 bg-black/20 rounded border border-neon-pink/20">
+                          <pre className="text-xs text-slate-300 font-mono whitespace-pre-wrap max-h-64 overflow-y-auto">
+                            {deploymentResult.fullOutput}
+                          </pre>
+                        </div>
+                      </details>
+                    )}
+                  </div>
                 )}
 
                 {deploymentResult.status === 'success' && (

@@ -9,9 +9,11 @@ import Terminal from '../components/ide/Terminal';
 import StatusBar from '../components/ide/StatusBar';
 import Toolbar from '../components/ide/Toolbar';
 import BuildStatus from '../components/ide/BuildStatus';
+import ResizeHandle from '../components/ide/ResizeHandle';
 import { BackendWakeUp } from '../components/BackendWakeUp';
 import { useIDEStore } from '../store/ideStore';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import { useResizable } from '../hooks/useResizable';
 
 const IDEPage: React.FC = () => {
   const { leftPanelOpen, rightPanelOpen, bottomPanelOpen, toggleLeftPanel, toggleBottomPanel, toggleRightPanel, setRightPanelType, addTab } = useIDEStore();
@@ -21,6 +23,31 @@ const IDEPage: React.FC = () => {
   
   // Enable keyboard shortcuts
   useKeyboardShortcuts();
+
+  // Resizable panels
+  const leftPanel = useResizable({
+    initialSize: 256,
+    minSize: 200,
+    maxSize: 500,
+    direction: 'horizontal',
+    storageKey: 'ide-left-panel-width',
+  });
+
+  const rightPanel = useResizable({
+    initialSize: 320,
+    minSize: 250,
+    maxSize: 600,
+    direction: 'horizontal',
+    storageKey: 'ide-right-panel-width',
+  });
+
+  const bottomPanel = useResizable({
+    initialSize: 300,
+    minSize: 150,
+    maxSize: 600,
+    direction: 'vertical',
+    storageKey: 'ide-bottom-panel-height',
+  });
 
   // Handle menu bar events
   React.useEffect(() => {
@@ -116,40 +143,64 @@ const IDEPage: React.FC = () => {
         <Sidebar />
         
         {/* File Explorer Panel */}
-        <div 
-          className={`bg-dark-surface border-r border-dark-border transition-all duration-300 ease-in-out overflow-hidden ${
-            leftPanelOpen ? 'w-64 opacity-100' : 'w-0 opacity-0'
-          }`}
-        >
-          {leftPanelOpen && <LeftPanel />}
-        </div>
+        {leftPanelOpen && (
+          <>
+            <div 
+              className="bg-dark-surface border-r border-dark-border overflow-hidden flex-shrink-0"
+              style={{ width: `${leftPanel.size}px` }}
+            >
+              <LeftPanel />
+            </div>
+            <ResizeHandle
+              direction="horizontal"
+              onMouseDown={leftPanel.handleMouseDown}
+              isResizing={leftPanel.isResizing}
+            />
+          </>
+        )}
         
         {/* Main Editor Area */}
         <div className="flex-1 flex flex-col min-w-0 bg-black relative">
           <EditorTabs />
           
-          <div className={`flex-1 ${bottomPanelOpen ? 'h-[60%]' : 'h-full'}`}>
+          <div className="flex-1 overflow-hidden">
             <CodeEditor />
           </div>
           
           {/* Bottom Panel (Terminal/Tests) */}
-          <div 
-            className={`border-t border-sui-cyan/20 bg-dark-surface transition-all duration-300 ease-in-out overflow-hidden ${
-              bottomPanelOpen ? 'h-[40%] opacity-100' : 'h-0 opacity-0'
-            }`}
-          >
-            {bottomPanelOpen && <Terminal />}
-          </div>
+          {bottomPanelOpen && (
+            <>
+              <ResizeHandle
+                direction="vertical"
+                onMouseDown={bottomPanel.handleMouseDown}
+                isResizing={bottomPanel.isResizing}
+              />
+              <div 
+                className="border-t border-sui-cyan/20 bg-dark-surface overflow-hidden flex-shrink-0"
+                style={{ height: `${bottomPanel.size}px` }}
+              >
+                <Terminal />
+              </div>
+            </>
+          )}
         </div>
 
         {/* Right Panel */}
-        <div 
-          className={`border-l border-sui-cyan/20 bg-dark-surface transition-all duration-300 ease-in-out overflow-hidden ${
-            rightPanelOpen ? 'w-80 opacity-100' : 'w-0 opacity-0'
-          }`}
-        >
-          {rightPanelOpen && <RightPanel />}
-        </div>
+        {rightPanelOpen && (
+          <>
+            <ResizeHandle
+              direction="horizontal"
+              onMouseDown={rightPanel.handleMouseDown}
+              isResizing={rightPanel.isResizing}
+            />
+            <div 
+              className="border-l border-sui-cyan/20 bg-dark-surface overflow-hidden flex-shrink-0"
+              style={{ width: `${rightPanel.size}px` }}
+            >
+              <RightPanel />
+            </div>
+          </>
+        )}
       </div>
       
       <StatusBar />

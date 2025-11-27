@@ -54,7 +54,16 @@ class DeploymentService {
       const compileResult = await compileResponse.json();
       
       if (!compileResult.success) {
-        throw new Error(compileResult.errors?.[0]?.message || 'Compilation failed');
+        // Create detailed error message with all compilation errors
+        const errorDetails = compileResult.errors?.map((err: any) => 
+          `${err.message}${err.file ? ` (${err.file}:${err.line}:${err.column})` : ''}`
+        ).join('\n') || 'Compilation failed';
+        
+        const error: any = new Error('Compilation failed');
+        error.compilationErrors = compileResult.errors;
+        error.fullOutput = compileResult.fullOutput;
+        error.details = errorDetails;
+        throw error;
       }
 
       // Step 2: Get compiled modules (bytecode)

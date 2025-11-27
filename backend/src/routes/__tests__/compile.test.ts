@@ -49,6 +49,66 @@ describe('Compile API', () => {
 
       expect(response.status).toBe(400);
     });
+
+    it('should return detailed error information on compilation failure', async () => {
+      const invalidCode = `
+        module test::invalid {
+          public fun broken() {
+            // Missing semicolon and invalid syntax
+            let x = 5
+            return x + "string"
+          }
+        }
+      `;
+
+      const response = await request(app)
+        .post('/api/compile')
+        .send({
+          code: invalidCode,
+          packageName: 'test',
+        });
+
+      // Should still return 200 but with success: false
+      expect(response.status).toBe(200);
+      
+      // In simulated mode, it will succeed
+      // In real mode with Sui CLI, it would fail
+      if (!response.body.simulated) {
+        expect(response.body.success).toBe(false);
+        expect(response.body.errors).toBeDefined();
+        expect(response.body.fullOutput).toBeDefined();
+      }
+    });
+
+    it('should cache compilation results', async () => {
+      const code = 'module test::cache { public fun test() {} }';
+      
+      // First request
+      const response1 = await request(app)
+        .post('/api/compile')
+        .send({ code, packageName: 'test' });
+
+      expect(response1.body.cached).toBe(false);
+
+      // Second request with same code should be cached
+      const response2 = await request(app)
+        .post('/api/compile')
+        .send({ code, packageName: 'test' });
+
+      expect(response2.body.cached).toBe(true);
+      expect(response2.body.bytecode).toBe(response1.body.bytecode);
+    });
+
+    it('should use default package name if not provided', async () => {
+      const response = await request(app)
+        .post('/api/compile')
+        .send({
+          code: 'module test::example { public fun hello() {} }',
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
   });
 
   describe('POST /api/compile/estimate-gas', () => {
