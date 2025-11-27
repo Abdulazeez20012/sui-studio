@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { webrtcService, Participant } from '../../services/webrtcService';
 import { useAuthStore } from '../../store/authStore';
+import { collaborationService } from '../../services/collaborationService';
 
 interface VideoChatProps {
   roomId: string;
@@ -31,6 +32,38 @@ const VideoChat: React.FC<VideoChatProps> = ({ roomId, onClose }) => {
       webrtcService.disconnect();
     };
   }, []);
+
+  const setupWebRTCSignaling = () => {
+    // Handle WebRTC peer joined
+    collaborationService.on('webrtc-peer-joined', (message: any) => {
+      console.log('New peer joined:', message);
+      // Call the new peer
+      if (message.peerId && message.peerId !== webrtcService.getPeerId()) {
+        webrtcService.callPeer(message.peerId, {
+          name: message.userName || 'Unknown',
+        }).catch(err => console.error('Failed to call peer:', err));
+      }
+    });
+
+    // Handle existing peers
+    collaborationService.on('webrtc-existing-peers', (message: any) => {
+      console.log('Existing peers:', message.peers);
+      // Call all existing peers
+      message.peers.forEach((peer: any) => {
+        if (peer.peerId && peer.peerId !== webrtcService.getPeerId()) {
+          webrtcService.callPeer(peer.peerId, {
+            name: peer.userName || 'Unknown',
+          }).catch(err => console.error('Failed to call peer:', err));
+        }
+      });
+    });
+
+    // Handle WebRTC signals
+    collaborationService.on('webrtc-signal', (message: any) => {
+      console.log('Received WebRTC signal from:', message.fromPeerId);
+      // Handle the signal (this would be used for more advanced signaling)
+    });
+  };
 
   const initializeWebRTC = async () => {
     try {
@@ -71,6 +104,12 @@ const VideoChat: React.FC<VideoChatProps> = ({ roomId, onClose }) => {
 
       setIsConnected(true);
       setError(null);
+
+      // Setup WebRTC signaling through WebSocket
+      setupWebRTCSignaling();
+
+      // Announce presence in room
+      collaborationService.joinWebRTCRoom(peerId);
     } catch (err: any) {
       console.error('Failed to initialize WebRTC:', err);
       setError(err.message || 'Failed to access camera/microphone');

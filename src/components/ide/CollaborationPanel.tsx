@@ -14,7 +14,9 @@ const CollaborationPanel: React.FC = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [users, setUsers] = useState<CollaborationUser[]>([]);
   const [showVideoChat, setShowVideoChat] = useState(false);
-  const [roomId] = useState(`room-${Date.now()}`);
+  const [roomId, setRoomId] = useState('');
+  const [showRoomDialog, setShowRoomDialog] = useState(false);
+  const [roomInput, setRoomInput] = useState('');
 
   useEffect(() => {
     // Listen for connection status
@@ -95,7 +97,7 @@ const CollaborationPanel: React.FC = () => {
           
           {/* Video Chat Button */}
           <button
-            onClick={() => setShowVideoChat(true)}
+            onClick={() => setShowRoomDialog(true)}
             className="flex items-center gap-2 px-3 py-1.5 bg-sui-cyan text-black rounded-lg hover:bg-[#2ba6eb] transition-colors text-xs font-semibold"
             title="Start video call"
           >
@@ -104,6 +106,74 @@ const CollaborationPanel: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Room Dialog */}
+      {showRoomDialog && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-dark-surface border border-sui-cyan/30 rounded-xl p-6 max-w-md w-full">
+            <h3 className="text-lg font-bold text-white mb-4">Join Video Call</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-slate-400 mb-2">
+                  Enter Room ID or create a new room
+                </label>
+                <input
+                  type="text"
+                  value={roomInput}
+                  onChange={(e) => setRoomInput(e.target.value)}
+                  placeholder="room-123 or leave empty for new room"
+                  className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-sui-cyan"
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    const newRoomId = roomInput.trim() || `room-${Date.now()}`;
+                    setRoomId(newRoomId);
+                    setShowVideoChat(true);
+                    setShowRoomDialog(false);
+                  }}
+                  className="flex-1 px-4 py-2 bg-sui-cyan text-black rounded-lg hover:bg-[#2ba6eb] transition-colors font-semibold"
+                >
+                  Join Room
+                </button>
+                <button
+                  onClick={() => {
+                    setShowRoomDialog(false);
+                    setRoomInput('');
+                  }}
+                  className="px-4 py-2 bg-dark-bg border border-dark-border text-white rounded-lg hover:bg-white/10 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+
+              <div className="pt-4 border-t border-dark-border">
+                <p className="text-xs text-slate-400 mb-2">Share this room ID with your team:</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 px-3 py-2 bg-dark-bg border border-dark-border rounded text-sui-cyan text-sm">
+                    {roomInput || 'room-' + Date.now()}
+                  </code>
+                  <button
+                    onClick={() => {
+                      const id = roomInput || `room-${Date.now()}`;
+                      navigator.clipboard.writeText(id);
+                    }}
+                    className="p-2 hover:bg-white/10 rounded transition-colors"
+                    title="Copy room ID"
+                  >
+                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin">
         {users.length === 0 ? (

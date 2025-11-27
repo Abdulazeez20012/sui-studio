@@ -94,6 +94,23 @@ export class CollaborationService {
     });
   }
 
+  // WebRTC signaling
+  sendWebRTCSignal(targetPeerId: string, signal: any) {
+    this.send({
+      type: 'webrtc-signal',
+      targetPeerId,
+      signal,
+    });
+  }
+
+  // Join WebRTC room
+  joinWebRTCRoom(peerId: string) {
+    this.send({
+      type: 'webrtc-join-room',
+      peerId,
+    });
+  }
+
   // Subscribe to message types
   on(messageType: string, handler: MessageHandler) {
     if (!this.messageHandlers.has(messageType)) {

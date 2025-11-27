@@ -1,11 +1,14 @@
 import React from 'react';
 import Navbar from '../../components/Navbar';
 import Hero from '../../components/Hero';
+import FeaturesShowcase from '../../components/FeaturesShowcase';
+import NewStats from '../../components/NewStats';
 import Partners from '../../components/Partners';
 import EcosystemOrbit from '../../components/EcosystemOrbit';
 import PlatformShowcase from '../../components/PlatformShowcase';
 import WalrusIntegration from '../../components/WalrusIntegration';
 import WorkflowIntegration from '../../components/WorkflowIntegration';
+import Testimonials from '../../components/Testimonials';
 import Stats from '../../components/Stats';
 import Personas from '../../components/Personas';
 import Roadmap from '../../components/Roadmap';
@@ -21,11 +24,14 @@ const LandingPage: React.FC = () => {
       
       <main className="relative z-10">
         <Hero />
+        <FeaturesShowcase />
+        <NewStats />
         <EcosystemOrbit />
         <Partners />
         <PlatformShowcase />
         <WalrusIntegration />
         <WorkflowIntegration />
+        <Testimonials />
         <Stats />
         <Personas />
         <Roadmap />

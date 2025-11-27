@@ -92,9 +92,72 @@ export class CollaborationServer {
       case 'save':
         this.handleSave(ws, message);
         break;
+      case 'webrtc-signal':
+        this.handleWebRTCSignal(ws, message);
+        break;
+      case 'webrtc-join-room':
+        this.handleWebRTCJoinRoom(ws, message);
+        break;
       default:
         console.log('Unknown message type:', message.type);
     }
+  }
+
+  private handleWebRTCSignal(ws: WebSocket, message: any) {
+    const projectId = this.clientToRoom.get(ws);
+    if (!projectId) return;
+
+    const room = this.rooms.get(projectId);
+    if (!room) return;
+
+    const { targetPeerId, signal } = message;
+    const sender = this.getClientByWs(ws, room);
+
+    // Forward signal to target peer
+    for (const client of room.clients.values()) {
+      if (client.userId === targetPeerId) {
+        this.sendToClient(client.ws, {
+          type: 'webrtc-signal',
+          fromPeerId: sender?.userId,
+          fromName: sender?.userName,
+          signal,
+        });
+        break;
+      }
+    }
+  }
+
+  private handleWebRTCJoinRoom(ws: WebSocket, message: any) {
+    const projectId = this.clientToRoom.get(ws);
+    if (!projectId) return;
+
+    const room = this.rooms.get(projectId);
+    if (!room) return;
+
+    const sender = this.getClientByWs(ws, room);
+    const { peerId } = message;
+
+    // Notify all other clients about new peer
+    this.broadcastToRoom(projectId, {
+      type: 'webrtc-peer-joined',
+      peerId,
+      userId: sender?.userId,
+      userName: sender?.userName,
+    }, sender?.userId);
+
+    // Send list of existing peers to new joiner
+    const existingPeers = Array.from(room.clients.values())
+      .filter(c => c.userId !== sender?.userId)
+      .map(c => ({
+        peerId: c.userId,
+        userId: c.userId,
+        userName: c.userName,
+      }));
+
+    this.sendToClient(ws, {
+      type: 'webrtc-existing-peers',
+      peers: existingPeers,
+    });
   }
 
   private handleJoin(ws: WebSocket, message: any, user: any) {
