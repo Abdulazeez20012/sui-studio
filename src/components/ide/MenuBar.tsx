@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { 
-  ChevronLeft, ChevronRight, Search, Settings, User, 
-  Minimize, Maximize, X as CloseIcon 
+import {
+  ChevronLeft, ChevronRight, Search, Settings, User,
+  Minimize, Maximize, X as CloseIcon
 } from 'lucide-react';
 
 interface MenuBarProps {
@@ -118,39 +118,31 @@ const MenuBar: React.FC<MenuBarProps> = ({ onMinimize, onMaximize, onClose }) =>
   const handleMenuItemClick = (item: any) => {
     console.log('Menu item clicked:', item.label);
     setActiveMenu(null);
-    
+
     // Handle menu actions
     switch (item.label) {
       case 'New File':
-        // Trigger new file creation
         document.dispatchEvent(new CustomEvent('ide:newFile'));
         break;
       case 'Save':
-        // Trigger save
         document.dispatchEvent(new CustomEvent('ide:save'));
         break;
       case 'Find':
-        // Trigger find
         document.dispatchEvent(new CustomEvent('ide:find'));
         break;
       case 'Command Palette':
-        // Trigger command palette
         document.dispatchEvent(new CustomEvent('ide:commandPalette'));
         break;
       case 'Toggle Sidebar':
-        // Trigger sidebar toggle
         document.dispatchEvent(new CustomEvent('ide:toggleSidebar'));
         break;
       case 'Toggle Panel':
-        // Trigger panel toggle
         document.dispatchEvent(new CustomEvent('ide:togglePanel'));
         break;
       case 'Build':
-        // Trigger build
         document.dispatchEvent(new CustomEvent('ide:build'));
         break;
       case 'Test':
-        // Trigger test
         document.dispatchEvent(new CustomEvent('ide:test'));
         break;
       default:
@@ -159,13 +151,13 @@ const MenuBar: React.FC<MenuBarProps> = ({ onMinimize, onMaximize, onClose }) =>
   };
 
   return (
-    <div className="h-9 bg-dark-header border-b border-sui-cyan/20 flex items-center justify-between px-2 relative z-50">
+    <div className="h-9 bg-walrus-dark-950 border-b border-walrus-dark-600 flex items-center justify-between px-2 relative z-50">
       {/* Left Section - Logo & Menus */}
       <div className="flex items-center gap-1">
         {/* Logo */}
         <div className="flex items-center gap-2 px-2 mr-2">
-          <div className="w-5 h-5 bg-sui-cyan/10 rounded flex items-center justify-center border border-sui-cyan/30">
-            <img 
+          <div className="w-5 h-5 bg-walrus-cyan/10 rounded flex items-center justify-center border border-walrus-cyan/30">
+            <img
               src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763580906/sui-sui-logo_gmux9g.png"
               alt="Sui"
               className="w-3 h-3 object-contain"
@@ -178,11 +170,10 @@ const MenuBar: React.FC<MenuBarProps> = ({ onMinimize, onMaximize, onClose }) =>
           <div key={menu.label} className="relative">
             <button
               onClick={() => handleMenuClick(menu.label)}
-              className={`px-3 py-1 text-xs font-medium transition-all rounded ${
-                activeMenu === menu.label
-                  ? 'bg-sui-cyan/10 text-sui-cyan'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
-              }`}
+              className={`px-3 py-1 text-xs font-medium transition-all rounded ${activeMenu === menu.label
+                  ? 'bg-walrus-cyan/10 text-walrus-cyan'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
             >
               {menu.label}
             </button>
@@ -195,21 +186,21 @@ const MenuBar: React.FC<MenuBarProps> = ({ onMinimize, onMaximize, onClose }) =>
                   className="fixed inset-0 z-40"
                   onClick={() => setActiveMenu(null)}
                 />
-                
+
                 {/* Menu Dropdown */}
-                <div className="absolute top-full left-0 mt-1 w-64 bg-dark-surface border border-sui-cyan/30 rounded-lg shadow-neon-lg py-1 z-50">
+                <div className="absolute top-full left-0 mt-1 w-64 bg-walrus-dark-800 border border-walrus-dark-600 rounded-lg shadow-glass py-1 z-50 backdrop-blur-xl">
                   {menu.items.map((item, index) => (
                     item.divider ? (
-                      <div key={index} className="h-px bg-sui-cyan/10 my-1" />
+                      <div key={index} className="h-px bg-white/5 my-1" />
                     ) : (
                       <button
                         key={index}
                         onClick={() => handleMenuItemClick(item)}
-                        className="w-full flex items-center justify-between px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-sui-cyan/10 transition-all"
+                        className="w-full flex items-center justify-between px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-all"
                       >
                         <span className="font-medium">{item.label}</span>
                         {item.shortcut && (
-                          <span className="text-xs text-slate-500 font-mono">
+                          <span className="text-xs text-gray-500 font-mono">
                             {item.shortcut}
                           </span>
                         )}
@@ -227,29 +218,28 @@ const MenuBar: React.FC<MenuBarProps> = ({ onMinimize, onMaximize, onClose }) =>
       <div className="flex items-center gap-2 flex-1 max-w-xl mx-4">
         {/* Navigation Arrows */}
         <div className="flex items-center gap-1">
-          <button className="p-1 text-slate-500 hover:text-sui-cyan hover:bg-sui-cyan/10 rounded transition-all">
+          <button className="p-1 text-gray-500 hover:text-white hover:bg-white/5 rounded transition-all">
             <ChevronLeft size={16} />
           </button>
-          <button className="p-1 text-slate-500 hover:text-sui-cyan hover:bg-sui-cyan/10 rounded transition-all">
+          <button className="p-1 text-gray-500 hover:text-white hover:bg-white/5 rounded transition-all">
             <ChevronRight size={16} />
           </button>
         </div>
 
         {/* Search Bar */}
-        <div className={`flex-1 flex items-center gap-2 px-3 py-1 bg-dark-panel rounded-lg border transition-all ${
-          searchFocused 
-            ? 'border-sui-cyan/50 shadow-neon' 
-            : 'border-sui-cyan/20'
-        }`}>
-          <Search size={14} className="text-slate-500" />
+        <div className={`flex-1 flex items-center gap-2 px-3 py-1 bg-walrus-dark-900 rounded-lg border transition-all ${searchFocused
+            ? 'border-walrus-cyan/50 shadow-neon'
+            : 'border-walrus-dark-600'
+          }`}>
+          <Search size={14} className="text-gray-500" />
           <input
             type="text"
             placeholder="sui-studio"
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setSearchFocused(false)}
-            className="flex-1 bg-transparent text-sm text-white placeholder-slate-500 outline-none font-tech"
+            className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 outline-none font-tech"
           />
-          <kbd className="px-1.5 py-0.5 text-xs bg-dark-bg border border-sui-cyan/20 rounded text-slate-500 font-mono">
+          <kbd className="px-1.5 py-0.5 text-xs bg-walrus-dark-800 border border-white/10 rounded text-gray-500 font-mono">
             Ctrl+P
           </kbd>
         </div>
@@ -258,33 +248,33 @@ const MenuBar: React.FC<MenuBarProps> = ({ onMinimize, onMaximize, onClose }) =>
       {/* Right Section - Window Controls */}
       <div className="flex items-center gap-1">
         {/* Settings */}
-        <button className="p-1.5 text-slate-500 hover:text-sui-cyan hover:bg-sui-cyan/10 rounded transition-all">
+        <button className="p-1.5 text-gray-500 hover:text-white hover:bg-white/5 rounded transition-all">
           <Settings size={16} />
         </button>
 
         {/* User */}
-        <button className="p-1.5 text-slate-500 hover:text-sui-cyan hover:bg-sui-cyan/10 rounded transition-all">
+        <button className="p-1.5 text-gray-500 hover:text-white hover:bg-white/5 rounded transition-all">
           <User size={16} />
         </button>
 
-        <div className="w-px h-4 bg-sui-cyan/20 mx-1" />
+        <div className="w-px h-4 bg-white/10 mx-1" />
 
         {/* Window Controls */}
-        <button 
+        <button
           onClick={onMinimize}
-          className="p-1.5 text-slate-500 hover:text-white hover:bg-white/10 rounded transition-all"
+          className="p-1.5 text-gray-500 hover:text-white hover:bg-white/10 rounded transition-all"
         >
           <Minimize size={14} />
         </button>
-        <button 
+        <button
           onClick={onMaximize}
-          className="p-1.5 text-slate-500 hover:text-white hover:bg-white/10 rounded transition-all"
+          className="p-1.5 text-gray-500 hover:text-white hover:bg-white/10 rounded transition-all"
         >
           <Maximize size={14} />
         </button>
-        <button 
+        <button
           onClick={onClose}
-          className="p-1.5 text-slate-500 hover:text-white hover:bg-red-500/20 rounded transition-all"
+          className="p-1.5 text-gray-500 hover:text-white hover:bg-red-500/20 rounded transition-all"
         >
           <CloseIcon size={14} />
         </button>

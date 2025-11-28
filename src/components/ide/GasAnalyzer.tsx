@@ -24,22 +24,8 @@ const GasAnalyzer: React.FC = () => {
       const estimate = await apiService.estimateGas(currentTab.content);
       setGasEstimate(estimate);
     } catch (error) {
-      console.log('Gas analysis failed, using fallback:', error);
-      // Fallback estimation
-      const lines = currentTab.content.split('\n').length;
-      const baseGas = 1000;
-      const gasPerLine = 50;
-      const estimatedGas = baseGas + (lines * gasPerLine);
-      
-      setGasEstimate({
-        estimatedGas,
-        gasBudget: Math.ceil(estimatedGas * 1.2),
-        breakdown: {
-          baseGas,
-          linesGas: lines * gasPerLine,
-          complexityFactor: 0,
-        },
-      });
+      console.error('Gas analysis requires backend service:', error);
+      setGasEstimate(null);
     } finally {
       setIsAnalyzing(false);
     }
@@ -75,6 +61,20 @@ const GasAnalyzer: React.FC = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-sui-cyan/30 scrollbar-track-transparent">
+        {!gasEstimate && !isAnalyzing && (
+          <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertCircle size={16} className="text-yellow-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-medium text-yellow-400 mb-1 font-tech">Backend Required</h4>
+                <p className="text-xs text-slate-300 font-tech">
+                  Gas analysis requires the backend AI service. Start the backend to enable this feature.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {gasEstimate && (
           <>
             {/* Gas Overview */}

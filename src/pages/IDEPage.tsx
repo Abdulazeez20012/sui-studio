@@ -20,7 +20,7 @@ const IDEPage: React.FC = () => {
   const [buildStatus, setBuildStatus] = useState<'idle' | 'building' | 'success' | 'error'>('idle');
   const [buildMessage, setBuildMessage] = useState('');
   const [backendReady, setBackendReady] = useState(false);
-  
+
   // Enable keyboard shortcuts
   useKeyboardShortcuts();
 
@@ -127,90 +127,89 @@ const IDEPage: React.FC = () => {
     <>
       {/* Backend Wake-Up Screen */}
       {!backendReady && <BackendWakeUp onReady={() => setBackendReady(true)} />}
-      
-      <div className="h-screen flex flex-col bg-black text-white">
+
+      <div className="h-screen flex flex-col bg-walrus-dark-950 text-gray-300 overflow-hidden">
         {/* Menu Bar */}
         <MenuBar />
-      
-      {/* Top Header Bar with Gradient */}
-      <div className="h-14 bg-dark-header border-b border-sui-cyan/20 flex items-center justify-between px-4 relative">
-        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-neon opacity-50"></div>
-        <Toolbar />
-      </div>
-      
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar */}
-        <Sidebar />
-        
-        {/* File Explorer Panel */}
-        {leftPanelOpen && (
-          <>
-            <div 
-              className="bg-dark-surface border-r border-dark-border overflow-hidden flex-shrink-0"
-              style={{ width: `${leftPanel.size}px` }}
-            >
-              <LeftPanel />
+
+        {/* Top Header Bar with Gradient */}
+        <div className="h-14 bg-walrus-dark-900 border-b border-walrus-dark-600 flex items-center justify-between px-4 relative z-30">
+          <Toolbar />
+        </div>
+
+        <div className="flex-1 flex overflow-hidden relative">
+          {/* Left Sidebar */}
+          <Sidebar />
+
+          {/* File Explorer Panel */}
+          {leftPanelOpen && (
+            <>
+              <div
+                className="bg-walrus-dark-900 border-r border-walrus-dark-600 overflow-hidden flex-shrink-0"
+                style={{ width: `${leftPanel.size}px` }}
+              >
+                <LeftPanel />
+              </div>
+              <ResizeHandle
+                direction="horizontal"
+                onMouseDown={leftPanel.handleMouseDown}
+                isResizing={leftPanel.isResizing}
+              />
+            </>
+          )}
+
+          {/* Main Editor Area */}
+          <div className="flex-1 flex flex-col min-w-0 bg-walrus-dark-950 relative">
+            <EditorTabs />
+
+            <div className="flex-1 overflow-hidden relative">
+              <CodeEditor />
             </div>
-            <ResizeHandle
-              direction="horizontal"
-              onMouseDown={leftPanel.handleMouseDown}
-              isResizing={leftPanel.isResizing}
-            />
-          </>
-        )}
-        
-        {/* Main Editor Area */}
-        <div className="flex-1 flex flex-col min-w-0 bg-black relative">
-          <EditorTabs />
-          
-          <div className="flex-1 overflow-hidden">
-            <CodeEditor />
+
+            {/* Bottom Panel (Terminal/Tests) */}
+            {bottomPanelOpen && (
+              <>
+                <ResizeHandle
+                  direction="vertical"
+                  onMouseDown={bottomPanel.handleMouseDown}
+                  isResizing={bottomPanel.isResizing}
+                />
+                <div
+                  className="border-t border-walrus-dark-600 bg-walrus-dark-900 overflow-hidden flex-shrink-0"
+                  style={{ height: `${bottomPanel.size}px` }}
+                >
+                  <Terminal />
+                </div>
+              </>
+            )}
           </div>
-          
-          {/* Bottom Panel (Terminal/Tests) */}
-          {bottomPanelOpen && (
+
+          {/* Right Panel */}
+          {rightPanelOpen && (
             <>
               <ResizeHandle
-                direction="vertical"
-                onMouseDown={bottomPanel.handleMouseDown}
-                isResizing={bottomPanel.isResizing}
+                direction="horizontal"
+                onMouseDown={rightPanel.handleMouseDown}
+                isResizing={rightPanel.isResizing}
               />
-              <div 
-                className="border-t border-sui-cyan/20 bg-dark-surface overflow-hidden flex-shrink-0"
-                style={{ height: `${bottomPanel.size}px` }}
+              <div
+                className="border-l border-walrus-dark-600 bg-walrus-dark-900 overflow-hidden flex-shrink-0"
+                style={{ width: `${rightPanel.size}px` }}
               >
-                <Terminal />
+                <RightPanel />
               </div>
             </>
           )}
         </div>
 
-        {/* Right Panel */}
-        {rightPanelOpen && (
-          <>
-            <ResizeHandle
-              direction="horizontal"
-              onMouseDown={rightPanel.handleMouseDown}
-              isResizing={rightPanel.isResizing}
-            />
-            <div 
-              className="border-l border-sui-cyan/20 bg-dark-surface overflow-hidden flex-shrink-0"
-              style={{ width: `${rightPanel.size}px` }}
-            >
-              <RightPanel />
-            </div>
-          </>
-        )}
-      </div>
-      
-      <StatusBar />
+        <StatusBar />
 
-      {/* Build Status Toast */}
-      <BuildStatus 
-        status={buildStatus}
-        message={buildMessage}
-        onClose={() => setBuildStatus('idle')}
-      />
+        {/* Build Status Toast */}
+        <BuildStatus
+          status={buildStatus}
+          message={buildMessage}
+          onClose={() => setBuildStatus('idle')}
+        />
       </div>
     </>
   );

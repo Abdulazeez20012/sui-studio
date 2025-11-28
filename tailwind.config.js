@@ -8,60 +8,57 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Walrus-inspired dark palette
+        // Premium Dark Palette (Walrus-inspired but refined)
         walrus: {
           dark: {
-            900: '#0B0F14',
-            800: '#12171D',
-            700: '#1A1F26',
-            600: '#232930',
+            950: '#050505', // Deepest black
+            900: '#0A0A0A', // Main background
+            800: '#121212', // Secondary background
+            700: '#1A1A1A', // Panels / Cards
+            600: '#262626', // Borders
           },
-          cyan: '#3CB9FF',
-          purple: '#6366F1',
-          pink: '#A855F7',
-          violet: '#8B5CF6',
-          blue: '#4DA2FF',
+          cyan: '#00E0FF', // Vibrant Cyan
+          purple: '#7C3AED', // Deep Purple
+          pink: '#F472B6', // Soft Pink
+          blue: '#3B82F6', // Standard Blue
         },
-        // Legacy sui colors (keeping for compatibility)
-        'sui-cyan': '#00D4FF',
-        // Deprecated neo colors (will remove after migration)
-        'neo-bg': '#F0F0F0',
-        'neo-black': '#000000',
-        'neo-white': '#FFFFFF',
-        'neo-primary': '#FF6B6B',
-        'neo-secondary': '#4ECDC4',
-        'neo-accent': '#FFE66D',
+        // Legacy support (mapped to new palette where possible)
+        'sui-cyan': '#00E0FF',
+        'dark-header': '#0A0A0A',
+        'dark-bg': '#050505',
+        'dark-surface': '#121212',
+        'dark-panel': '#1A1A1A',
+        'dark-border': '#262626',
       },
       backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-conic': 'conic-gradient(from 0deg at 50% 50%, var(--tw-gradient-stops))',
-        'walrus-glow': 'conic-gradient(from 0deg at 50% 50%, #3CB9FF 0deg, #6366F1 120deg, #A855F7 240deg, #3CB9FF 360deg)',
+        'gradient-neon': 'linear-gradient(to right, #00E0FF, #7C3AED)',
+        'gradient-premium': 'linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%)',
+        'gradient-glow': 'radial-gradient(circle at center, rgba(0, 224, 255, 0.1) 0%, transparent 70%)',
       },
       boxShadow: {
-        'neo': '4px 4px 0px 0px #000000',
-        'neo-lg': '8px 8px 0px 0px #000000',
-        'neo-sm': '2px 2px 0px 0px #000000',
-        'glow': '0 0 30px -10px rgba(60, 185, 255, 0.3)',
-        'glow-lg': '0 0 50px -10px rgba(60, 185, 255, 0.5)',
-        'glow-purple': '0 0 30px -10px rgba(99, 102, 241, 0.3)',
-      },
-      borderWidth: {
-        '3': '3px',
+        'neon': '0 0 10px rgba(0, 224, 255, 0.3)',
+        'neon-lg': '0 0 20px rgba(0, 224, 255, 0.4)',
+        'premium': '0 4px 20px rgba(0, 0, 0, 0.5)',
+        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        heading: ['Space Grotesk', 'Inter', 'sans-serif'],
-        display: ['Syne', 'Space Grotesk', 'sans-serif'],
-        mono: ['IBM Plex Mono', 'Menlo', 'Monaco', 'monospace'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+        tech: ['Rajdhani', 'sans-serif'],
       },
       animation: {
-        'spin-slower': 'spin 20s linear infinite',
         'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'float': 'float 6s ease-in-out infinite',
       },
-      backdropBlur: {
-        xs: '2px',
-      },
+      keyframes: {
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        }
+      }
     },
   },
-  plugins: [],
+  plugins: [
+    require('tailwind-scrollbar'),
+  ],
 }

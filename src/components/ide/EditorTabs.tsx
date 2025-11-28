@@ -1,51 +1,50 @@
 import React from 'react';
-import { X, Circle } from 'lucide-react';
+import { X, Circle, FileCode } from 'lucide-react';
 import { useIDEStore } from '../../store/ideStore';
 
 const EditorTabs: React.FC = () => {
   const { tabs, activeTab, setActiveTab, removeTab } = useIDEStore();
 
   return (
-    <div className="flex items-center bg-dark-header border-b border-sui-cyan/20 overflow-x-auto scrollbar-thin scrollbar-thumb-sui-cyan/30 scrollbar-track-transparent relative">
-      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-sui-cyan/30 to-transparent"></div>
-      
+    <div className="flex items-center bg-walrus-dark-900 border-b border-walrus-dark-600 overflow-x-auto scrollbar-thin scrollbar-thumb-walrus-dark-700 scrollbar-track-transparent relative z-20">
       {tabs.map((tab) => (
         <div
           key={tab.id}
-          className={`flex items-center gap-3 px-4 py-3 cursor-pointer group min-w-[140px] relative transition-all duration-200 ${
-            activeTab === tab.id
-              ? 'bg-dark-bg text-white'
-              : 'text-slate-500 hover:text-sui-cyan hover:bg-sui-cyan/5'
-          }`}
+          className={`flex items-center gap-2 px-4 py-2.5 cursor-pointer group min-w-[140px] max-w-[200px] relative transition-all duration-200 border-r border-walrus-dark-800 ${activeTab === tab.id
+              ? 'bg-walrus-dark-950 text-white'
+              : 'bg-walrus-dark-900 text-gray-500 hover:bg-walrus-dark-800 hover:text-gray-300'
+            }`}
           onClick={() => setActiveTab(tab.id)}
         >
-          {/* Language indicator icon with glow */}
-          <span className={`text-xs font-bold ${
-            tab.language === 'javascript' ? 'text-yellow-400' : 
-            tab.language === 'typescript' ? 'text-blue-400' :
-            tab.language === 'css' ? 'text-pink-400' :
-            tab.language === 'move' ? 'text-neon-purple' :
-            'text-slate-500'
-          }`}>
-            {tab.language === 'javascript' ? 'JS' : 
-             tab.language === 'typescript' ? 'TS' :
-             tab.language === 'css' ? 'CSS' : 
-             tab.language === 'move' ? 'MV' : ''}
-          </span>
-          <span className="text-sm truncate flex-1 font-medium">{tab.name}</span>
-          {tab.isDirty && <Circle size={6} fill="currentColor" className="text-sui-cyan animate-pulse" />}
+          {/* Active Tab Top Indicator */}
+          {activeTab === tab.id && (
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-neon shadow-neon"></div>
+          )}
+
+          {/* File Icon */}
+          <FileCode size={14} className={`
+            ${tab.language === 'move' ? 'text-walrus-cyan' :
+              tab.language === 'typescript' ? 'text-blue-400' : 'text-gray-400'}
+          `} />
+
+          <span className="text-xs font-medium truncate flex-1 font-mono">{tab.name}</span>
+
+          {tab.isDirty && (
+            <Circle size={6} fill="currentColor" className="text-walrus-pink animate-pulse" />
+          )}
+
           <button
             onClick={(e) => {
               e.stopPropagation();
               removeTab(tab.id);
             }}
-            className="opacity-0 group-hover:opacity-100 hover:bg-sui-cyan/10 hover:text-sui-cyan rounded p-1 transition-all"
+            className={`p-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-all ${activeTab === tab.id
+                ? 'hover:bg-white/10 text-gray-400 hover:text-white'
+                : 'hover:bg-walrus-dark-700 text-gray-500 hover:text-gray-300'
+              }`}
           >
             <X size={14} />
           </button>
-          {activeTab === tab.id && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-neon shadow-neon"></div>
-          )}
         </div>
       ))}
     </div>

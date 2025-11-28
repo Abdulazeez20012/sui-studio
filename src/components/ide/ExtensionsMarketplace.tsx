@@ -20,109 +20,31 @@ const ExtensionsMarketplace: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<'downloads' | 'rating' | 'recent'>('downloads');
-  const [installedExtensions, setInstalledExtensions] = useState<Set<string>>(new Set(['core-analyzer', 'move-syntax']));
+  const [installedExtensions, setInstalledExtensions] = useState<Set<string>>(new Set());
+  const [extensions, setExtensions] = useState<Extension[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const extensions: Extension[] = [
-    {
-      id: 'core-analyzer',
-      name: 'Core Analyzer',
-      publisher: 'Sui Studio Team',
-      description: 'Advanced Sui Move code analysis, debugging, and optimization tools',
-      version: '2.1.0',
-      downloads: 15420,
-      rating: 4.8,
-      category: 'Analysis',
-      icon: '🔍',
-      marketplaceUrl: 'https://marketplace.visualstudio.com/items?itemName=sui-studio.core-analyzer',
-      featured: true,
-    },
-    {
-      id: 'move-syntax',
-      name: 'Move Language Support',
-      publisher: 'Move Foundation',
-      description: 'Syntax highlighting, IntelliSense, and code completion for Move',
-      version: '1.5.2',
-      downloads: 28350,
-      rating: 4.9,
-      category: 'Language',
-      icon: '📝',
-      marketplaceUrl: 'https://marketplace.visualstudio.com/items?itemName=move-foundation.move-syntax',
-      featured: true,
-    },
-    {
-      id: 'sui-debugger',
-      name: 'Sui Debugger',
-      publisher: 'Mysten Labs',
-      description: 'Interactive debugger for Sui Move smart contracts',
-      version: '1.8.0',
-      downloads: 12890,
-      rating: 4.7,
-      category: 'Debugging',
-      icon: '🐛',
-      marketplaceUrl: 'https://marketplace.visualstudio.com/items?itemName=mysten.sui-debugger',
-      featured: true,
-    },
-    {
-      id: 'move-formatter',
-      name: 'Move Formatter',
-      publisher: 'Code Style',
-      description: 'Automatic code formatting and style enforcement for Move',
-      version: '1.2.1',
-      downloads: 9240,
-      rating: 4.6,
-      category: 'Formatting',
-      icon: '✨',
-      marketplaceUrl: 'https://marketplace.visualstudio.com/items?itemName=codestyle.move-formatter',
-    },
-    {
-      id: 'sui-snippets',
-      name: 'Sui Snippets',
-      publisher: 'DevTools',
-      description: 'Code snippets for common Sui Move patterns and templates',
-      version: '2.0.0',
-      downloads: 18750,
-      rating: 4.8,
-      category: 'Snippets',
-      icon: '⚡',
-      marketplaceUrl: 'https://marketplace.visualstudio.com/items?itemName=devtools.sui-snippets',
-    },
-    {
-      id: 'move-linter',
-      name: 'Move Linter',
-      publisher: 'Quality Tools',
-      description: 'Real-time linting and error detection for Move code',
-      version: '1.4.3',
-      downloads: 11200,
-      rating: 4.5,
-      category: 'Linting',
-      icon: '🔧',
-      marketplaceUrl: 'https://marketplace.visualstudio.com/items?itemName=quality.move-linter',
-    },
-    {
-      id: 'sui-test-runner',
-      name: 'Sui Test Runner',
-      publisher: 'Testing Pro',
-      description: 'Run and debug Sui Move tests directly in VS Code',
-      version: '1.6.0',
-      downloads: 8930,
-      rating: 4.7,
-      category: 'Testing',
-      icon: '🧪',
-      marketplaceUrl: 'https://marketplace.visualstudio.com/items?itemName=testing.sui-test-runner',
-    },
-    {
-      id: 'move-docs',
-      name: 'Move Documentation',
-      publisher: 'Docs Team',
-      description: 'Inline documentation and hover information for Move APIs',
-      version: '1.3.0',
-      downloads: 7650,
-      rating: 4.4,
-      category: 'Documentation',
-      icon: '📚',
-      marketplaceUrl: 'https://marketplace.visualstudio.com/items?itemName=docs.move-docs',
-    },
-  ];
+  // Load extensions from backend
+  React.useEffect(() => {
+    const loadExtensions = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/extensions`);
+        if (!response.ok) throw new Error('Failed to load extensions');
+        const data = await response.json();
+        setExtensions(data.extensions || []);
+        setError(null);
+      } catch (err) {
+        console.error('Extensions marketplace requires backend service:', err);
+        setError('Backend service required');
+        setExtensions([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadExtensions();
+  }, []);
 
   const categories = ['all', 'Analysis', 'Language', 'Debugging', 'Formatting', 'Snippets', 'Linting', 'Testing', 'Documentation'];
 
@@ -227,8 +149,35 @@ const ExtensionsMarketplace: React.FC = () => {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-sui-cyan/30 scrollbar-track-transparent">
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <Package size={48} className="text-slate-600 mx-auto mb-3 animate-pulse" />
+              <p className="text-sm text-slate-400 font-tech">Loading extensions...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !isLoading && (
+          <div className="p-4">
+            <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+              <div className="flex items-start gap-2">
+                <Package size={16} className="text-yellow-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-sm font-medium text-yellow-400 mb-1 font-tech">Backend Required</h4>
+                  <p className="text-xs text-slate-300 font-tech">
+                    Extensions marketplace requires the backend service. Start the backend to browse and install extensions.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Featured Extensions */}
-        {!searchQuery && selectedCategory === 'all' && (
+        {!isLoading && !error && !searchQuery && selectedCategory === 'all' && (
           <div className="p-4 border-b border-sui-cyan/10">
             <div className="flex items-center gap-2 mb-3">
               <TrendingUp size={16} className="text-neon-purple" />
@@ -245,38 +194,40 @@ const ExtensionsMarketplace: React.FC = () => {
         )}
 
         {/* All Extensions */}
-        <div className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider font-tech">
-              {filteredExtensions.length} Extensions
-            </h4>
-            <div className="flex items-center gap-2 text-xs text-slate-500 font-tech">
-              <span>{installedExtensions.size} Installed</span>
+        {!isLoading && !error && (
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider font-tech">
+                {filteredExtensions.length} Extensions
+              </h4>
+              <div className="flex items-center gap-2 text-xs text-slate-500 font-tech">
+                <span>{installedExtensions.size} Installed</span>
+              </div>
             </div>
-          </div>
-          <div className="grid gap-3">
-            {filteredExtensions.map((ext) => (
-              <ExtensionCard 
-                key={ext.id} 
-                extension={ext} 
-                isInstalled={installedExtensions.has(ext.id)}
-                onInstall={() => setInstalledExtensions(prev => new Set([...prev, ext.id]))}
-                onUninstall={() => setInstalledExtensions(prev => {
-                  const next = new Set(prev);
-                  next.delete(ext.id);
-                  return next;
-                })}
-              />
-            ))}
-          </div>
+            <div className="grid gap-3">
+              {filteredExtensions.map((ext) => (
+                <ExtensionCard 
+                  key={ext.id} 
+                  extension={ext} 
+                  isInstalled={installedExtensions.has(ext.id)}
+                  onInstall={() => setInstalledExtensions(prev => new Set([...prev, ext.id]))}
+                  onUninstall={() => setInstalledExtensions(prev => {
+                    const next = new Set(prev);
+                    next.delete(ext.id);
+                    return next;
+                  })}
+                />
+              ))}
+            </div>
 
-          {filteredExtensions.length === 0 && (
-            <div className="text-center py-12">
-              <Package size={48} className="text-slate-600 mx-auto mb-3" />
-              <p className="text-slate-400 font-tech">No extensions found</p>
-            </div>
-          )}
-        </div>
+            {filteredExtensions.length === 0 && extensions.length > 0 && (
+              <div className="text-center py-12">
+                <Package size={48} className="text-slate-600 mx-auto mb-3" />
+                <p className="text-slate-400 font-tech">No extensions found</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

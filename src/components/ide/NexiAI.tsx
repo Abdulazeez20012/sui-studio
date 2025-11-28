@@ -27,7 +27,7 @@ const NexiAI: React.FC = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  
+
   const currentTab = tabs.find(t => t.id === activeTab);
 
   const scrollToBottom = () => {
@@ -72,7 +72,7 @@ const NexiAI: React.FC = () => {
     const startTime = Date.now();
 
     try {
-      // Try to use backend AI service first
+      // Use backend AI service
       const response = await aiService.sendMessage(query, {
         code: currentTab?.content,
         language: currentTab?.language || 'move',
@@ -86,56 +86,25 @@ const NexiAI: React.FC = () => {
           content: response.content,
           timestamp: new Date(response.createdAt),
         }]);
-        
+
         // Track AI query
         const duration = Date.now() - startTime;
         analyticsService.trackAIQuery(query, duration);
       } else {
         throw new Error('No response from AI service');
       }
-    } catch (error) {
-      // Fallback to local response generation
-      console.log('Using fallback AI response');
-      const aiResponse: Message = {
+    } catch (error: any) {
+      // Show error message instead of fallback
+      const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: generateResponse(query),
+        content: `❌ **AI Service Unavailable**\n\nI'm unable to process your request right now. This could be because:\n\n• Backend server is not running (run \`start-backend.bat\`)\n• AI service is not configured (check backend .env for API keys)\n• Network connection issue\n\n**Error:** ${error.message || 'Unknown error'}\n\nPlease ensure the backend is running and properly configured.`,
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, aiResponse]);
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const generateResponse = (query: string): string => {
-    const lowerQuery = query.toLowerCase();
-
-    if (lowerQuery.includes('move') || lowerQuery.includes('smart contract')) {
-      return `Here's a basic Sui Move smart contract structure:\n\n\`\`\`move\nmodule my_package::my_module {\n    use sui::object::{Self, UID};\n    use sui::transfer;\n    use sui::tx_context::{Self, TxContext};\n\n    struct MyObject has key {\n        id: UID,\n        value: u64,\n    }\n\n    public entry fun create(value: u64, ctx: &mut TxContext) {\n        let obj = MyObject {\n            id: object::new(ctx),\n            value,\n        };\n        transfer::transfer(obj, tx_context::sender(ctx));\n    }\n}\n\`\`\`\n\nThis creates a basic object with a value. Would you like me to explain any specific part?`;
-    }
-
-    if (lowerQuery.includes('walrus')) {
-      return `**Walrus Storage Integration:**\n\nWalrus provides decentralized storage for Sui. Here's how to upload:\n\n\`\`\`typescript\nimport { WalrusClient } from '@mysten/walrus';\n\nconst client = new WalrusClient({\n  network: 'testnet'\n});\n\nconst blob = await client.upload(fileData);\nconsole.log('Blob ID:', blob.id);\n\`\`\`\n\nYou can then reference this blob ID in your Move contracts!`;
-    }
-
-    if (lowerQuery.includes('zklogin')) {
-      return `**zkLogin Implementation:**\n\nzkLogin enables Web2 authentication for Web3:\n\n\`\`\`typescript\nimport { zkLogin } from '@mysten/zklogin';\n\n// 1. Get JWT from OAuth provider (Google, Facebook, etc.)\nconst jwt = await getJWTFromProvider();\n\n// 2. Generate zkLogin proof\nconst proof = await zkLogin.generateProof(jwt);\n\n// 3. Create Sui address\nconst address = zkLogin.getAddress(proof);\n\n// 4. Sign transactions\nconst signature = await zkLogin.sign(transaction, proof);\n\`\`\`\n\nNo seed phrases needed!`;
-    }
-
-    if (lowerQuery.includes('gas') || lowerQuery.includes('optimize')) {
-      return `**Gas Optimization Tips:**\n\n1. **Use references** instead of copying:\n   \`&Object\` vs \`Object\`\n\n2. **Batch operations** when possible\n\n3. **Avoid unnecessary storage** operations\n\n4. **Use efficient data structures**:\n   - \`vector\` for lists\n   - \`Table\` for key-value pairs\n\n5. **Minimize object creation**\n\nWould you like me to analyze your specific code?`;
-    }
-
-    if (lowerQuery.includes('suiet') || lowerQuery.includes('wallet')) {
-      return `**Suiet Wallet Integration:**\n\n\`\`\`typescript\nimport { SuietWallet } from '@suiet/wallet-kit';\n\n// Connect wallet\nconst wallet = new SuietWallet();\nawait wallet.connect();\n\n// Get account\nconst account = wallet.getAccount();\n\n// Sign transaction\nconst signedTx = await wallet.signTransaction({\n  transaction: txBytes,\n  account: account.address\n});\n\n// Execute\nconst result = await wallet.executeTransaction(signedTx);\n\`\`\`\n\nSupports all major Sui wallets!`;
-    }
-
-    if (lowerQuery.includes('sdk')) {
-      return `**Sui SDK Usage:**\n\n\`\`\`typescript\nimport { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client';\nimport { TransactionBlock } from '@mysten/sui.js/transactions';\n\nconst client = new SuiClient({ url: getFullnodeUrl('testnet') });\n\n// Create transaction\nconst tx = new TransactionBlock();\ntx.moveCall({\n  target: '0x2::coin::split',\n  arguments: [tx.object(coinId), tx.pure(1000)],\n});\n\n// Execute\nconst result = await client.signAndExecuteTransactionBlock({\n  transactionBlock: tx,\n  signer: keypair,\n});\n\`\`\``;
-    }
-
-    return `I can help you with that! Could you provide more details about:\n\n• What you're trying to build\n• Any specific errors you're encountering\n• Which Sui technology you're using (Move, Walrus, zkLogin, etc.)\n\nThe more context you provide, the better I can assist you!`;
   };
 
   const handleQuickAction = (prompt: string) => {
@@ -199,13 +168,12 @@ const NexiAI: React.FC = () => {
                 <Bot size={18} className="text-black" />
               </div>
             )}
-            
+
             <div
-              className={`max-w-[80%] rounded-lg p-4 ${
-                message.role === 'user'
-                  ? 'bg-sui-cyan/10 border border-sui-cyan/30'
-                  : 'bg-dark-panel border border-sui-cyan/20'
-              }`}
+              className={`max-w-[80%] rounded-lg p-4 ${message.role === 'user'
+                ? 'bg-sui-cyan/10 border border-sui-cyan/30'
+                : 'bg-dark-panel border border-sui-cyan/20'
+                }`}
             >
               <div className="prose prose-invert prose-sm max-w-none">
                 <div className="text-sm text-slate-200 whitespace-pre-wrap font-tech">
@@ -277,19 +245,17 @@ const NexiAI: React.FC = () => {
                 <button
                   key={index}
                   onClick={() => handleQuickAction(action.prompt)}
-                  className={`flex items-center gap-2 p-3 bg-dark-panel border rounded-lg hover:shadow-neon transition-all text-left group ${
-                    action.color === 'sui-cyan' ? 'border-sui-cyan/20 hover:border-sui-cyan/50' :
+                  className={`flex items-center gap-2 p-3 bg-dark-panel border rounded-lg hover:shadow-neon transition-all text-left group ${action.color === 'sui-cyan' ? 'border-sui-cyan/20 hover:border-sui-cyan/50' :
                     action.color === 'neon-green' ? 'border-neon-green/20 hover:border-neon-green/50' :
-                    action.color === 'neon-purple' ? 'border-neon-purple/20 hover:border-neon-purple/50' :
-                    'border-neon-pink/20 hover:border-neon-pink/50'
-                  }`}
+                      action.color === 'neon-purple' ? 'border-neon-purple/20 hover:border-neon-purple/50' :
+                        'border-neon-pink/20 hover:border-neon-pink/50'
+                    }`}
                 >
-                  <div className={`group-hover:scale-110 transition-transform ${
-                    action.color === 'sui-cyan' ? 'text-sui-cyan' :
+                  <div className={`group-hover:scale-110 transition-transform ${action.color === 'sui-cyan' ? 'text-sui-cyan' :
                     action.color === 'neon-green' ? 'text-neon-green' :
-                    action.color === 'neon-purple' ? 'text-neon-purple' :
-                    'text-neon-pink'
-                  }`}>
+                      action.color === 'neon-purple' ? 'text-neon-purple' :
+                        'text-neon-pink'
+                    }`}>
                     {action.icon}
                   </div>
                   <span className="text-xs font-bold text-slate-300 group-hover:text-white font-tech">
@@ -299,7 +265,7 @@ const NexiAI: React.FC = () => {
               ))}
             </div>
           </div>
-          
+
           <div>
             <h4 className="text-xs text-slate-500 uppercase tracking-wider mb-2 font-tech">Popular Topics</h4>
             <div className="flex flex-wrap gap-2">
