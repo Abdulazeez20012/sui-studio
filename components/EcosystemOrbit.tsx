@@ -2,42 +2,36 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Section from './ui/Section';
 import { motion } from 'framer-motion';
-import {
-  Zap, Droplets, Waves, Box, Hexagon, Anchor,
-  Cloud, Shield, MapPin, Cpu, Globe, Activity,
-  Database, Share2, Radio
-} from 'lucide-react';
 
-// Specific Project List requested
+// Real Web3 Brands & Logos
 const NODES = [
-  { name: 'Surge', icon: <Waves size={18} />, color: '#3CB9FF', type: 'DeFi' },
-  { name: 'Turbot', icon: <Activity size={18} />, color: '#F59E0B', type: 'DEX' },
-  { name: 'Nafun', icon: <MapPin size={18} />, color: '#10B981', type: 'Social' },
-  { name: 'Wakara', icon: <Shield size={18} />, color: '#8B5CF6', type: 'Infra' },
-  { name: 'SAWNG', icon: <Radio size={18} />, color: '#EC4899', type: 'Media' },
-  { name: 'PUG', icon: <span className="text-[10px] font-bold">PUG</span>, color: '#F43F5E', type: 'Meme' },
-  { name: 'Ferra', icon: <Hexagon size={18} />, color: '#6366F1', type: 'DeFi' },
-  { name: 'Dulceaan', icon: <Box size={18} />, color: '#F97316', type: 'NFT' },
-  { name: 'ALK', icon: <span className="text-[10px] font-bold">ALK</span>, color: '#A855F7', type: 'Token' },
-  { name: 'Albeni', icon: <Globe size={18} />, color: '#3B82F6', type: 'DAO' },
-  { name: 'IKA', icon: <span className="text-[10px] font-bold">IKA</span>, color: '#EF4444', type: 'Game' },
-  { name: 'Magros', icon: <Database size={18} />, color: '#14B8A6', type: 'Storage' },
-  { name: 'Berlin', icon: <MapPin size={18} />, color: '#FFFFFF', type: 'Node' },
-  { name: 'Infector', icon: <Cpu size={18} />, color: '#84CC16', type: 'Sec' },
-  { name: 'Powata', icon: <Zap size={18} />, color: '#EAB308', type: 'Util' },
+  { name: 'Sui', logo: 'https://assets.coingecko.com/coins/images/26375/standard/sui_asset.jpeg', type: 'L1' },
+  { name: 'Ethereum', logo: 'https://assets.coingecko.com/coins/images/279/standard/ethereum.png', type: 'L1' },
+  { name: 'Solana', logo: 'https://assets.coingecko.com/coins/images/4128/standard/solana.png', type: 'L1' },
+  { name: 'USDC', logo: 'https://assets.coingecko.com/coins/images/6319/standard/usdc.png', type: 'Stablecoin' },
+  { name: 'Tether', logo: 'https://assets.coingecko.com/coins/images/325/standard/Tether.png', type: 'Stablecoin' },
+  { name: 'Cetus', logo: 'https://assets.coingecko.com/coins/images/30169/standard/cetus.png', type: 'DEX' },
+  { name: 'Turbos', logo: 'https://assets.coingecko.com/coins/images/30473/standard/turbos.png', type: 'DEX' },
+  { name: 'Scallop', logo: 'https://assets.coingecko.com/coins/images/30474/standard/scallop.png', type: 'Lending' },
+  { name: 'Navi', logo: 'https://assets.coingecko.com/coins/images/34346/standard/navi.png', type: 'Lending' },
+  { name: 'Aftermath', logo: 'https://pbs.twimg.com/profile_images/1649134956763480064/W-r5q7m__400x400.jpg', type: 'DeFi' }, // Fallback if not on CG
+  { name: 'Typus', logo: 'https://pbs.twimg.com/profile_images/1656834372983160833/2W0s0d0O_400x400.jpg', type: 'DeFi' },
+  { name: 'Kriya', logo: 'https://assets.coingecko.com/coins/images/29678/standard/kriya.png', type: 'DEX' },
+  { name: 'Bucket', logo: 'https://pbs.twimg.com/profile_images/1666060098907144193/6X6z6Z6__400x400.jpg', type: 'Protocol' },
+  { name: 'Bluefin', logo: 'https://pbs.twimg.com/profile_images/1709972322587394048/8X8z8Z8__400x400.jpg', type: 'Exchange' },
+  { name: 'Pyth', logo: 'https://assets.coingecko.com/coins/images/31924/standard/pyth.png', type: 'Oracle' },
 ];
 
 const EcosystemOrbit: React.FC = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [projectNodes, setProjectNodes] = useState<any[]>([]);
-  const rotationRef = useRef({ x: 0.2, y: 0 }); // Initial tilt
+  const rotationRef = useRef({ x: 0.2, y: 0 });
   const requestRef = useRef<number>(0);
 
   // Configuration
-  const RADIUS = 300;
-  const PERSPECTIVE = 800;
+  const RADIUS = 320; // Slightly larger
+  const PERSPECTIVE = 1000;
 
   // Initialize Nodes with Spherical Coordinates (Fibonacci Sphere)
   useEffect(() => {
@@ -58,22 +52,11 @@ const EcosystemOrbit: React.FC = () => {
 
   // Animation Loop
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
     const animate = () => {
       if (!isHovered) {
-        rotationRef.current.y += 0.002; // Rotate Y
+        rotationRef.current.y += 0.0015; // Smooth continuous rotation
+        rotationRef.current.x = Math.sin(Date.now() * 0.0005) * 0.1 + 0.2; // Gentle wobble
       }
-
-      const width = canvas.width;
-      const height = canvas.height;
-      const cx = width / 2;
-      const cy = height / 2;
-
-      ctx.clearRect(0, 0, width, height);
 
       // Rotation Matrix Values
       const rx = rotationRef.current.x;
@@ -83,124 +66,7 @@ const EcosystemOrbit: React.FC = () => {
       const cosX = Math.cos(rx);
       const sinX = Math.sin(rx);
 
-      // --- 1. Draw Wireframe Globe (Latitude & Longitude Lines) ---
-      ctx.strokeStyle = 'rgba(60, 185, 255, 0.1)';
-      ctx.lineWidth = 1;
-
-      const draw3DCircle = (radius: number, axis: 'x' | 'y' | 'z', steps: number = 60) => {
-        ctx.beginPath();
-        for (let i = 0; i <= steps; i++) {
-          const theta = (i / steps) * Math.PI * 2;
-          let x = 0, y = 0, z = 0;
-
-          // Define circle points in 3D
-          if (axis === 'y') { // Horizontal rings (Latitude)
-            x = radius * Math.cos(theta);
-            z = radius * Math.sin(theta);
-            y = 0; // Need to offset y for multiple rings
-          } else if (axis === 'x') { // Vertical rings (Longitude)
-            x = radius * Math.cos(theta);
-            y = radius * Math.sin(theta);
-            z = 0;
-          }
-
-          // Apply Rotation
-          let x1 = x * cosY - z * sinY;
-          let z1 = z * cosY + x * sinY;
-          let y1 = y * cosX - z1 * sinX;
-          let z2 = z1 * cosX + y * sinX;
-
-          // Project
-          const scale = PERSPECTIVE / (PERSPECTIVE + z2);
-          const x2d = cx + x1 * scale;
-          const y2d = cy + y1 * scale;
-
-          if (i === 0) ctx.moveTo(x2d, y2d);
-          else ctx.lineTo(x2d, y2d);
-        }
-        ctx.closePath();
-        ctx.stroke();
-      };
-
-      // Draw Latitudes
-      [0, 0.5, 0.8, -0.5, -0.8].forEach(scale => {
-        // We simulate latitude by drawing circles at different Y heights with scaled radii
-        // Simplified: Just draw a few key wireframe rings
-        // Actually, drawing rotated circles is complex. Let's draw points and connect them or just simple great circles.
-        // Better: Draw 3 Longitude Great Circles
-        // And 1 Equator
-      });
-
-      // Draw 3 meridian circles rotated differently to form a sphere shape
-      // We will simply draw 3 circles on X/Y/Z planes rotated by the global rotation
-      const sphereSteps = 3;
-      for (let i = 0; i < sphereSteps; i++) {
-        // Hacky way to draw wireframe lines: just pre-calculate points on sphere and rotate them
-      }
-
-      // Custom Globe Drawing Logic
-      // Draw Latitude Lines
-      for (let lat = -60; lat <= 60; lat += 30) {
-        const latRad = lat * Math.PI / 180;
-        const r = RADIUS * Math.cos(latRad);
-        const yBase = RADIUS * Math.sin(latRad);
-
-        ctx.beginPath();
-        for (let lng = 0; lng <= 360; lng += 5) {
-          const lngRad = lng * Math.PI / 180;
-          let x = r * Math.cos(lngRad);
-          let z = r * Math.sin(lngRad);
-          let y = yBase;
-
-          // Rotate
-          let x1 = x * cosY - z * sinY;
-          let z1 = z * cosY + x * sinY;
-          let y1 = y * cosX - z1 * sinX;
-          let z2 = z1 * cosX + y * sinX;
-
-          const scale = PERSPECTIVE / (PERSPECTIVE + z2);
-          const x2d = cx + x1 * scale;
-          const y2d = cy + y1 * scale;
-
-          // Fading for back of globe
-          ctx.globalAlpha = z2 < 0 ? 0.05 : 0.15;
-
-          if (lng === 0) ctx.moveTo(x2d, y2d);
-          else ctx.lineTo(x2d, y2d);
-        }
-        ctx.stroke();
-      }
-
-      // Draw Longitude Lines
-      for (let lng = 0; lng < 360; lng += 45) {
-        const lngRad = lng * Math.PI / 180;
-        ctx.beginPath();
-        for (let lat = -90; lat <= 90; lat += 5) {
-          const latRad = lat * Math.PI / 180;
-          let x = RADIUS * Math.cos(latRad) * Math.cos(lngRad);
-          let z = RADIUS * Math.cos(latRad) * Math.sin(lngRad);
-          let y = RADIUS * Math.sin(latRad);
-
-          // Rotate
-          let x1 = x * cosY - z * sinY;
-          let z1 = z * cosY + x * sinY;
-          let y1 = y * cosX - z1 * sinX;
-          let z2 = z1 * cosX + y * sinX;
-
-          const scale = PERSPECTIVE / (PERSPECTIVE + z2);
-          const x2d = cx + x1 * scale;
-          const y2d = cy + y1 * scale;
-
-          ctx.globalAlpha = z2 < 0 ? 0.05 : 0.15;
-
-          if (lat === -90) ctx.moveTo(x2d, y2d);
-          else ctx.lineTo(x2d, y2d);
-        }
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1; // Reset alpha
-
-      // --- 2. Update React Node Positions ---
+      // Update React Node Positions
       setProjectNodes(prevNodes => prevNodes.map(node => {
         // Rotate
         let x1 = node.baseX * cosY - node.baseZ * sinY;
@@ -217,7 +83,7 @@ const EcosystemOrbit: React.FC = () => {
           y: y1 * scale,
           z: z2,
           scale: scale,
-          opacity: (z2 + RADIUS) / (2 * RADIUS), // Simple depth cue
+          opacity: (z2 + RADIUS) / (2 * RADIUS),
           zIndex: Math.floor(scale * 100)
         };
       }));
@@ -230,27 +96,30 @@ const EcosystemOrbit: React.FC = () => {
   }, [isHovered]);
 
   return (
-    <Section className="py-32 overflow-hidden relative bg-neo-white border-y-3 border-neo-black" id="ecosystem-orbit">
-      {/* Background Elements */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000005_1px,transparent_1px),linear-gradient(to_bottom,#00000005_1px,transparent_1px)] bg-[size:40px_40px]" />
+    <Section className="py-32 overflow-hidden relative bg-[#0B0F14]" id="ecosystem-orbit">
+      {/* Background Elements - Subtle Grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:60px_60px] opacity-20" />
 
-      <div className="text-center mb-16 relative z-10">
+      {/* Ambient Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-sui-cyan/5 rounded-full blur-[100px] pointer-events-none" />
+
+      <div className="text-center mb-20 relative z-10">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="font-heading font-black text-3xl md:text-5xl mb-4 text-neo-black uppercase tracking-tighter"
+          className="font-heading font-black text-4xl md:text-6xl mb-6 text-white tracking-tight"
         >
-          Global <span className="text-neo-primary bg-neo-black px-2 text-white">Ecosystem</span>
+          Global <span className="text-transparent bg-clip-text bg-gradient-to-r from-sui-cyan to-blue-600">Ecosystem</span>
         </motion.h2>
         <motion.p
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
-          className="text-neo-black font-medium max-w-2xl mx-auto text-lg"
+          className="text-gray-400 font-medium max-w-2xl mx-auto text-xl"
         >
-          Join a rapidly expanding universe of DeFi, Gaming, and Infrastructure projects built on Sui.
+          Join the fastest growing network of DeFi, Gaming, and Infrastructure.
         </motion.p>
       </div>
 
@@ -261,27 +130,20 @@ const EcosystemOrbit: React.FC = () => {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Canvas for Wireframe Globe */}
-        <canvas
-          ref={canvasRef}
-          width={800}
-          height={800}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-60"
-        />
+        {/* Orbital Rings - Pure CSS for cleanliness */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/5 rounded-full animate-[spin_60s_linear_infinite]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] border border-white/5 rounded-full animate-[spin_40s_linear_infinite_reverse]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] border border-white/10 rounded-full animate-[spin_20s_linear_infinite]" />
 
         {/* Central SUI Hub */}
-        <div className="absolute z-20 w-28 h-28 rounded-full bg-neo-black border-4 border-neo-primary flex items-center justify-center shadow-neo animate-float">
-          {/* Orbital Rings */}
-          <div className="absolute inset-[-15px] border-2 border-neo-black/20 rounded-full animate-spin-slow" />
-          <div className="absolute inset-[-30px] border-2 border-neo-black/10 rounded-full animate-spin-reverse-slower" />
-
+        <div className="absolute z-20 w-32 h-32 rounded-full bg-[#0B0F14] border-2 border-sui-cyan/30 flex items-center justify-center shadow-[0_0_50px_rgba(60,185,255,0.2)]">
+          <div className="absolute inset-0 bg-sui-cyan/10 rounded-full animate-pulse" />
           <div className="flex flex-col items-center justify-center z-10">
             <img
-              src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763580906/sui-sui-logo_gmux9g.png"
+              src="https://assets.coingecko.com/coins/images/26375/standard/sui_asset.jpeg"
               alt="Sui Logo"
-              className="w-12 h-12 object-contain"
+              className="w-16 h-16 rounded-full object-cover"
             />
-            <span className="text-xs font-black tracking-[0.2em] text-white mt-2">SUI</span>
           </div>
         </div>
 
@@ -293,32 +155,33 @@ const EcosystemOrbit: React.FC = () => {
               className="absolute top-0 left-0 flex flex-col items-center justify-center cursor-pointer group will-change-transform"
               style={{
                 transform: `translate3d(${node.x}px, ${node.y}px, 0) scale(${node.scale})`,
-                opacity: Math.max(0.2, node.opacity),
+                opacity: Math.max(0.3, node.opacity),
                 zIndex: node.zIndex,
               }}
             >
-              {/* Connection Line to Center (Optional - can be noisy) */}
-              {/* <div className="absolute top-1/2 left-1/2 w-px h-[300px] bg-gradient-to-b from-sui-cyan/10 to-transparent origin-top -translate-y-full -z-10 opacity-20" style={{ transform: `rotate(${Math.atan2(node.y, node.x)}rad)`}} /> */}
-
-              <div className="relative">
+              <div className="relative transition-transform duration-300 group-hover:scale-125">
                 {/* Icon Circle */}
                 <div
-                  className="w-10 h-10 rounded-full bg-neo-white border-2 border-neo-black flex items-center justify-center shadow-neo-sm group-hover:shadow-neo group-hover:scale-110 transition-all duration-200"
+                  className="w-14 h-14 rounded-full bg-[#1A1F26] border border-white/10 flex items-center justify-center shadow-lg overflow-hidden relative"
                 >
-                  <div style={{ color: '#000' }}>{node.icon}</div>
+                  <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <img
+                    src={node.logo}
+                    alt={node.name}
+                    className="w-full h-full object-cover p-2"
+                    onError={(e) => {
+                      // Fallback if image fails
+                      (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/1A1F26/FFF?text=' + node.name[0];
+                    }}
+                  />
                 </div>
 
                 {/* Label Tooltip */}
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">
-                  <div className="px-3 py-1.5 bg-neo-black border-2 border-neo-primary rounded-none text-center whitespace-nowrap shadow-neo-sm">
-                    <div className="text-xs font-bold text-white">{node.name}</div>
-                    <div className="text-[10px] text-neo-primary font-bold uppercase">{node.type}</div>
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50 translate-y-2 group-hover:translate-y-0">
+                  <div className="px-4 py-2 bg-[#1A1F26]/90 backdrop-blur-md border border-white/10 rounded-xl text-center whitespace-nowrap shadow-xl">
+                    <div className="text-sm font-bold text-white">{node.name}</div>
+                    <div className="text-[10px] text-sui-cyan font-bold uppercase tracking-wider">{node.type}</div>
                   </div>
-                </div>
-
-                {/* Simple Label for Distance Visibility */}
-                <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-2 text-[10px] font-bold text-neo-black whitespace-nowrap transition-opacity duration-300 ${node.zIndex < 50 ? 'opacity-0' : 'opacity-100'} group-hover:opacity-0`}>
-                  {node.name}
                 </div>
               </div>
             </div>
