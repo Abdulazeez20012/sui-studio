@@ -12,6 +12,8 @@ import { useAuthStore } from '../src/store/authStore';
 import { useThemeStore } from '../src/store/themeStore';
 import AuthModal from '../src/components/auth/AuthModal';
 import { useSuiWallet } from '../src/hooks/useSuiWallet';
+import { useSubscription } from '../src/hooks/useSubscription';
+import SubscriptionModal from '../src/components/subscription/SubscriptionModal';
 
 type NavItem = {
   label: string;
@@ -67,6 +69,8 @@ const Navbar: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showWalletMenu, setShowWalletMenu] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const { subscription, hasActivePlan } = useSubscription();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
@@ -202,6 +206,23 @@ const Navbar: React.FC = () => {
               <span className="text-xs font-mono font-bold text-neo-black">{network}</span>
               <ChevronDown className="w-3 h-3 text-neo-black cursor-pointer" />
             </div>
+
+            {/* Subscription Status */}
+            {connected && (
+              <button
+                onClick={() => setShowSubscriptionModal(true)}
+                className={`flex items-center gap-2 px-3 py-1.5 border-2 border-neo-black shadow-neo-sm transition-all hover:shadow-neo ${
+                  hasActivePlan()
+                    ? 'bg-sui-cyan text-neo-black'
+                    : 'bg-neo-white text-neo-black hover:bg-neo-accent'
+                }`}
+              >
+                <Zap className="w-4 h-4" />
+                <span className="text-xs font-bold">
+                  {hasActivePlan() ? subscription?.tier === 1 ? 'PRO' : subscription?.tier === 2 ? 'TEAM' : 'ENTERPRISE' : 'UPGRADE'}
+                </span>
+              </button>
+            )}
 
             {/* Auth / User Profile */}
             {isAuthenticated && user ? (
@@ -433,6 +454,12 @@ const Navbar: React.FC = () => {
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         onSuccess={handleAuthSuccess}
+      />
+
+      {/* Subscription Modal */}
+      <SubscriptionModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
       />
     </nav>
   );

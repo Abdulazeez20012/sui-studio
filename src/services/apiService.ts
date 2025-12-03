@@ -1,4 +1,7 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { config } from '../config';
+import { logger } from '../utils/logger';
+
+const API_URL = config.api.baseUrl;
 
 class APIService {
   private wakeUpInProgress = false;
@@ -48,7 +51,7 @@ class APIService {
       return response.ok;
     } catch (error) {
       this.wakeUpInProgress = false;
-      console.log('Backend wake-up in progress or unavailable');
+      logger.debug('Backend wake-up in progress or unavailable');
       this.setConnected(false);
       return false;
     }
