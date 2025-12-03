@@ -1,7 +1,7 @@
 import express, { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
+import { Transaction } from '@mysten/sui/transactions';
 import { optionalAuth, AuthRequest } from '../middleware/auth';
 import { z } from 'zod';
 

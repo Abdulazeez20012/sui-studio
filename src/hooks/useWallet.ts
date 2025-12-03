@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client';
+import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
 
 export interface WalletAccount {
   address: string;
