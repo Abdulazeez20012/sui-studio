@@ -13,7 +13,7 @@ import { useThemeStore } from '../src/store/themeStore';
 import AuthModal from '../src/components/auth/AuthModal';
 import { useSuiWallet } from '../src/hooks/useSuiWallet';
 import { useSubscription } from '../src/hooks/useSubscription';
-import { SubscriptionModal } from '../src/components/subscription/SubscriptionModal';
+import SubscriptionModal from '../src/components/subscription/SubscriptionModal';
 
 type NavItem = {
   label: string;
