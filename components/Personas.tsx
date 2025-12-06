@@ -26,28 +26,28 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
     viewport={{ once: true }}
     transition={{ delay }}
     whileHover={{ scale: 1.01, borderColor: 'rgba(60,185,255,0.3)' }}
-    className="bg-[#12171D] border border-white/5 rounded-xl p-6 flex flex-col h-full shadow-lg hover:shadow-[0_0_30px_-10px_rgba(60,185,255,0.1)] transition-all duration-300 group relative overflow-hidden"
+    className="bg-panel border border-border rounded-xl p-6 flex flex-col h-full shadow-lg hover:shadow-[0_0_30px_-10px_rgba(60,185,255,0.1)] transition-all duration-300 group relative overflow-hidden"
   >
     {/* Hover Glow Gradient */}
     <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
     <div className="flex justify-between items-start mb-6 relative z-10">
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-white/5 border border-white/5 group-hover:bg-sui-cyan/10 group-hover:text-sui-cyan transition-colors duration-300 text-slate-400">
+        <div className="p-2 rounded-lg bg-surface border border-border group-hover:bg-brand/10 group-hover:text-brand transition-colors duration-300 text-content-muted">
           {icon}
         </div>
         <div>
-          <h3 className="text-white font-bold text-lg leading-tight">{title}</h3>
-          <p className="text-slate-500 text-xs uppercase tracking-wider font-medium">{subtitle}</p>
+          <h3 className="text-content font-bold text-lg leading-tight">{title}</h3>
+          <p className="text-content-muted text-xs uppercase tracking-wider font-medium">{subtitle}</p>
         </div>
       </div>
       <div className="text-right">
-        <div className="font-mono text-2xl font-bold text-white group-hover:text-sui-cyan transition-colors duration-300">{metric}</div>
-        <div className="text-slate-500 text-xs">{metricLabel}</div>
+        <div className="font-mono text-2xl font-bold text-content group-hover:text-brand transition-colors duration-300">{metric}</div>
+        <div className="text-content-muted text-xs">{metricLabel}</div>
       </div>
     </div>
 
-    <div className="flex-1 bg-[#0B0F14] border border-white/5 rounded-lg p-4 relative overflow-hidden group-hover:border-white/10 transition-colors">
+    <div className="flex-1 bg-surface border border-border rounded-lg p-4 relative overflow-hidden group-hover:border-slate-300 dark:group-hover:border-white/10 transition-colors">
       {/* Grid background for chart area */}
       <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#3CB9FF 1px, transparent 1px)', backgroundSize: '12px 12px' }}></div>
       <div className="relative z-10 h-full flex flex-col justify-center">
@@ -59,16 +59,16 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
 
 const Personas: React.FC = () => {
   return (
-    <Section id="stages" className="bg-[#0B0F14] relative overflow-hidden">
+    <Section id="stages" className="bg-transparent relative overflow-hidden">
       {/* Background Decor */}
-      <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-sui-cyan/5 to-transparent pointer-events-none blur-3xl" />
+
 
       <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10">
         <div>
-          <h2 className="font-heading font-bold text-3xl md:text-4xl text-white mb-4">
+          <h2 className="font-heading font-bold text-3xl md:text-4xl text-content mb-4">
             Built for Every Stage
           </h2>
-          <p className="text-slate-400 max-w-xl text-lg">
+          <p className="text-content-muted max-w-xl text-lg">
             From first contract to global scale. A platform that adapts to your growth metrics.
           </p>
         </div>
@@ -136,13 +136,13 @@ const Personas: React.FC = () => {
           delay={0.1}
         >
           <div className="space-y-3 font-mono text-xs w-full">
-            <div className="flex items-center justify-between text-slate-500 mb-2 pb-2 border-b border-white/5">
+            <div className="flex items-center justify-between text-content-muted mb-2 pb-2 border-b border-border">
               <span>Function Cost Analysis</span>
               <Activity className="w-3 h-3" />
             </div>
             {['init_pool', 'swap_exact', 'add_liquidity'].map((fn, i) => (
               <div key={fn} className="relative">
-                <div className="flex justify-between mb-1 text-slate-300 z-10 relative">
+                <div className="flex justify-between mb-1 text-content z-10 relative">
                   <span>{fn}</span>
                   <span>{120 - i * 30} μSUI</span>
                 </div>
@@ -179,15 +179,14 @@ const Personas: React.FC = () => {
                 initial={{ opacity: 0, x: -10 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 + i * 0.1 }}
-                className="flex items-center gap-3 p-2 rounded bg-white/5 border border-white/5 hover:bg-white/10 transition-colors"
               >
                 <div className={`w-6 h-6 rounded-full ${item.c} flex items-center justify-center text-[10px] text-white font-bold shadow-lg`}>
                   {item.u[0]}
                 </div>
-                <div className="text-xs text-slate-400 flex-1 truncate">
-                  <span className="text-white font-medium">{item.u}</span> {item.a}
+                <div className="text-xs text-content-muted flex-1 truncate">
+                  <span className="text-content font-medium">{item.u}</span> {item.a}
                 </div>
-                <span className="text-[10px] text-slate-600 whitespace-nowrap">{item.t}</span>
+                <span className="text-[10px] text-content-muted whitespace-nowrap">{item.t}</span>
               </motion.div>
             ))}
           </div>

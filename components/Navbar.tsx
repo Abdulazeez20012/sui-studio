@@ -113,8 +113,8 @@ const Navbar: React.FC = () => {
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b-3 ${isScrolled || isMobileMenuOpen
-          ? 'bg-neo-bg border-neo-black py-4 shadow-neo'
-          : 'bg-transparent border-transparent py-6'
+        ? 'bg-surface/80 backdrop-blur-md border-border py-4 shadow-xl'
+        : 'bg-transparent border-transparent py-6'
         }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -129,7 +129,7 @@ const Navbar: React.FC = () => {
                 className="w-8 h-8 object-contain transition-transform group-hover:scale-110 duration-200"
               />
             </div>
-            <span className="font-display font-black text-xl tracking-tight text-neo-black uppercase">Sui Studio</span>
+            <span className="font-display font-black text-xl tracking-tight text-content uppercase">Sui Studio</span>
           </div>
 
           {/* Desktop Navigation */}
@@ -144,13 +144,13 @@ const Navbar: React.FC = () => {
                 <a
                   href={item.href || '#'}
                   className={`px-4 py-2 text-sm font-bold rounded-none flex items-center gap-1.5 transition-colors border-2 ${activeDropdown === item.label
-                      ? 'bg-neo-primary text-neo-black border-neo-black shadow-neo-sm'
-                      : 'text-neo-black border-transparent hover:bg-neo-accent hover:border-neo-black hover:shadow-neo-sm'
+                    ? 'bg-brand text-black border-transparent shadow-[0_0_20px_rgba(60,185,255,0.4)]'
+                    : 'text-content border-transparent hover:bg-surface hover:border-border'
                     }`}
                 >
                   {item.label}
                   {item.children && (
-                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 text-neo-black ${activeDropdown === item.label ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 text-current ${activeDropdown === item.label ? 'rotate-180' : ''}`} />
                   )}
                 </a>
 
@@ -162,7 +162,7 @@ const Navbar: React.FC = () => {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 5, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute top-full left-0 mt-2 w-72 bg-neo-white border-3 border-neo-black shadow-neo p-2 overflow-hidden z-50"
+                      className="absolute top-full left-0 mt-2 w-72 bg-panel border border-border shadow-2xl p-2 overflow-hidden z-50 rounded-xl"
                     >
 
                       <div className="grid gap-1">
@@ -170,17 +170,17 @@ const Navbar: React.FC = () => {
                           <a
                             key={child.name}
                             href={child.href}
-                            className="flex items-start gap-3 p-3 hover:bg-neo-bg border-2 border-transparent hover:border-neo-black transition-all group/item"
+                            className="flex items-start gap-3 p-3 hover:bg-white/5 border border-transparent hover:border-white/10 transition-all group/item rounded-lg"
                           >
-                            <div className="p-2 bg-neo-secondary border-2 border-neo-black text-neo-black group-hover/item:shadow-neo-sm transition-all">
+                            <div className="p-2 bg-surface border border-border text-content group-hover/item:text-brand transition-all rounded-md">
                               {child.icon && <child.icon className="w-4 h-4" />}
                             </div>
                             <div>
-                              <div className="text-sm font-bold text-neo-black">
+                              <div className="text-sm font-bold text-content group-hover/item:text-brand transition-colors">
                                 {child.name}
                               </div>
                               {child.description && (
-                                <div className="text-xs text-gray-600 mt-0.5 font-medium">
+                                <div className="text-xs text-content-muted mt-0.5 font-medium">
                                   {child.description}
                                 </div>
                               )}
@@ -198,24 +198,23 @@ const Navbar: React.FC = () => {
           {/* Web3 Toolbar (Desktop) */}
           <div className="hidden lg:flex items-center gap-4 shrink-0">
             {/* Network Status */}
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-neo-white border-2 border-neo-black shadow-neo-sm">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-surface border border-border rounded-full">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
               </span>
-              <span className="text-xs font-mono font-bold text-neo-black">{network}</span>
-              <ChevronDown className="w-3 h-3 text-neo-black cursor-pointer" />
+              <span className="text-xs font-mono font-bold text-content">{network}</span>
+              <ChevronDown className="w-3 h-3 text-slate-400 cursor-pointer" />
             </div>
 
             {/* Subscription Status */}
             {connected && (
               <button
                 onClick={() => setShowSubscriptionModal(true)}
-                className={`flex items-center gap-2 px-3 py-1.5 border-2 border-neo-black shadow-neo-sm transition-all hover:shadow-neo ${
-                  hasActivePlan()
-                    ? 'bg-sui-cyan text-neo-black'
-                    : 'bg-neo-white text-neo-black hover:bg-neo-accent'
-                }`}
+                className={`flex items-center gap-2 px-3 py-1.5 border border-border rounded-md transition-all ${hasActivePlan()
+                  ? 'bg-brand/20 text-brand border-brand/50'
+                  : 'bg-surface text-content hover:bg-surface/80'
+                  }`}
               >
                 <Zap className="w-4 h-4" />
                 <span className="text-xs font-bold">
@@ -229,7 +228,7 @@ const Navbar: React.FC = () => {
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-[#161b22] border border-white/10 rounded-lg hover:border-sui-cyan/30 transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-panel border border-border rounded-lg hover:border-brand/30 transition-colors"
                 >
                   {user.picture ? (
                     <img
@@ -240,27 +239,27 @@ const Navbar: React.FC = () => {
                   ) : (
                     <User size={16} className="text-slate-400" />
                   )}
-                  <span className="text-sm text-white">{user.name}</span>
+                  <span className="text-sm text-content">{user.name}</span>
                   <ChevronDown className="w-3 h-3 text-slate-500" />
                 </button>
 
                 {/* User Dropdown */}
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-56 bg-[#161b22] border border-white/10 rounded-xl shadow-2xl py-2 z-50">
-                    <div className="px-4 py-2 border-b border-white/10">
-                      <p className="text-sm font-medium text-white">{user.name}</p>
-                      <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                  <div className="absolute right-0 mt-2 w-56 bg-panel border border-border rounded-xl shadow-2xl py-2 z-50">
+                    <div className="px-4 py-2 border-b border-border">
+                      <p className="text-sm font-medium text-content">{user.name}</p>
+                      <p className="text-xs text-content-muted truncate">{user.email}</p>
                     </div>
                     <button
                       onClick={() => navigate('/ide')}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-content-muted hover:text-content hover:bg-surface transition-colors"
                     >
                       <Terminal size={16} />
                       <span>Open IDE</span>
                     </button>
                     <button
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-content-muted hover:text-content hover:bg-surface transition-colors"
                     >
                       <LogOut size={16} />
                       <span>Sign Out</span>
@@ -286,7 +285,7 @@ const Navbar: React.FC = () => {
                 size="sm"
                 onClick={handleConnect}
                 disabled={loading}
-                className={connected ? "border-sui-cyan/30 text-sui-cyan bg-sui-cyan/5" : ""}
+                className={connected ? "border-brand/30 text-brand bg-brand/5" : ""}
               >
                 <Wallet className="w-4 h-4 mr-2" />
                 {loading ? 'Connecting...' : connected && address ? formatAddress(address) : 'Connect Wallet'}
@@ -294,15 +293,15 @@ const Navbar: React.FC = () => {
 
               {/* Wallet Selection Menu */}
               {showWalletMenu && !connected && (
-                <div className="absolute right-0 mt-2 w-56 bg-[#161b22] border border-white/10 rounded-xl shadow-2xl py-2 z-50">
-                  <div className="px-4 py-2 border-b border-white/10">
-                    <p className="text-sm font-medium text-white">Select Wallet</p>
+                <div className="absolute right-0 mt-2 w-56 bg-panel border border-border rounded-xl shadow-2xl py-2 z-50">
+                  <div className="px-4 py-2 border-b border-border">
+                    <p className="text-sm font-medium text-content">Select Wallet</p>
                   </div>
                   {availableWallets.map((wallet) => (
                     <button
                       key={wallet.name}
                       onClick={() => handleWalletSelect(wallet.name)}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-content-muted hover:text-content hover:bg-surface transition-colors"
                     >
                       {wallet.icon ? (
                         <img src={wallet.icon} alt={wallet.name} className="w-4 h-4" />
@@ -319,7 +318,7 @@ const Navbar: React.FC = () => {
                   )}
                   <button
                     onClick={() => setShowWalletMenu(false)}
-                    className="w-full px-4 py-2 text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-colors border-t border-white/10 mt-2"
+                    className="w-full px-4 py-2 text-sm text-content-muted hover:text-content hover:bg-surface transition-colors border-t border-border mt-2"
                   >
                     Cancel
                   </button>
@@ -328,14 +327,14 @@ const Navbar: React.FC = () => {
             </div>
 
             {/* Settings Toggles */}
-            <div className="flex items-center gap-1 border-l-2 border-neo-black pl-4">
-              <button className="p-2 text-neo-black hover:bg-neo-accent border-2 border-transparent hover:border-neo-black hover:shadow-neo-sm transition-all">
+            <div className="flex items-center gap-1 border-l border-border pl-4">
+              <button className="p-2 text-content hover:bg-surface rounded-md transition-all">
                 <Globe className="w-4 h-4" />
                 <span className="sr-only">Language</span>
               </button>
-              <button 
+              <button
                 onClick={toggleTheme}
-                className="p-2 text-neo-black hover:bg-neo-accent border-2 border-transparent hover:border-neo-black hover:shadow-neo-sm transition-all"
+                className="p-2 text-content hover:bg-surface rounded-md transition-all"
                 aria-label="Toggle theme"
               >
                 {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -346,7 +345,7 @@ const Navbar: React.FC = () => {
 
           {/* Mobile Toggle */}
           <button
-            className="lg:hidden text-neo-black p-2 hover:bg-neo-accent border-2 border-transparent hover:border-neo-black hover:shadow-neo-sm transition-all relative z-50"
+            className="lg:hidden text-content p-2 hover:bg-surface rounded-md transition-all relative z-50"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -370,16 +369,16 @@ const Navbar: React.FC = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 bottom-0 w-full max-w-sm bg-[#0B0F14] border-l border-white/10 z-50 overflow-y-auto lg:hidden"
+              className="fixed top-0 right-0 bottom-0 w-full max-w-sm bg-panel border-l border-border z-50 overflow-y-auto lg:hidden"
             >
               <div className="p-6 pt-24 space-y-8">
                 {/* Mobile Nav Items */}
                 <div className="space-y-2">
                   {NAV_MENU.map((item) => (
-                    <div key={item.label} className="border-b border-white/5 pb-2">
+                    <div key={item.label} className="border-b border-border pb-2">
                       {item.children ? (
                         <div className="space-y-2">
-                          <div className="text-sm font-bold text-slate-500 uppercase tracking-wider px-2 py-1">
+                          <div className="text-sm font-bold text-content-muted uppercase tracking-wider px-2 py-1">
                             {item.label}
                           </div>
                           <div className="pl-2 space-y-1">
@@ -388,9 +387,9 @@ const Navbar: React.FC = () => {
                                 key={child.name}
                                 href={child.href}
                                 onClick={() => setIsMobileMenuOpen(false)}
-                                className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 text-slate-300 hover:text-white transition-colors"
+                                className="flex items-center gap-3 p-3 rounded-lg hover:bg-surface text-content-muted hover:text-content transition-colors"
                               >
-                                {child.icon && <child.icon className="w-4 h-4 text-sui-cyan" />}
+                                {child.icon && <child.icon className="w-4 h-4 text-brand" />}
                                 <span className="text-base font-medium">{child.name}</span>
                               </a>
                             ))}
@@ -400,7 +399,7 @@ const Navbar: React.FC = () => {
                         <a
                           href={item.href}
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block p-3 rounded-lg text-lg font-medium text-white hover:bg-white/5 transition-colors"
+                          className="block p-3 rounded-lg text-lg font-medium text-content hover:bg-surface transition-colors"
                         >
                           {item.label}
                         </a>
@@ -411,11 +410,11 @@ const Navbar: React.FC = () => {
 
                 {/* Mobile Actions */}
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-[#161b22] border border-white/10">
-                    <span className="text-sm text-slate-400">Network</span>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-surface border border-border">
+                    <span className="text-sm text-content-muted">Network</span>
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                      <span className="text-sm font-mono text-white">{network}</span>
+                      <span className="text-sm font-mono text-content">{network}</span>
                     </div>
                   </div>
 
@@ -430,13 +429,13 @@ const Navbar: React.FC = () => {
                   </Button>
 
                   <div className="grid grid-cols-2 gap-4">
-                    <button className="flex items-center justify-center gap-2 p-3 rounded-lg border border-white/10 hover:bg-white/5 text-slate-300 transition-colors">
+                    <button className="flex items-center justify-center gap-2 p-3 rounded-lg border border-border hover:bg-surface text-content-muted transition-colors">
                       <Globe className="w-4 h-4" />
                       English
                     </button>
-                    <button 
+                    <button
                       onClick={toggleTheme}
-                      className="flex items-center justify-center gap-2 p-3 rounded-lg border border-white/10 hover:bg-white/5 text-slate-300 transition-colors"
+                      className="flex items-center justify-center gap-2 p-3 rounded-lg border border-border hover:bg-surface text-content-muted transition-colors"
                     >
                       {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                       {theme === 'dark' ? 'Light' : 'Dark'}

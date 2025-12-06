@@ -8,22 +8,39 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Premium Dark Palette (Walrus-inspired but refined)
+        // Semantic System (The "Proper" Way)
+        surface: {
+          DEFAULT: 'var(--bg-main)',
+          panel: 'var(--bg-panel)',
+          card: 'var(--bg-card)',
+        },
+        content: {
+          DEFAULT: 'var(--text-main)',
+          muted: 'var(--text-muted)',
+        },
+        border: {
+          DEFAULT: 'var(--border-main)',
+        },
+        brand: {
+          DEFAULT: 'var(--accent-primary)',
+        },
+
+        // Premium Dark Palette (Keeping specific values for untokenized edge cases)
         walrus: {
           dark: {
-            950: '#050505', // Deepest black
-            900: '#0A0A0A', // Main background
-            800: '#121212', // Secondary background
-            700: '#1A1A1A', // Panels / Cards
-            600: '#262626', // Borders
+            950: '#050505',
+            900: '#0A0A0A',
+            800: '#121212',
+            700: '#1A1A1A',
+            600: '#262626',
           },
-          cyan: '#00E0FF', // Vibrant Cyan
-          purple: '#7C3AED', // Deep Purple
-          pink: '#F472B6', // Soft Pink
-          blue: '#3B82F6', // Standard Blue
+          cyan: '#00E0FF',
+          purple: '#7C3AED',
+          pink: '#F472B6',
+          blue: '#3B82F6',
         },
-        // Legacy support (mapped to new palette where possible)
-        'sui-cyan': '#00E0FF',
+        // Legacy/Compat mappings
+        'sui-cyan': 'var(--accent-primary)', // Now semantic!
         'dark-header': '#0A0A0A',
         'dark-bg': '#050505',
         'dark-surface': '#121212',
@@ -42,10 +59,11 @@ export default {
         'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        heading: ['Inter', 'system-ui', 'sans-serif'], // Unify heading font with sans for professional look
-        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
-        tech: ['Rajdhani', 'sans-serif'],
+        sans: ['DM Sans', 'system-ui', 'sans-serif'],
+        heading: ['Nunito', 'sans-serif'],
+        secondary: ['Nunito', 'sans-serif'],
+        mono: ['IBM Plex Mono', 'JetBrains Mono', 'monospace'],
+        display: ['DM Sans', 'sans-serif'],
       },
       animation: {
         'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',

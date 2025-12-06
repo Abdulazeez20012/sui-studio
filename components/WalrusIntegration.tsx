@@ -30,9 +30,7 @@ const WalrusIntegration: React.FC = () => {
   return (
     <section className="relative py-32 px-6 overflow-hidden">
       {/* Background Effects */}
-      <div className="absolute inset-0 grid-bg opacity-20" />
-      <div className="absolute top-1/2 left-0 w-[500px] h-[500px] bg-walrus-purple/10 rounded-full blur-[150px]" />
-      <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-walrus-pink/10 rounded-full blur-[150px]" />
+
 
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -54,7 +52,7 @@ const WalrusIntegration: React.FC = () => {
               whileInView="visible"
               viewport={{ once: true }}
               variants={FoldInOut}
-              className="text-5xl font-bold text-white"
+              className="text-5xl font-bold text-content"
             >
               ONE-CLICK UPLOAD TO
               <span className="block gradient-text mt-2">
@@ -67,7 +65,7 @@ const WalrusIntegration: React.FC = () => {
               whileInView="visible"
               viewport={{ once: true }}
               variants={FadeUp}
-              className="text-lg text-slate-400 leading-relaxed"
+              className="text-lg text-content-muted leading-relaxed"
             >
               Deploy your projects to decentralized storage instantly. Walrus provides secure,
               fast, and reliable storage for your Sui applications with just one click.
@@ -91,8 +89,8 @@ const WalrusIntegration: React.FC = () => {
                     {feature.icon}
                   </div>
                   <div>
-                    <h4 className="text-white font-semibold mb-1">{feature.title}</h4>
-                    <p className="text-sm text-slate-400">{feature.description}</p>
+                    <h4 className="text-content font-semibold mb-1">{feature.title}</h4>
+                    <p className="text-sm text-content-muted">{feature.description}</p>
                   </div>
                 </motion.div>
               ))}
@@ -129,9 +127,9 @@ const WalrusIntegration: React.FC = () => {
             <div className="glass-card-hover p-8 rounded-2xl">
               {/* Walrus Logo */}
               <div className="aspect-square rounded-xl bg-gradient-to-br from-walrus-cyan/20 via-walrus-purple/20 to-walrus-pink/20 flex items-center justify-center mb-6 p-8">
-                <img 
-                  src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763911075/walrus_es4xqr.png" 
-                  alt="Walrus Storage" 
+                <img
+                  src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763911075/walrus_es4xqr.png"
+                  alt="Walrus Storage"
                   className="w-full h-full object-contain"
                 />
               </div>
@@ -139,12 +137,12 @@ const WalrusIntegration: React.FC = () => {
               {/* Stats */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="glass-card p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-white mb-1">5s</div>
-                  <div className="text-sm text-slate-400">Avg. Upload Time</div>
+                  <div className="text-2xl font-bold text-content mb-1">5s</div>
+                  <div className="text-sm text-content-muted">Avg. Upload Time</div>
                 </div>
                 <div className="glass-card p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-white mb-1">99.9%</div>
-                  <div className="text-sm text-slate-400">Uptime</div>
+                  <div className="text-2xl font-bold text-content mb-1">99.9%</div>
+                  <div className="text-sm text-content-muted">Uptime</div>
                 </div>
               </div>
             </div>

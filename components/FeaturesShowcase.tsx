@@ -80,9 +80,9 @@ const FeaturesShowcase: React.FC = () => {
   };
 
   return (
-    <section className="py-32 px-4 relative overflow-hidden bg-[#000000]">
+    <section className="py-32 px-4 relative overflow-hidden bg-transparent">
       {/* Subtle Background */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-slate-900/20 via-[#000000] to-[#000000]" />
+
 
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Section Header */}
@@ -92,17 +92,17 @@ const FeaturesShowcase: React.FC = () => {
             whileInView="visible"
             viewport={{ once: true }}
             variants={FadeUp}
-            className="text-5xl md:text-7xl font-medium mb-6 tracking-tighter text-white"
+            className="text-5xl md:text-7xl font-medium mb-6 tracking-tighter text-content"
           >
             Everything you need. <br />
-            <span className="text-slate-500">Nothing you don't.</span>
+            <span className="text-content-muted">Nothing you don't.</span>
           </motion.h2>
           <motion.p
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={FadeUp}
-            className="text-xl text-slate-400 max-w-2xl mx-auto font-light"
+            className="text-xl text-content-muted max-w-2xl mx-auto font-light"
           >
             A complete suite of tools designed for the next generation of Move developers.
           </motion.p>
@@ -115,7 +115,7 @@ const FeaturesShowcase: React.FC = () => {
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
-                className={`relative px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${activeTab === key ? 'text-black' : 'text-slate-400 hover:text-white'
+                className={`relative px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${activeTab === key ? 'text-black' : 'text-slate-500 hover:text-white'
                   }`}
               >
                 {activeTab === key && (
@@ -147,13 +147,13 @@ const FeaturesShowcase: React.FC = () => {
                 <motion.div
                   key={index}
                   variants={ScaleReveal}
-                  className="group relative p-8 rounded-3xl bg-[#0B0F14] border border-white/5 hover:border-white/10 transition-colors duration-500 overflow-hidden"
+                  className="group relative p-8 rounded-3xl bg-panel border border-border hover:border-border transition-colors duration-500 overflow-hidden shadow-lg dark:shadow-none"
                 >
                   {/* Hover Glow */}
                   <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                   {/* Icon */}
-                  <div className="mb-6 w-12 h-12 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300">
+                  <div className="mb-6 w-12 h-12 rounded-2xl bg-surface border border-border flex items-center justify-center text-content-muted group-hover:scale-110 transition-transform duration-300">
                     <Icon className="w-6 h-6" />
                   </div>
 
@@ -164,10 +164,10 @@ const FeaturesShowcase: React.FC = () => {
                     </div>
                   )}
 
-                  <h3 className="text-xl font-medium text-white mb-3">
+                  <h3 className="text-xl font-medium text-content mb-3">
                     {feature.title}
                   </h3>
-                  <p className="text-slate-400 leading-relaxed font-light">
+                  <p className="text-content-muted leading-relaxed font-light">
                     {feature.description}
                   </p>
                 </motion.div>

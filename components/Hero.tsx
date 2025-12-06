@@ -3,7 +3,7 @@ import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'fram
 import { ChevronRight, Play, Command, CheckCircle2, Copy, Terminal, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Button from './ui/Button';
-import Section from './ui/Section';
+
 import { useAuthStore } from '../src/store/authStore';
 import AuthModal from '../src/components/auth/AuthModal';
 import { StaggerContainer, FoldInOut, ScaleReveal, FadeUp } from '../src/lib/animations';
@@ -72,19 +72,10 @@ const Hero: React.FC = () => {
   }, []);
 
   return (
-    <Section className="pt-32 pb-20 min-h-[110vh] flex items-center justify-center overflow-hidden relative perspective-[2000px]" id="hero">
+    <section className="pt-32 pb-32 min-h-[110vh] flex items-center justify-center overflow-hidden relative perspective-[2000px] w-full" id="hero">
       {/* Abstract Background Layer */}
       {/* Abstract Background Layer - Apple Style Clean */}
-      <div className="absolute inset-0 pointer-events-none select-none overflow-hidden bg-[#000000]">
-        {/* Subtle top spotlight */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[120vw] h-[800px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-800/20 via-[#0B0F14] to-[#000000] opacity-60" />
 
-        {/* Very subtle ambient glow */}
-        <div className="absolute top-[20%] left-[20%] w-[600px] h-[600px] bg-sui-cyan/5 rounded-full blur-[120px]" />
-
-        {/* Noise overlay for texture */}
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03]" />
-      </div>
 
       <div
         ref={containerRef}
@@ -99,15 +90,15 @@ const Hero: React.FC = () => {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="mb-8 group cursor-pointer"
         >
-          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md hover:bg-white/10 hover:border-sui-cyan/30 transition-all duration-300 shadow-[0_0_20px_-10px_rgba(60,185,255,0.2)]">
+          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-surface border border-border backdrop-blur-md hover:bg-surface/80 hover:border-brand/30 transition-all duration-300 shadow-[0_0_20px_-10px_rgba(60,185,255,0.2)]">
             <div className="flex -space-x-2">
               {[1, 2, 3].map(i => (
-                <div key={i} className="w-5 h-5 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 border border-[#0B0F14]" />
+                <div key={i} className="w-5 h-5 rounded-full bg-gradient-to-br from-slate-200 to-slate-400 dark:from-slate-700 dark:to-slate-900 border border-panel" />
               ))}
             </div>
-            <span className="text-xs font-medium text-slate-300 flex items-center gap-1">
-              Trusted by <span className="text-white font-bold">1,000+</span> developers
-              <ChevronRight className="w-3 h-3 text-slate-500 group-hover:text-white transition-colors" />
+            <span className="text-xs font-medium text-content-muted flex items-center gap-1">
+              Trusted by <span className="text-content font-bold">1,000+</span> developers
+              <ChevronRight className="w-3 h-3 text-content-muted group-hover:text-content transition-colors" />
             </span>
           </div>
         </motion.div>
@@ -117,10 +108,10 @@ const Hero: React.FC = () => {
           initial={{ opacity: 0, y: 40, filter: 'blur(10px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           transition={{ duration: 0.8, delay: 0.1, ease: [0.2, 0.65, 0.3, 0.9] }}
-          className="font-sans font-medium text-6xl md:text-8xl lg:text-9xl tracking-tighter text-white mb-8 leading-[0.95] max-w-6xl mx-auto"
+          className="font-sans font-medium text-5xl md:text-8xl lg:text-9xl tracking-tighter text-content mb-8 leading-[0.95] max-w-6xl mx-auto"
         >
           The Unified <br className="hidden md:block" />
-          <span className="text-white drop-shadow-2xl">
+          <span className="text-content drop-shadow-2xl">
             Development Platform
           </span>
         </motion.h1>
@@ -129,7 +120,7 @@ const Hero: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl leading-relaxed font-light"
+          className="text-lg md:text-xl text-content-muted mb-10 max-w-2xl leading-relaxed font-light"
         >
           From first exploration to enterprise deployment. Experience the power of a hybrid environment that adapts to your workflow.
         </motion.p>
@@ -142,14 +133,14 @@ const Hero: React.FC = () => {
           className="flex flex-col sm:flex-row items-center gap-4 mb-20"
         >
           <button
-            className="group min-w-[200px] px-8 py-4 rounded-full bg-white text-black font-semibold text-lg hover:bg-gray-100 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:scale-105 flex items-center justify-center gap-2"
+            className="group min-w-[200px] px-8 py-4 rounded-full bg-slate-900 text-white dark:bg-white dark:text-black font-semibold text-lg hover:bg-slate-800 dark:hover:bg-gray-100 transition-all duration-300 shadow-[0_0_20px_rgba(0,0,0,0.1)] dark:shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:scale-105 flex items-center justify-center gap-2"
             onClick={handleStartBuilding}
           >
             {isAuthenticated ? 'Open IDE' : 'Start Building'}
             <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </button>
-          <button className="group min-w-[180px] px-8 py-4 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-white font-medium text-lg hover:bg-white/20 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2">
-            <Play className="w-5 h-5 fill-white" />
+          <button className="group min-w-[180px] px-8 py-4 rounded-full bg-surface/80 border border-border text-content font-medium text-lg hover:bg-surface transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2">
+            <Play className="w-5 h-5 fill-content" />
             Watch Demo
           </button>
         </motion.div>
@@ -274,7 +265,7 @@ const Hero: React.FC = () => {
         onClose={() => setShowAuthModal(false)}
         onSuccess={handleAuthSuccess}
       />
-    </Section>
+    </section>
   );
 };
 

@@ -58,10 +58,9 @@ const Testimonials: React.FC = () => {
   ];
 
   return (
-    <section className="py-32 px-6 relative overflow-hidden bg-white dark:bg-transparent transition-colors duration-300">
+    <section className="py-32 px-6 relative overflow-hidden bg-transparent transition-colors duration-300">
       {/* Background */}
-      <div className="absolute inset-0 grid-bg opacity-10 dark:opacity-20" />
-      <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-purple-100/50 dark:bg-walrus-purple/5 rounded-full blur-[150px]" />
+
 
       <div className="max-w-4xl mx-auto relative z-10">
         {/* Header */}
@@ -85,9 +84,9 @@ const Testimonials: React.FC = () => {
             variants={FoldInOut}
             className="text-5xl md:text-6xl font-bold mb-6 font-heading"
           >
-            <span className="text-white">What</span>{' '}
+            <span className="text-content">What</span>{' '}
             <span className="bg-gradient-to-r from-[#4DA8FF] via-[#6FB6FF] to-[#00D4FF] bg-clip-text text-transparent">developers</span>{' '}
-            <span className="text-white">are saying</span>
+            <span className="text-content">are saying</span>
           </motion.h2>
         </div>
 
@@ -102,7 +101,7 @@ const Testimonials: React.FC = () => {
               transition={{ duration: 0.5, ease: "easeInOut" }}
               className="w-full"
             >
-              <div className="group relative glass-card p-8 md:p-12 rounded-2xl border border-white/5 bg-walrus-dark-800/40 backdrop-blur-xl">
+              <div className="group relative glass-card p-8 md:p-12 rounded-2xl border border-border bg-panel backdrop-blur-xl shadow-lg dark:shadow-none">
                 {/* Quote Icon */}
                 <div className="absolute top-8 right-8 opacity-10">
                   <Quote className="w-16 h-16 text-walrus-cyan" />
@@ -111,12 +110,12 @@ const Testimonials: React.FC = () => {
                 <div className="flex flex-col md:flex-row gap-8 items-center">
                   {/* Left: Avatar & Info */}
                   <div className="flex flex-col items-center md:items-start gap-4 shrink-0 text-center md:text-left">
-                    <div className="w-20 h-20 rounded-full glass-card flex items-center justify-center text-3xl border border-sui-cyan/30 text-sui-cyan shadow-[0_0_30px_-10px_rgba(0,224,255,0.3)]">
+                    <div className="w-20 h-20 rounded-full glass-card flex items-center justify-center text-3xl border border-sui-cyan/30 text-sui-cyan bg-surface shadow-[0_0_30px_-10px_rgba(0,224,255,0.3)]">
                       {testimonials[currentIndex].avatar}
                     </div>
                     <div>
                       <div className="font-bold text-xl text-sui-cyan font-heading">{testimonials[currentIndex].name}</div>
-                      <div className="text-sm text-slate-400 font-sans">{testimonials[currentIndex].role}</div>
+                      <div className="text-sm text-content-muted font-sans">{testimonials[currentIndex].role}</div>
 
                       {/* Rating */}
                       <div className="flex gap-1 mt-2 justify-center md:justify-start">
@@ -129,7 +128,7 @@ const Testimonials: React.FC = () => {
 
                   {/* Right: Content */}
                   <div className="flex-1">
-                    <p className="text-lg md:text-xl text-slate-200 leading-relaxed font-sans italic text-center md:text-left">
+                    <p className="text-lg md:text-xl text-content leading-relaxed font-sans italic text-center md:text-left">
                       "{testimonials[currentIndex].content}"
                     </p>
                   </div>
@@ -147,7 +146,7 @@ const Testimonials: React.FC = () => {
               onClick={() => setCurrentIndex(index)}
               className={`w-2 h-2 rounded-full transition-all duration-300 ${index === currentIndex
                 ? 'w-8 bg-sui-cyan shadow-[0_0_10px_rgba(0,224,255,0.5)]'
-                : 'bg-white/20 hover:bg-white/40'
+                : 'bg-border hover:bg-content-muted/50'
                 }`}
               aria-label={`Go to testimonial ${index + 1}`}
             />

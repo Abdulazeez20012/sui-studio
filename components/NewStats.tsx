@@ -48,17 +48,17 @@ const NewStats: React.FC = () => {
   ];
 
   return (
-    <section className="py-20 px-6 relative overflow-hidden bg-neo-bg">
+    <section className="py-20 px-6 relative overflow-hidden bg-transparent">
       {/* Background */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000010_1px,transparent_1px),linear-gradient(to_bottom,#00000010_1px,transparent_1px)] bg-[size:20px_20px]" />
+
 
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Header */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-black mb-4 text-neo-black uppercase tracking-tighter font-display">
+          <h2 className="text-4xl md:text-5xl font-black mb-4 text-content uppercase tracking-tighter font-display">
             Built for Performance
           </h2>
-          <p className="text-neo-black text-lg font-medium font-sans">
+          <p className="text-content-muted text-lg font-medium font-sans">
             Industry-leading features that set Sui Studio apart
           </p>
         </div>
@@ -68,27 +68,27 @@ const NewStats: React.FC = () => {
           {stats.map((stat, index) => (
             <div
               key={index}
-              className="group relative bg-neo-white border-3 border-neo-black rounded-none p-6 hover:shadow-neo-lg hover:-translate-y-1 transition-all duration-200"
+              className="group relative bg-panel border-3 border-border rounded-none p-6 hover:shadow-lg dark:hover:shadow-neo-lg hover:-translate-y-1 transition-all duration-200 shadow-sm"
             >
               {/* Icon */}
-              <div className={`inline-flex p-3 bg-neo-bg border-2 border-neo-black mb-4 group-hover:scale-110 transition-transform shadow-neo-sm`}>
-                <div className="text-neo-black">
+              <div className={`inline-flex p-3 bg-surface border-2 border-border mb-4 group-hover:scale-110 transition-transform shadow-sm dark:shadow-neo-sm`}>
+                <div className="text-content-muted group-hover:text-content transition-colors">
                   {stat.icon}
                 </div>
               </div>
 
               {/* Value */}
-              <div className="text-3xl font-black text-neo-black mb-1 font-display">
+              <div className="text-3xl font-black text-content mb-1 font-display">
                 {stat.value}
               </div>
 
               {/* Label */}
-              <div className="text-sm font-bold text-neo-black mb-2 uppercase font-heading">
+              <div className="text-sm font-bold text-content-muted mb-2 uppercase font-heading">
                 {stat.label}
               </div>
 
               {/* Description */}
-              <div className="text-xs text-neo-black font-medium font-sans">
+              <div className="text-xs text-content-muted font-medium font-sans">
                 {stat.description}
               </div>
             </div>

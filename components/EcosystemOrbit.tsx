@@ -33,10 +33,9 @@ const EcosystemOrbit: React.FC = () => {
   const outerRadius = 360;
 
   return (
-    <Section className="py-32 overflow-hidden relative bg-[#000000]" id="ecosystem-orbit">
+    <Section className="py-32 overflow-hidden relative bg-transparent" id="ecosystem-orbit">
       {/* Background Elements - Subtle Gradient */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#1a1f35] via-[#000000] to-[#000000] opacity-40" />
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03]" />
+
 
       <div className="text-center mb-24 relative z-10">
         <motion.h2

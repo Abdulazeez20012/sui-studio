@@ -3,26 +3,60 @@
 @tailwind utilities;
 
 @layer base {
-  * {
-    @apply border-dark-border;
+  :root {
+    /* Premium Light Mode (Default/Fallback) */
+    --bg-main: #FAFAFA;
+    /* Zinc 50 */
+    --bg-panel: #FFFFFF;
+    /* White */
+    --bg-card: rgba(255, 255, 255, 0.8);
+    --border-main: #E4E4E7;
+    /* Zinc 200 */
+    --text-main: #18181B;
+    /* Zinc 900 */
+    --text-muted: #71717A;
+    /* Zinc 500 */
+    --accent-primary: #3B82F6;
+    /* Blue 500 */
   }
-  
+
+  .dark {
+    /* Premium Dark Mode (Walrus/Sui Studio) */
+    --bg-main: #050505;
+    /* Black */
+    --bg-panel: #0A0A0A;
+    /* Gray 950 */
+    --bg-card: rgba(255, 255, 255, 0.05);
+    --border-main: #262626;
+    /* Neutral 800 */
+    --text-main: #FFFFFF;
+    /* White */
+    --text-muted: #A1A1AA;
+    /* Zinc 400 */
+    --accent-primary: #00E0FF;
+    /* Cyan */
+  }
+
+  * {
+    @apply border-border;
+  }
+
   body {
-    @apply bg-dark-bg text-white;
+    @apply bg-surface text-content antialiased transition-colors duration-300;
   }
 }
 
 @layer utilities {
   .scrollbar-thin::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-track {
-    @apply bg-dark-surface;
+    @apply bg-transparent;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-slate-600 rounded hover:bg-slate-500;
+    @apply bg-slate-300 dark:bg-slate-700 rounded-full hover:bg-slate-400 dark:hover:bg-slate-600 transition-colors;
   }
 }
