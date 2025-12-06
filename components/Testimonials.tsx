@@ -1,9 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Star, Quote, MessageCircle, User, Lock, Palette, Zap as ZapIcon, Globe } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { StaggerContainer, FoldInOut, ScaleReveal, FadeUp } from '../src/lib/animations';
+import { motion, AnimatePresence } from 'framer-motion';
+import { StaggerContainer, FoldInOut, FadeUp } from '../src/lib/animations';
 
 const Testimonials: React.FC = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % 6); // 6 is length of testimonials
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
   const testimonials = [
     {
       name: 'Alex Chen',
@@ -55,9 +63,9 @@ const Testimonials: React.FC = () => {
       <div className="absolute inset-0 grid-bg opacity-10 dark:opacity-20" />
       <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-purple-100/50 dark:bg-walrus-purple/5 rounded-full blur-[150px]" />
 
-      <div className="max-w-7xl mx-auto relative z-10">
+      <div className="max-w-4xl mx-auto relative z-10">
         {/* Header */}
-        <div className="text-center mb-20">
+        <div className="text-center mb-16">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -83,50 +91,69 @@ const Testimonials: React.FC = () => {
           </motion.h2>
         </div>
 
-        {/* Testimonials Grid */}
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          variants={StaggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-        >
-          {testimonials.map((testimonial, index) => (
+        {/* Carousel Container */}
+        <div className="relative min-h-[300px] flex items-center justify-center">
+          <AnimatePresence mode="wait">
             <motion.div
-              key={index}
-              variants={ScaleReveal}
-              className="group relative glass-card-hover p-8 rounded-xl"
+              key={currentIndex}
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -100 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+              className="w-full"
             >
-              {/* Quote Icon */}
-              <div className="absolute top-6 right-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                <Quote className="w-12 h-12 text-walrus-cyan" />
-              </div>
-
-              {/* Rating */}
-              <div className="flex gap-1 mb-4">
-                {[...Array(testimonial.rating)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-sui-cyan text-sui-cyan" />
-                ))}
-              </div>
-
-              {/* Content */}
-              <p className="text-slate-300 leading-relaxed mb-6 relative z-10 font-sans">
-                "{testimonial.content}"
-              </p>
-
-              {/* Author */}
-              <div className="flex items-center gap-3 relative z-10">
-                <div className="w-12 h-12 rounded-full glass-card flex items-center justify-center text-2xl border border-sui-cyan/30 text-sui-cyan">
-                  {testimonial.avatar}
+              <div className="group relative glass-card p-8 md:p-12 rounded-2xl border border-white/5 bg-walrus-dark-800/40 backdrop-blur-xl">
+                {/* Quote Icon */}
+                <div className="absolute top-8 right-8 opacity-10">
+                  <Quote className="w-16 h-16 text-walrus-cyan" />
                 </div>
-                <div>
-                  <div className="font-bold text-sui-cyan font-heading">{testimonial.name}</div>
-                  <div className="text-sm text-slate-400 font-sans">{testimonial.role}</div>
+
+                <div className="flex flex-col md:flex-row gap-8 items-center">
+                  {/* Left: Avatar & Info */}
+                  <div className="flex flex-col items-center md:items-start gap-4 shrink-0 text-center md:text-left">
+                    <div className="w-20 h-20 rounded-full glass-card flex items-center justify-center text-3xl border border-sui-cyan/30 text-sui-cyan shadow-[0_0_30px_-10px_rgba(0,224,255,0.3)]">
+                      {testimonials[currentIndex].avatar}
+                    </div>
+                    <div>
+                      <div className="font-bold text-xl text-sui-cyan font-heading">{testimonials[currentIndex].name}</div>
+                      <div className="text-sm text-slate-400 font-sans">{testimonials[currentIndex].role}</div>
+
+                      {/* Rating */}
+                      <div className="flex gap-1 mt-2 justify-center md:justify-start">
+                        {[...Array(testimonials[currentIndex].rating)].map((_, i) => (
+                          <Star key={i} className="w-4 h-4 fill-sui-cyan text-sui-cyan" />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Content */}
+                  <div className="flex-1">
+                    <p className="text-lg md:text-xl text-slate-200 leading-relaxed font-sans italic text-center md:text-left">
+                      "{testimonials[currentIndex].content}"
+                    </p>
+                  </div>
                 </div>
               </div>
             </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Carousel Indicators */}
+        <div className="flex justify-center gap-2 mt-8">
+          {testimonials.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentIndex(index)}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${index === currentIndex
+                ? 'w-8 bg-sui-cyan shadow-[0_0_10px_rgba(0,224,255,0.5)]'
+                : 'bg-white/20 hover:bg-white/40'
+                }`}
+              aria-label={`Go to testimonial ${index + 1}`}
+            />
           ))}
-        </motion.div>
+        </div>
+
       </div>
     </section>
   );

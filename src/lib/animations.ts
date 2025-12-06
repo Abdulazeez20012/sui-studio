@@ -60,20 +60,29 @@ export const ScaleReveal: Variants = {
 
 // Slide In Directional
 export const SlideInFromLeft: Variants = {
-    hidden: { x: -50, opacity: 0 },
+    hidden: { x: -100, opacity: 0 },
     visible: {
         x: 0,
         opacity: 1,
-        transition: { type: "spring", damping: 25, stiffness: 100 }
+        transition: { type: "spring", damping: 20, stiffness: 100 }
     }
 };
 
 export const SlideInFromRight: Variants = {
-    hidden: { x: 50, opacity: 0 },
+    hidden: { x: 100, opacity: 0 },
     visible: {
         x: 0,
         opacity: 1,
-        transition: { type: "spring", damping: 25, stiffness: 100 }
+        transition: { type: "spring", damping: 20, stiffness: 100 }
+    }
+};
+
+export const SlideInFromBottom: Variants = {
+    hidden: { y: 100, opacity: 0 },
+    visible: {
+        y: 0,
+        opacity: 1,
+        transition: { type: "spring", damping: 20, stiffness: 100 }
     }
 };
 

@@ -43,6 +43,7 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        heading: ['Inter', 'system-ui', 'sans-serif'], // Unify heading font with sans for professional look
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
         tech: ['Rajdhani', 'sans-serif'],
       },

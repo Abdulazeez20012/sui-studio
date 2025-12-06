@@ -74,17 +74,16 @@ const Hero: React.FC = () => {
   return (
     <Section className="pt-32 pb-20 min-h-[110vh] flex items-center justify-center overflow-hidden relative perspective-[2000px]" id="hero">
       {/* Abstract Background Layer */}
-      <div className="absolute inset-0 pointer-events-none select-none overflow-hidden bg-[#0B0F14]">
-        {/* Slush-style Gradient Orbs */}
-        <motion.div
-          style={{ y: y1, opacity }}
-          className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[80vw] h-[60vh] bg-[conic-gradient(from_0deg_at_50%_50%,_#3CB9FF_0deg,_#6366F1_120deg,_#A855F7_240deg,_#3CB9FF_360deg)] opacity-20 blur-[120px] rounded-full mix-blend-screen animate-spin-slower"
-        />
-        <div className="absolute top-[20%] right-[-10%] w-[500px] h-[500px] bg-sui-cyan/10 rounded-full blur-[100px] animate-pulse-slow" />
+      {/* Abstract Background Layer - Apple Style Clean */}
+      <div className="absolute inset-0 pointer-events-none select-none overflow-hidden bg-[#000000]">
+        {/* Subtle top spotlight */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[120vw] h-[800px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-800/20 via-[#0B0F14] to-[#000000] opacity-60" />
 
-        {/* Grid Overlay with Radial Mask */}
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.02]" />
-        <div className="absolute inset-0 grid-bg opacity-40" style={{ maskImage: 'radial-gradient(circle at center, black 30%, transparent 80%)' }} />
+        {/* Very subtle ambient glow */}
+        <div className="absolute top-[20%] left-[20%] w-[600px] h-[600px] bg-sui-cyan/5 rounded-full blur-[120px]" />
+
+        {/* Noise overlay for texture */}
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03]" />
       </div>
 
       <div
@@ -115,14 +114,14 @@ const Hero: React.FC = () => {
 
         {/* Main Headlines */}
         <motion.h1
-          initial={{ opacity: 0, y: 30, filter: 'blur(10px)' }}
+          initial={{ opacity: 0, y: 40, filter: 'blur(10px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 0.8, delay: 0.1 }}
-          className="font-heading font-bold text-5xl md:text-7xl lg:text-8xl tracking-tight text-white mb-6 leading-[1.1] max-w-5xl"
+          transition={{ duration: 0.8, delay: 0.1, ease: [0.2, 0.65, 0.3, 0.9] }}
+          className="font-sans font-medium text-6xl md:text-8xl lg:text-9xl tracking-tighter text-white mb-8 leading-[0.95] max-w-6xl mx-auto"
         >
-          The Unified Development <br className="hidden md:block" />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-sui-cyan to-sui-indigo">
-            Platform for Sui
+          The Unified <br className="hidden md:block" />
+          <span className="text-white drop-shadow-2xl">
+            Development Platform
           </span>
         </motion.h1>
 
@@ -142,19 +141,17 @@ const Hero: React.FC = () => {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="flex flex-col sm:flex-row items-center gap-4 mb-20"
         >
-          <Button
-            size="lg"
-            variant="primary"
-            className="group min-w-[180px] shadow-[0_0_30px_-5px_rgba(60,185,255,0.3)]"
+          <button
+            className="group min-w-[200px] px-8 py-4 rounded-full bg-white text-black font-semibold text-lg hover:bg-gray-100 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:scale-105 flex items-center justify-center gap-2"
             onClick={handleStartBuilding}
           >
-            {isAuthenticated ? 'Open IDE' : 'Start Building Free'}
-            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Button>
-          <Button size="lg" variant="outline" className="group min-w-[160px] border-white/10 hover:bg-white/5">
-            <Play className="w-4 h-4 mr-2 fill-current" />
-            View Demo
-          </Button>
+            {isAuthenticated ? 'Open IDE' : 'Start Building'}
+            <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </button>
+          <button className="group min-w-[180px] px-8 py-4 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-white font-medium text-lg hover:bg-white/20 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2">
+            <Play className="w-5 h-5 fill-white" />
+            Watch Demo
+          </button>
         </motion.div>
 
         {/* Floating IDE Mockup */}
@@ -173,7 +170,7 @@ const Hero: React.FC = () => {
           {/* Glow Behind Mockup */}
           <div className="absolute inset-0 bg-gradient-to-t from-sui-cyan/20 via-sui-indigo/10 to-transparent blur-3xl -z-10 transform translate-y-10 opacity-60" />
 
-          <div className="rounded-xl overflow-hidden border border-white/10 bg-[#0e1217]/80 backdrop-blur-xl shadow-[0_0_80px_-20px_rgba(0,0,0,0.5)] ring-1 ring-white/5">
+          <div className="rounded-2xl overflow-hidden border border-white/10 bg-[#0e1217] shadow-2xl shadow-black/50 ring-1 ring-white/5">
             {/* Window Header */}
             <div className="h-10 bg-[#161b22]/90 flex items-center justify-between px-4 border-b border-white/5">
               <div className="flex gap-2">

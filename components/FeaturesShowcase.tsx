@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Video, Code, Maximize2, Zap, Shield, Users,
-  Layers, Terminal, Rocket, FileCheck, Monitor, Mic, Sparkles
+  Layers, Terminal, Rocket, FileCheck, Monitor, Mic
 } from 'lucide-react';
-import { StaggerContainer, ScaleReveal, FadeUp, FoldInOut } from '../src/lib/animations';
+import { StaggerContainer, ScaleReveal, FadeUp } from '../src/lib/animations';
 
 const FeaturesShowcase: React.FC = () => {
   const [activeTab, setActiveTab] = useState('development');
@@ -12,157 +12,124 @@ const FeaturesShowcase: React.FC = () => {
   const categories = {
     development: {
       label: 'Development',
-      icon: Code,
-      color: 'walrus-cyan',
       features: [
         {
-          icon: <Code className="w-8 h-8" />,
+          icon: Code,
           title: 'Move Language Support',
           description: 'Full syntax highlighting, auto-completion, and intelligent code analysis for Sui Move.',
         },
         {
-          icon: <Terminal className="w-8 h-8" />,
+          icon: Terminal,
           title: 'Integrated Terminal',
           description: 'Full-featured terminal with Sui CLI integration. Run commands without leaving the IDE.',
         },
         {
-          icon: <FileCheck className="w-8 h-8" />,
-          title: 'Advanced Error Reporting',
+          icon: FileCheck,
+          title: 'Advanced Diagnostic',
           description: 'Detailed compilation errors with context, file locations, and quick fixes.',
-          badge: 'NEW',
+          badge: 'New',
         },
         {
-          icon: <Rocket className="w-8 h-8" />,
+          icon: Rocket,
           title: 'Gas Optimization',
           description: 'Real-time gas analysis and optimization suggestions to reduce transaction costs.',
-        },
-        {
-          icon: <Layers className="w-8 h-8" />,
-          title: 'Smart Templates',
-          description: 'Pre-built templates for NFTs, DeFi, Gaming, and more. Start coding in seconds.',
-        },
-        {
-          icon: <Maximize2 className="w-8 h-8" />,
-          title: 'Resizable Panels',
-          description: 'Fully customizable workspace. Drag to resize any panel and save your perfect layout.',
-          badge: 'NEW',
         },
       ],
     },
     collaboration: {
       label: 'Collaboration',
-      icon: Users,
-      color: 'walrus-purple',
       features: [
         {
-          icon: <Video className="w-8 h-8" />,
-          title: 'Real-Time Video Collaboration',
-          description: 'HD video calls with screen sharing. Pair program with your team using WebRTC technology.',
-          badge: 'NEW',
+          icon: Video,
+          title: 'HD Video Calls',
+          description: 'Crystal clear video calls with screen sharing. Pair program with your team using WebRTC.',
+          badge: 'Beta',
         },
         {
-          icon: <Users className="w-8 h-8" />,
-          title: 'Live Collaboration',
+          icon: Users,
+          title: 'Live Cursors',
           description: 'Real-time cursor tracking, code sharing, and collaborative editing with your team.',
         },
         {
-          icon: <Monitor className="w-8 h-8" />,
+          icon: Monitor,
           title: 'Screen Sharing',
           description: 'Share your screen during video calls for better collaboration and code reviews.',
         },
         {
-          icon: <Mic className="w-8 h-8" />,
-          title: 'Voice Communication',
-          description: 'Crystal-clear voice chat with echo cancellation and noise suppression.',
+          icon: Mic,
+          title: 'Voice Chat',
+          description: 'Low-latency voice communication with echo cancellation and noise suppression.',
         },
       ],
     },
     deployment: {
       label: 'Deployment',
-      icon: Zap,
-      color: 'walrus-pink',
       features: [
         {
-          icon: <Zap className="w-8 h-8" />,
-          title: 'One-Click Deployment',
+          icon: Zap,
+          title: 'One-Click Deploy',
           description: 'Deploy to Sui mainnet, testnet, or devnet with a single click. No CLI required.',
         },
         {
-          icon: <Shield className="w-8 h-8" />,
-          title: 'Built-in Wallet',
+          icon: Shield,
+          title: 'Smart Wallet',
           description: 'Integrated Sui wallet for testing and deployment. Manage assets directly in the IDE.',
         },
       ],
     },
   };
 
-  const CategoryIcon = categories[activeTab as keyof typeof categories].icon;
-
   return (
-    <section className="py-32 px-6 relative overflow-hidden bg-gray-50 dark:bg-transparent transition-colors duration-300">
-      {/* Background Effects */}
-      <div className="absolute inset-0 grid-bg opacity-10 dark:opacity-30" />
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-sui-cyan/10 dark:bg-walrus-cyan/5 rounded-full blur-[150px]" />
+    <section className="py-32 px-4 relative overflow-hidden bg-[#000000]">
+      {/* Subtle Background */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-slate-900/20 via-[#000000] to-[#000000]" />
 
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Section Header */}
-        <div className="text-center mb-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="inline-block mb-4"
-          >
-            <span className="walrus-badge text-walrus-cyan">
-              <Sparkles className="w-4 h-4" />
-              POWERFUL FEATURES
-            </span>
-          </motion.div>
+        <div className="text-center mb-20">
           <motion.h2
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            variants={FoldInOut}
-            className="text-5xl md:text-6xl font-bold mb-6 font-heading"
+            variants={FadeUp}
+            className="text-5xl md:text-7xl font-medium mb-6 tracking-tighter text-white"
           >
-            <span className="text-white">Everything you need to</span>{' '}
-            <span className="bg-gradient-to-r from-[#4DA8FF] via-[#6FB6FF] to-[#00D4FF] bg-clip-text text-transparent">ship.</span>
+            Everything you need. <br />
+            <span className="text-slate-500">Nothing you don't.</span>
           </motion.h2>
           <motion.p
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={FadeUp}
-            className="text-xl text-slate-400 max-w-2xl mx-auto"
+            className="text-xl text-slate-400 max-w-2xl mx-auto font-light"
           >
             A complete suite of tools designed for the next generation of Move developers.
           </motion.p>
         </div>
 
-        {/* Tab Navigation */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="flex flex-wrap justify-center gap-4 mb-16"
-        >
-          {Object.entries(categories).map(([key, category]) => {
-            const Icon = category.icon;
-            return (
+        {/* Apple-style Segmented Control */}
+        <div className="flex justify-center mb-20">
+          <div className="p-1 bg-white/5 rounded-full border border-white/5 inline-flex backdrop-blur-md">
+            {Object.entries(categories).map(([key, category]) => (
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
-                className={`relative px-8 py-4 font-semibold transition-all duration-300 flex items-center gap-3 rounded-lg ${activeTab === key
-                  ? 'glass-card-hover border-white/20 shadow-glow'
-                  : 'glass-card hover:border-white/15'
+                className={`relative px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${activeTab === key ? 'text-black' : 'text-slate-400 hover:text-white'
                   }`}
               >
-                <Icon className="w-5 h-5" />
-                {category.label}
+                {activeTab === key && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 bg-white rounded-full shadow-[0_0_15px_rgba(255,255,255,0.3)]"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+                <span className="relative z-10">{category.label}</span>
               </button>
-            );
-          })}
-        </motion.div>
+            ))}
+          </div>
+        </div>
 
         {/* Features Grid */}
         <AnimatePresence mode="wait">
@@ -172,37 +139,40 @@ const FeaturesShowcase: React.FC = () => {
             animate="visible"
             exit="hidden"
             variants={StaggerContainer}
-            className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 max-w-5xl mx-auto"
           >
-            {categories[activeTab as keyof typeof categories].features.map((feature, index) => (
-              <motion.div
-                key={index}
-                variants={ScaleReveal}
-                className="group relative p-8 glass-card-hover rounded-xl"
-              >
-                {/* Badge */}
-                {feature.badge && (
-                  <div className="absolute top-4 right-4">
-                    <span className="px-3 py-1 bg-walrus-cyan/20 border border-walrus-cyan/30 text-walrus-cyan text-xs font-bold rounded-full">
-                      {feature.badge}
-                    </span>
+            {categories[activeTab as keyof typeof categories].features.map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <motion.div
+                  key={index}
+                  variants={ScaleReveal}
+                  className="group relative p-8 rounded-3xl bg-[#0B0F14] border border-white/5 hover:border-white/10 transition-colors duration-500 overflow-hidden"
+                >
+                  {/* Hover Glow */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                  {/* Icon */}
+                  <div className="mb-6 w-12 h-12 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300">
+                    <Icon className="w-6 h-6" />
                   </div>
-                )}
 
-                {/* Icon */}
-                <div className="inline-flex p-4 glass-card mb-6 group-hover:scale-110 transition-transform duration-300 rounded-lg text-sui-cyan border border-sui-cyan/20 group-hover:border-sui-cyan/40 group-hover:shadow-[0_0_20px_rgba(77,168,255,0.3)]">
-                  {feature.icon}
-                </div>
+                  {/* Badge */}
+                  {feature.badge && (
+                    <div className="absolute top-8 right-8 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-bold border border-blue-500/20">
+                      {feature.badge}
+                    </div>
+                  )}
 
-                {/* Content */}
-                <h3 className="text-xl font-bold mb-3 font-heading bg-gradient-to-r from-white to-sui-cyan bg-clip-text text-transparent">
-                  {feature.title}
-                </h3>
-                <p className="text-slate-400 leading-relaxed font-sans">
-                  {feature.description}
-                </p>
-              </motion.div>
-            ))}
+                  <h3 className="text-xl font-medium text-white mb-3">
+                    {feature.title}
+                  </h3>
+                  <p className="text-slate-400 leading-relaxed font-light">
+                    {feature.description}
+                  </p>
+                </motion.div>
+              );
+            })}
           </motion.div>
         </AnimatePresence>
       </div>

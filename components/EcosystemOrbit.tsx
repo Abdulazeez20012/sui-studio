@@ -1,195 +1,152 @@
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import Section from './ui/Section';
 import { motion } from 'framer-motion';
 
 // Real Web3 Brands & Logos
 const NODES = [
-  { name: 'Sui', logo: 'https://assets.coingecko.com/coins/images/26375/standard/sui_asset.jpeg', type: 'L1' },
-  { name: 'Ethereum', logo: 'https://assets.coingecko.com/coins/images/279/standard/ethereum.png', type: 'L1' },
-  { name: 'Solana', logo: 'https://assets.coingecko.com/coins/images/4128/standard/solana.png', type: 'L1' },
-  { name: 'USDC', logo: 'https://assets.coingecko.com/coins/images/6319/standard/usdc.png', type: 'Stablecoin' },
-  { name: 'Tether', logo: 'https://assets.coingecko.com/coins/images/325/standard/Tether.png', type: 'Stablecoin' },
-  { name: 'Cetus', logo: 'https://assets.coingecko.com/coins/images/30169/standard/cetus.png', type: 'DEX' },
-  { name: 'Turbos', logo: 'https://assets.coingecko.com/coins/images/30473/standard/turbos.png', type: 'DEX' },
-  { name: 'Scallop', logo: 'https://assets.coingecko.com/coins/images/30474/standard/scallop.png', type: 'Lending' },
-  { name: 'Navi', logo: 'https://assets.coingecko.com/coins/images/34346/standard/navi.png', type: 'Lending' },
-  { name: 'Aftermath', logo: 'https://pbs.twimg.com/profile_images/1649134956763480064/W-r5q7m__400x400.jpg', type: 'DeFi' }, // Fallback if not on CG
-  { name: 'Typus', logo: 'https://pbs.twimg.com/profile_images/1656834372983160833/2W0s0d0O_400x400.jpg', type: 'DeFi' },
-  { name: 'Kriya', logo: 'https://assets.coingecko.com/coins/images/29678/standard/kriya.png', type: 'DEX' },
-  { name: 'Bucket', logo: 'https://pbs.twimg.com/profile_images/1666060098907144193/6X6z6Z6__400x400.jpg', type: 'Protocol' },
-  { name: 'Bluefin', logo: 'https://pbs.twimg.com/profile_images/1709972322587394048/8X8z8Z8__400x400.jpg', type: 'Exchange' },
-  { name: 'Pyth', logo: 'https://assets.coingecko.com/coins/images/31924/standard/pyth.png', type: 'Oracle' },
+  // Inner Ring (Core DeFi)
+  { name: 'Cetus', logo: 'https://assets.coingecko.com/coins/images/30169/standard/cetus.png', type: 'DEX', layer: 'inner', angle: 0 },
+  { name: 'Navi', logo: 'https://assets.coingecko.com/coins/images/34346/standard/navi.png', type: 'Lending', layer: 'inner', angle: 120 },
+  { name: 'Scallop', logo: 'https://assets.coingecko.com/coins/images/30474/standard/scallop.png', type: 'Lending', layer: 'inner', angle: 240 },
+
+  // Middle Ring (L1s & Stablecoins)
+  { name: 'USDC', logo: 'https://assets.coingecko.com/coins/images/6319/standard/usdc.png', type: 'Stablecoin', layer: 'middle', angle: 45 },
+  { name: 'Solana', logo: 'https://assets.coingecko.com/coins/images/4128/standard/solana.png', type: 'L1', layer: 'middle', angle: 135 },
+  { name: 'Ethereum', logo: 'https://assets.coingecko.com/coins/images/279/standard/ethereum.png', type: 'L1', layer: 'middle', angle: 225 },
+  { name: 'Pyth', logo: 'https://assets.coingecko.com/coins/images/31924/standard/pyth.png', type: 'Oracle', layer: 'middle', angle: 315 },
+
+  // Outer Ring (Infrastructure & Partners)
+  { name: 'Typus', logo: 'https://pbs.twimg.com/profile_images/1656834372983160833/2W0s0d0O_400x400.jpg', type: 'DeFi', layer: 'outer', angle: 30 },
+  { name: 'Bluefin', logo: 'https://pbs.twimg.com/profile_images/1709972322587394048/8X8z8Z8__400x400.jpg', type: 'Exchange', layer: 'outer', angle: 100 },
+  { name: 'Bucket', logo: 'https://pbs.twimg.com/profile_images/1666060098907144193/6X6z6Z6__400x400.jpg', type: 'Protocol', layer: 'outer', angle: 170 },
+  { name: 'Turbos', logo: 'https://assets.coingecko.com/coins/images/30473/standard/turbos.png', type: 'DEX', layer: 'outer', angle: 240 },
+  { name: 'Aftermath', logo: 'https://pbs.twimg.com/profile_images/1649134956763480064/W-r5q7m__400x400.jpg', type: 'DeFi', layer: 'outer', angle: 310 },
 ];
 
 const EcosystemOrbit: React.FC = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const [projectNodes, setProjectNodes] = useState<any[]>([]);
-  const rotationRef = useRef({ x: 0.2, y: 0 });
-  const requestRef = useRef<number>(0);
 
-  // Configuration
-  const RADIUS = 320; // Slightly larger
-  const PERSPECTIVE = 1000;
-
-  // Initialize Nodes with Spherical Coordinates (Fibonacci Sphere)
-  useEffect(() => {
-    const newNodes = NODES.map((node, i) => {
-      const phi = Math.acos(-1 + (2 * i) / NODES.length);
-      const theta = Math.sqrt(NODES.length * Math.PI) * phi;
-
-      return {
-        ...node,
-        baseX: RADIUS * Math.cos(theta) * Math.sin(phi),
-        baseY: RADIUS * Math.sin(theta) * Math.sin(phi),
-        baseZ: RADIUS * Math.cos(phi),
-        x: 0, y: 0, z: 0, scale: 1, opacity: 1, zIndex: 1
-      };
-    });
-    setProjectNodes(newNodes);
-  }, []);
-
-  // Animation Loop
-  useEffect(() => {
-    const animate = () => {
-      if (!isHovered) {
-        rotationRef.current.y += 0.0015; // Smooth continuous rotation
-        rotationRef.current.x = Math.sin(Date.now() * 0.0005) * 0.1 + 0.2; // Gentle wobble
-      }
-
-      // Rotation Matrix Values
-      const rx = rotationRef.current.x;
-      const ry = rotationRef.current.y;
-      const cosY = Math.cos(ry);
-      const sinY = Math.sin(ry);
-      const cosX = Math.cos(rx);
-      const sinX = Math.sin(rx);
-
-      // Update React Node Positions
-      setProjectNodes(prevNodes => prevNodes.map(node => {
-        // Rotate
-        let x1 = node.baseX * cosY - node.baseZ * sinY;
-        let z1 = node.baseZ * cosY + node.baseX * sinY;
-        let y1 = node.baseY * cosX - z1 * sinX;
-        let z2 = z1 * cosX + node.baseY * sinX;
-
-        // Project
-        const scale = PERSPECTIVE / (PERSPECTIVE + z2);
-
-        return {
-          ...node,
-          x: x1 * scale,
-          y: y1 * scale,
-          z: z2,
-          scale: scale,
-          opacity: (z2 + RADIUS) / (2 * RADIUS),
-          zIndex: Math.floor(scale * 100)
-        };
-      }));
-
-      requestRef.current = requestAnimationFrame(animate);
-    };
-
-    requestRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(requestRef.current);
-  }, [isHovered]);
+  // Orbit Configuration
+  const innerRadius = 160;
+  const middleRadius = 260;
+  const outerRadius = 360;
 
   return (
-    <Section className="py-32 overflow-hidden relative bg-[#0B0F14]" id="ecosystem-orbit">
-      {/* Background Elements - Subtle Grid */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:60px_60px] opacity-20" />
+    <Section className="py-32 overflow-hidden relative bg-[#000000]" id="ecosystem-orbit">
+      {/* Background Elements - Subtle Gradient */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#1a1f35] via-[#000000] to-[#000000] opacity-40" />
+      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03]" />
 
-      {/* Ambient Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-sui-cyan/5 rounded-full blur-[100px] pointer-events-none" />
-
-      <div className="text-center mb-20 relative z-10">
+      <div className="text-center mb-24 relative z-10">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="font-heading font-black text-4xl md:text-6xl mb-6 text-white tracking-tight"
+          className="font-sans font-medium text-5xl md:text-7xl mb-6 text-white tracking-tighter"
         >
-          Global <span className="text-transparent bg-clip-text bg-gradient-to-r from-sui-cyan to-blue-600">Ecosystem</span>
+          Global <span className="text-[#3B82F6]">Ecosystem</span>
         </motion.h2>
         <motion.p
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
-          className="text-gray-400 font-medium max-w-2xl mx-auto text-xl"
+          className="text-slate-400 font-light max-w-2xl mx-auto text-xl"
         >
           Join the fastest growing network of DeFi, Gaming, and Infrastructure.
         </motion.p>
       </div>
 
-      {/* 3D Scene Container */}
+      {/* Orbit Container */}
       <div
-        ref={containerRef}
-        className="relative h-[600px] w-full flex items-center justify-center perspective-1000"
+        className="relative h-[800px] w-full flex items-center justify-center overflow-visible"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Orbital Rings - Pure CSS for cleanliness */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/5 rounded-full animate-[spin_60s_linear_infinite]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] border border-white/5 rounded-full animate-[spin_40s_linear_infinite_reverse]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] border border-white/10 rounded-full animate-[spin_20s_linear_infinite]" />
 
-        {/* Central SUI Hub */}
-        <div className="absolute z-20 w-32 h-32 rounded-full bg-[#0B0F14] border-2 border-sui-cyan/30 flex items-center justify-center shadow-[0_0_50px_rgba(60,185,255,0.2)]">
-          <div className="absolute inset-0 bg-sui-cyan/10 rounded-full animate-pulse" />
-          <div className="flex flex-col items-center justify-center z-10">
-            <img
-              src="https://assets.coingecko.com/coins/images/26375/standard/sui_asset.jpeg"
-              alt="Sui Logo"
-              className="w-16 h-16 rounded-full object-cover"
-            />
+        {/* Central Hub */}
+        <div className="absolute z-20 w-32 h-32 rounded-full bg-[#000000] border border-white/10 flex items-center justify-center shadow-[0_0_80px_rgba(59,130,246,0.15)]">
+          <div className="absolute inset-0 bg-blue-500/10 rounded-full animate-pulse-slow" />
+          <div className="relative z-10 w-20 h-20 rounded-full flex items-center justify-center bg-gradient-to-br from-white to-slate-300 p-0.5 shadow-xl">
+            <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
+              <img
+                src="https://assets.coingecko.com/coins/images/26375/standard/sui_asset.jpeg"
+                alt="Sui"
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Project Nodes */}
-        <div className="relative w-0 h-0 preserve-3d">
-          {projectNodes.map((node, idx) => (
-            <div
-              key={idx}
-              className="absolute top-0 left-0 flex flex-col items-center justify-center cursor-pointer group will-change-transform"
-              style={{
-                transform: `translate3d(${node.x}px, ${node.y}px, 0) scale(${node.scale})`,
-                opacity: Math.max(0.3, node.opacity),
-                zIndex: node.zIndex,
-              }}
-            >
-              <div className="relative transition-transform duration-300 group-hover:scale-125">
-                {/* Icon Circle */}
-                <div
-                  className="w-14 h-14 rounded-full bg-[#1A1F26] border border-white/10 flex items-center justify-center shadow-lg overflow-hidden relative"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <img
-                    src={node.logo}
-                    alt={node.name}
-                    className="w-full h-full object-cover p-2"
-                    onError={(e) => {
-                      // Fallback if image fails
-                      (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/1A1F26/FFF?text=' + node.name[0];
-                    }}
-                  />
-                </div>
+        {/* Orbit Rings */}
 
-                {/* Label Tooltip */}
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50 translate-y-2 group-hover:translate-y-0">
-                  <div className="px-4 py-2 bg-[#1A1F26]/90 backdrop-blur-md border border-white/10 rounded-xl text-center whitespace-nowrap shadow-xl">
-                    <div className="text-sm font-bold text-white">{node.name}</div>
-                    <div className="text-[10px] text-sui-cyan font-bold uppercase tracking-wider">{node.type}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
+        {/* Inner Ring */}
+        <div className="absolute border border-white/5 rounded-full" style={{ width: innerRadius * 2, height: innerRadius * 2 }} />
+        <div
+          className={`absolute w-full h-full flex items-center justify-center animate-[spin_40s_linear_infinite] ${isHovered ? '[animation-play-state:paused]' : ''}`}
+        >
+          {NODES.filter(n => n.layer === 'inner').map((node, i) => (
+            <OrbitNode key={i} node={node} radius={innerRadius} />
           ))}
         </div>
+
+        {/* Middle Ring */}
+        <div className="absolute border border-white/5 rounded-full" style={{ width: middleRadius * 2, height: middleRadius * 2 }} />
+        <div
+          className={`absolute w-full h-full flex items-center justify-center animate-[spin_60s_linear_infinite_reverse] ${isHovered ? '[animation-play-state:paused]' : ''}`}
+        >
+          {NODES.filter(n => n.layer === 'middle').map((node, i) => (
+            <OrbitNode key={i} node={node} radius={middleRadius} reverse />
+          ))}
+        </div>
+
+        {/* Outer Ring */}
+        <div className="absolute border border-white/5 rounded-full" style={{ width: outerRadius * 2, height: outerRadius * 2 }} />
+        <div
+          className={`absolute w-full h-full flex items-center justify-center animate-[spin_80s_linear_infinite] ${isHovered ? '[animation-play-state:paused]' : ''}`}
+        >
+          {NODES.filter(n => n.layer === 'outer').map((node, i) => (
+            <OrbitNode key={i} node={node} radius={outerRadius} />
+          ))}
+        </div>
+
       </div>
     </Section>
   );
 };
+
+const OrbitNode: React.FC<{ node: any, radius: number, reverse?: boolean }> = ({ node, radius, reverse }) => {
+  return (
+    <div
+      className="absolute top-1/2 left-1/2 -ml-8 -mt-8 flex items-center justify-center group"
+      style={{
+        transform: `rotate(${node.angle}deg) translateX(${radius}px) rotate(${reverse ? node.angle : -node.angle}deg)`,
+      }}
+    >
+      {/* Node Visual */}
+      <div className="relative w-16 h-16 transition-all duration-300 group-hover:scale-110 cursor-pointer">
+        <div className="absolute inset-0 bg-[#0B0F14] rounded-full border border-white/10 shadow-lg flex items-center justify-center group-hover:border-[#3B82F6]/50 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all">
+          <img
+            src={node.logo}
+            alt={node.name}
+            className="w-10 h-10 rounded-full object-cover opacity-80 group-hover:opacity-100 transition-opacity grayscale group-hover:grayscale-0"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${node.name}&background=random&color=fff`;
+            }}
+          />
+        </div>
+
+        {/* Floating Label */}
+        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50 translate-y-2 group-hover:translate-y-0">
+          <div className="px-3 py-1.5 bg-[#1A1F26]/90 backdrop-blur-md border border-white/10 rounded-lg text-center whitespace-nowrap shadow-xl">
+            <div className="text-xs font-bold text-white">{node.name}</div>
+            <div className="text-[10px] text-slate-400">{node.type}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default EcosystemOrbit;
