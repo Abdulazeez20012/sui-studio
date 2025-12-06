@@ -101,7 +101,230 @@ router.get('/structure/:projectName', async (req: AuthRequest, res) => {
   }
 });
 
+// Create a new Move module in existing project
+const createModuleSchema = z.object({
+  projectName: z.string().min(1),
+  moduleName: z.string().min(1).max(100),
+  includeTests: z.boolean().optional().default(true),
+});
+
+router.post('/create-module', async (req: AuthRequest, res) => {
+  try {
+    const { projectName, moduleName, includeTests } = createModuleSchema.parse(req.body);
+
+    const sanitizedModule = moduleName.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+    const workspaceDir = path.join('/tmp', `sui-workspace-${req.userId}`);
+    const projectDir = path.join(workspaceDir, projectName);
+
+    // Check if project exists
+    try {
+      await fs.access(projectDir);
+    } catch {
+      return res.status(404).json({ 
+        error: 'Project not found',
+        message: `Project "${projectName}" does not exist` 
+      });
+    }
+
+    // Create module file
+    const moduleContent = generateModuleFile(projectName, sanitizedModule);
+    const modulePath = path.join(projectDir, 'sources', `${sanitizedModule}.move`);
+    await fs.writeFile(modulePath, moduleContent);
+
+    // Create test file if requested
+    let testPath = null;
+    if (includeTests) {
+      const testContent = generateTestFile(projectName, sanitizedModule);
+      testPath = path.join(projectDir, 'tests', `${sanitizedModule}_tests.move`);
+      await fs.writeFile(testPath, testContent);
+    }
+
+    res.json({
+      success: true,
+      message: `Module "${sanitizedModule}" created successfully`,
+      moduleName: sanitizedModule,
+      files: {
+        module: `sources/${sanitizedModule}.move`,
+        test: includeTests ? `tests/${sanitizedModule}_tests.move` : null,
+      },
+    });
+  } catch (error: any) {
+    console.error('Module creation error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Helper functions
+
+function generateModuleFile(projectName: string, moduleName: string): string {
+  const capitalizedModule = moduleName.charAt(0).toUpperCase() + moduleName.slice(1);
+  
+  return `module ${projectName}::${moduleName} {
+    use sui::object::{Self, UID};
+    use sui::transfer;
+    use sui::tx_context::{Self, TxContext};
+    use std::string::{Self, String};
+    use sui::event;
+
+    // ===== Structs =====
+
+    /// Main struct for ${capitalizedModule}
+    public struct ${capitalizedModule} has key, store {
+        id: UID,
+        name: String,
+        creator: address,
+        created_at: u64,
+    }
+
+    // ===== Events =====
+
+    public struct ${capitalizedModule}Created has copy, drop {
+        id: address,
+        creator: address,
+        name: String,
+    }
+
+    // ===== Public Functions =====
+
+    /// Create a new ${capitalizedModule}
+    public entry fun create(
+        name: vector<u8>,
+        ctx: &mut TxContext
+    ) {
+        let sender = tx_context::sender(ctx);
+        let obj = ${capitalizedModule} {
+            id: object::new(ctx),
+            name: string::utf8(name),
+            creator: sender,
+            created_at: tx_context::epoch(ctx),
+        };
+
+        event::emit(${capitalizedModule}Created {
+            id: object::uid_to_address(&obj.id),
+            creator: sender,
+            name: string::utf8(name),
+        });
+
+        transfer::public_transfer(obj, sender);
+    }
+
+    /// Transfer ${capitalizedModule} to another address
+    public entry fun transfer_to(
+        obj: ${capitalizedModule},
+        recipient: address,
+    ) {
+        transfer::public_transfer(obj, recipient);
+    }
+
+    /// Delete ${capitalizedModule}
+    public entry fun delete(obj: ${capitalizedModule}) {
+        let ${capitalizedModule} { id, name: _, creator: _, created_at: _ } = obj;
+        object::delete(id);
+    }
+
+    // ===== Getters =====
+
+    public fun get_name(obj: &${capitalizedModule}): String {
+        obj.name
+    }
+
+    public fun get_creator(obj: &${capitalizedModule}): address {
+        obj.creator
+    }
+
+    public fun get_created_at(obj: &${capitalizedModule}): u64 {
+        obj.created_at
+    }
+}
+`;
+}
+
+function generateTestFile(projectName: string, moduleName: string): string {
+  const capitalizedModule = moduleName.charAt(0).toUpperCase() + moduleName.slice(1);
+  
+  return `#[test_only]
+module ${projectName}::${moduleName}_tests {
+    use ${projectName}::${moduleName}::{Self, ${capitalizedModule}};
+    use sui::test_scenario;
+
+    #[test]
+    fun test_create_${moduleName}() {
+        let user = @0xA;
+        let scenario_val = test_scenario::begin(user);
+        let scenario = &mut scenario_val;
+
+        // Create ${moduleName}
+        {
+            ${moduleName}::create(b"Test ${capitalizedModule}", test_scenario::ctx(scenario));
+        };
+
+        test_scenario::next_tx(scenario, user);
+
+        // Verify ${moduleName} was created
+        {
+            let obj = test_scenario::take_from_sender<${capitalizedModule}>(scenario);
+            assert!(${moduleName}::get_creator(&obj) == user, 0);
+            test_scenario::return_to_sender(scenario, obj);
+        };
+
+        test_scenario::end(scenario_val);
+    }
+
+    #[test]
+    fun test_transfer_${moduleName}() {
+        let user = @0xA;
+        let recipient = @0xB;
+        let scenario_val = test_scenario::begin(user);
+        let scenario = &mut scenario_val;
+
+        // Create ${moduleName}
+        {
+            ${moduleName}::create(b"Test ${capitalizedModule}", test_scenario::ctx(scenario));
+        };
+
+        test_scenario::next_tx(scenario, user);
+
+        // Transfer to recipient
+        {
+            let obj = test_scenario::take_from_sender<${capitalizedModule}>(scenario);
+            ${moduleName}::transfer_to(obj, recipient);
+        };
+
+        test_scenario::next_tx(scenario, recipient);
+
+        // Verify recipient received it
+        {
+            let obj = test_scenario::take_from_sender<${capitalizedModule}>(scenario);
+            test_scenario::return_to_sender(scenario, obj);
+        };
+
+        test_scenario::end(scenario_val);
+    }
+
+    #[test]
+    fun test_delete_${moduleName}() {
+        let user = @0xA;
+        let scenario_val = test_scenario::begin(user);
+        let scenario = &mut scenario_val;
+
+        // Create ${moduleName}
+        {
+            ${moduleName}::create(b"Test ${capitalizedModule}", test_scenario::ctx(scenario));
+        };
+
+        test_scenario::next_tx(scenario, user);
+
+        // Delete ${moduleName}
+        {
+            let obj = test_scenario::take_from_sender<${capitalizedModule}>(scenario);
+            ${moduleName}::delete(obj);
+        };
+
+        test_scenario::end(scenario_val);
+    }
+}
+`;
+}
 
 function generateMoveToml(projectName: string): string {
   return `[package]

@@ -394,6 +394,15 @@ class APIService {
     return this.handleResponse(response);
   }
 
+  async createModule(projectName: string, moduleName: string, includeTests = true) {
+    const response = await fetch(`${API_URL}/api/project-init/create-module`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ projectName, moduleName, includeTests }),
+    });
+    return this.handleResponse(response);
+  }
+
   // Contract publishing (real deployment to Sui network)
   async publishContract(data: {
     code: string;
