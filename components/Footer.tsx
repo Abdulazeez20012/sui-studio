@@ -70,7 +70,7 @@ const Footer: React.FC = () => {
                <div className="md:col-span-4">
                   <div className="flex items-center gap-3 mb-6">
                      <div className="relative">
-                        />
+                        <Hexagon className="w-8 h-8 text-neo-primary" />
                      </div>
                      <span className="font-display font-black text-xl text-content uppercase">Sui Studio</span>
                   </div>
