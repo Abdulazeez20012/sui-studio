@@ -22,7 +22,8 @@ const Header: React.FC = () => {
         bottomPanelOpen,
         rightPanelOpen,
         toggleRightPanel,
-        setRightPanelType
+        rightPanelType,
+        setRightPanelType,
     } = useIDEStore();
 
     const [backendConnected, setBackendConnected] = useState(false);
@@ -130,13 +131,12 @@ const Header: React.FC = () => {
 
     const handleDeploy = () => {
         if (!currentTab || !backendConnected) return;
-        if (rightPanelOpen) {
-            // If already open and not deployment, switch. If deployment, close? 
-            // User asked for specific button. Let's just open deployment panel.
-            setRightPanelType('deployment');
+
+        if (rightPanelOpen && rightPanelType === 'deployment') {
+            toggleRightPanel();
         } else {
             setRightPanelType('deployment');
-            toggleRightPanel();
+            if (!rightPanelOpen) toggleRightPanel();
         }
     };
 

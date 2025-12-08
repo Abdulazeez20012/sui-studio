@@ -3,6 +3,8 @@ import Editor from '@monaco-editor/react';
 import { useIDEStore } from '../../store/ideStore';
 import WelcomeScreen from './WelcomeScreen';
 import { registerMoveLanguage } from '../../utils/moveLanguage';
+import { collaborationService } from '../../services/collaborationService';
+import './CodeEditor.css';
 
 const CodeEditor: React.FC = () => {
   const { tabs, activeTab, updateTabContent, files } = useIDEStore();
@@ -11,12 +13,102 @@ const CodeEditor: React.FC = () => {
 
   const currentTab = tabs.find(t => t.id === activeTab);
 
+  // Track remote cursors decorations and widgets
+  const remoteCursorsRef = useRef<Map<string, { decorationIds: string[], widgetId: string | null }>>(new Map());
+
   const handleEditorDidMount = (editor: any, monaco: any) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
 
     // Register Sui Move language
     registerMoveLanguage(monaco);
+
+    // --- Real-time Collaboration Logic ---
+    const updateRemoteCursor = (userId: string, position: { line: number, column: number }, userName: string, color: string) => {
+      const existing = remoteCursorsRef.current.get(userId);
+
+      const newDecorations = [
+        {
+          range: new monaco.Range(position.line, position.column, position.line, position.column),
+          options: {
+            className: `remote-cursor remote-cursor-${userId}`,
+            hoverMessage: { value: `User: ${userName}` }
+          }
+        }
+      ];
+
+      const decorationIds = editor.deltaDecorations(existing?.decorationIds || [], newDecorations);
+
+      let widgetId = existing?.widgetId;
+
+      if (!widgetId) {
+        widgetId = `cursor.widget.${userId}`;
+        const widget = {
+          getId: () => widgetId!,
+          getDomNode: () => {
+            const domNode = document.createElement('div');
+            domNode.className = 'remote-cursor-name';
+            domNode.textContent = userName;
+            domNode.style.backgroundColor = color;
+            return domNode;
+          },
+          getPosition: () => ({
+            position: { lineNumber: position.line, column: position.column },
+            preference: [monaco.editor.ContentWidgetPositionPreference.ABOVE, monaco.editor.ContentWidgetPositionPreference.BELOW]
+          })
+        };
+        editor.addContentWidget(widget);
+      } else {
+        editor.layoutContentWidget({
+          getId: () => widgetId!,
+          getDomNode: () => { return null as any; },
+          getPosition: () => ({
+            position: { lineNumber: position.line, column: position.column },
+            preference: [monaco.editor.ContentWidgetPositionPreference.ABOVE, monaco.editor.ContentWidgetPositionPreference.BELOW]
+          })
+        });
+      }
+
+      if (!document.getElementById(`style-${userId}`)) {
+        const style = document.createElement('style');
+        style.id = `style-${userId}`;
+        style.textContent = `.remote-cursor-${userId} { border-left: 2px solid ${color}; }`;
+        document.head.appendChild(style);
+      }
+
+      remoteCursorsRef.current.set(userId, { decorationIds, widgetId });
+    };
+
+    const handleRemoteUserLeft = (msg: any) => {
+      const { userId } = msg;
+      const existing = remoteCursorsRef.current.get(userId);
+      if (existing) {
+        editor.deltaDecorations(existing.decorationIds, []);
+        if (existing.widgetId) {
+          editor.removeContentWidget({ getId: () => existing.widgetId! });
+        }
+        const style = document.getElementById(`style-${userId}`);
+        if (style) style.remove();
+        remoteCursorsRef.current.delete(userId);
+      }
+    };
+
+    collaborationService.on('cursor', (msg: any) => {
+      const color = msg.color || '#3CB9FF';
+      const name = msg.userName || msg.userId;
+      if (msg.position) {
+        updateRemoteCursor(msg.userId, msg.position, name, color);
+      }
+    });
+
+    collaborationService.on('user-left', handleRemoteUserLeft);
+
+    editor.onDidChangeCursorPosition((e: any) => {
+      collaborationService.sendCursor({
+        line: e.position.lineNumber,
+        column: e.position.column
+      });
+    });
 
     // Define custom premium dark theme
     monaco.editor.defineTheme('walrus-dark', {

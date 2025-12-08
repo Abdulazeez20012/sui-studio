@@ -1,0 +1,21 @@
+.remote-cursor {
+    position: absolute;
+    pointer-events: none;
+    width: 2px !important;
+    z-index: 100;
+    transition: all 0.1s ease-out;
+}
+
+.remote-cursor-name {
+    position: absolute;
+    font-size: 10px;
+    color: white;
+    padding: 2px 5px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 101;
+    font-weight: 600;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    font-family: 'Inter', sans-serif;
+}

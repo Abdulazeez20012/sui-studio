@@ -24,8 +24,10 @@ const Sidebar: React.FC = () => {
               onClick={() => {
                 if (item.type === 'home') {
                   if (leftPanelOpen) toggleLeftPanel();
+                  settingsLeftPanelType(null);
                   return;
                 }
+
                 if (leftPanelType === item.type && leftPanelOpen) {
                   toggleLeftPanel();
                 } else {
@@ -34,8 +36,8 @@ const Sidebar: React.FC = () => {
                 }
               }}
               className={`p-2.5 rounded-xl transition-all duration-300 relative group-hover:shadow-neon-sm ${item.type !== 'home' && leftPanelType === item.type && leftPanelOpen
-                  ? 'text-walrus-cyan bg-walrus-cyan/10 shadow-neon'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                ? 'text-walrus-cyan bg-walrus-cyan/10 shadow-neon'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
             >
               {item.icon}
