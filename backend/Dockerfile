@@ -17,11 +17,15 @@ RUN apt-get update && apt-get install -y \
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-# Install Sui CLI by compiling from source (this takes ~10 minutes)
+# Install Sui CLI by compiling from source (this takes ~10-15 minutes)
+# Using mainnet branch for stable version
 RUN cargo install --locked --git https://github.com/MystenLabs/sui.git --branch mainnet sui
 
-# Verify installation
-RUN sui --version
+# Verify Sui CLI installation
+RUN sui --version && echo "✅ Sui CLI installed successfully"
+
+# Create workspace directory for user projects
+RUN mkdir -p /app/workspaces && chmod 777 /app/workspaces
 
 # Set working directory
 WORKDIR /app

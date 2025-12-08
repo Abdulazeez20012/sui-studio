@@ -27,6 +27,7 @@
     "express-rate-limit": "^7.1.5",
     "jsonwebtoken": "^9.0.2",
     "openai": "^4.104.0",
+    "simple-git": "^3.30.0",
     "ws": "^8.16.0",
     "yjs": "^13.6.27",
     "zod": "^3.22.4"

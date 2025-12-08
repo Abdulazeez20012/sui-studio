@@ -21,6 +21,9 @@ import aiRoutes from './routes/ai';
 import extensionsRoutes from './routes/extensions';
 import terminalRoutes from './routes/terminal';
 import yjsRoutes, { setupYjsWebSocket } from './routes/yjs';
+import gitRoutes from './routes/git';
+import formatRoutes from './routes/format';
+import testRoutes from './routes/test';
 
 const app: Express = express();
 const PORT = process.env.PORT || 3001;
@@ -85,6 +88,9 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/extensions', extensionsRoutes);
 app.use('/api/terminal', terminalRoutes);
 app.use('/api/yjs', yjsRoutes);
+app.use('/api/git', gitRoutes);
+app.use('/api/format', formatRoutes);
+app.use('/api/test', testRoutes);
 
 // Error handling middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
