@@ -1,17 +1,24 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { useIDEStore } from '../../store/ideStore';
 import WelcomeScreen from './WelcomeScreen';
 import { registerMoveLanguage } from '../../utils/moveLanguage';
 import { collaborationService } from '../../services/collaborationService';
+import { useYjsCollaboration } from '../../hooks/useYjsCollaboration';
+import { CollaborationIndicator } from './CollaborationIndicator';
 import './CodeEditor.css';
 
 const CodeEditor: React.FC = () => {
   const { tabs, activeTab, updateTabContent, files } = useIDEStore();
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<any>(null);
+  const [enableYjs, setEnableYjs] = useState(false);
 
   const currentTab = tabs.find(t => t.id === activeTab);
+
+  // Yjs collaboration (optional, can be toggled)
+  const documentId = currentTab?.id || 'default';
+  const yjs = useYjsCollaboration(enableYjs ? documentId : '');
 
   // Track remote cursors decorations and widgets
   const remoteCursorsRef = useRef<Map<string, { decorationIds: string[], widgetId: string | null }>>(new Map());
@@ -164,8 +171,20 @@ const CodeEditor: React.FC = () => {
   const handleEditorChange = (value: string | undefined) => {
     if (activeTab && value !== undefined) {
       updateTabContent(activeTab, value);
+      
+      // Update Yjs document if enabled
+      if (enableYjs && yjs.connected) {
+        yjs.updateContent(value);
+      }
     }
   };
+
+  // Sync Yjs changes back to editor
+  useEffect(() => {
+    if (enableYjs && yjs.text && currentTab && yjs.text !== currentTab.content) {
+      updateTabContent(activeTab!, yjs.text);
+    }
+  }, [yjs.text, enableYjs]);
 
   if (!currentTab && files.length === 0) {
     // Return null or basic empty state - NexiHome will be shown by parent
@@ -196,6 +215,13 @@ const CodeEditor: React.FC = () => {
           className="w-[800px] h-[800px] object-contain filter grayscale brightness-150 animate-pulse-slow"
         />
       </div>
+
+      {/* Collaboration Indicator */}
+      {enableYjs && (
+        <div className="absolute top-4 right-4 z-20">
+          <CollaborationIndicator connected={yjs.connected} users={yjs.users} />
+        </div>
+      )}
 
       <div className="relative z-10 h-full">
         <Editor

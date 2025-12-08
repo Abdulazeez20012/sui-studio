@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import { createServer } from 'http';
+import { WebSocketServer } from 'ws';
 import { CollaborationServer } from './websocket/CollaborationServer';
 
 // Load environment variables
@@ -19,6 +20,7 @@ import analyticsRoutes from './routes/analytics';
 import aiRoutes from './routes/ai';
 import extensionsRoutes from './routes/extensions';
 import terminalRoutes from './routes/terminal';
+import yjsRoutes, { setupYjsWebSocket } from './routes/yjs';
 
 const app: Express = express();
 const PORT = process.env.PORT || 3001;
@@ -30,7 +32,7 @@ const server = createServer(app);
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
-  'https://sui-studio.vercel.app',
+  'https://suistudio.live',
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
@@ -38,17 +40,17 @@ app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     // Allow Vercel preview deployments (*.vercel.app)
     if (origin.endsWith('.vercel.app')) {
       return callback(null, true);
     }
-    
+
     // Check if origin is in allowed list
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    
+
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
@@ -82,11 +84,12 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/extensions', extensionsRoutes);
 app.use('/api/terminal', terminalRoutes);
+app.use('/api/yjs', yjsRoutes);
 
 // Error handling middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error('Error:', err);
-  
+
   res.status(err.status || 500).json({
     error: {
       message: err.message || 'Internal server error',
@@ -102,6 +105,17 @@ app.use((req, res) => {
 
 // Initialize WebSocket server
 const collaborationServer = new CollaborationServer(server);
+
+// Initialize Yjs WebSocket server on /yjs path
+const yjsWss = new WebSocketServer({ 
+  server, 
+  path: '/yjs',
+  verifyClient: (info) => {
+    // Allow all origins for now, add auth later if needed
+    return true;
+  }
+});
+setupYjsWebSocket(yjsWss);
 
 // WebSocket status endpoint
 app.get('/api/collaboration/room/:projectId', (req, res) => {
@@ -120,6 +134,7 @@ server.listen(PORT, () => {
   console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL}`);
   console.log(`⛓️  Sui Network: ${process.env.SUI_NETWORK}`);
   console.log(`🔌 WebSocket server ready at ws://localhost:${PORT}/ws`);
+  console.log(`📝 Yjs collaboration server ready at ws://localhost:${PORT}/yjs`);
 });
 
 export default app;

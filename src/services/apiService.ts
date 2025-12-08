@@ -155,14 +155,18 @@ class APIService {
   }
 
   // Compilation endpoints
-  async compileCode(code: string, packageName?: string) {
+  async compileCode(code: string, packageName?: string, options?: {
+    skipFetch?: boolean;
+    testMode?: boolean;
+    generateDocs?: boolean;
+  }) {
     if (!this.isConnected) {
       throw new Error('Backend disconnected. Please run start-backend.bat');
     }
     const response = await fetch(`${API_URL}/api/compile`, {
       method: 'POST',
       headers: this.getHeaders(),
-      body: JSON.stringify({ code, packageName }),
+      body: JSON.stringify({ code, packageName, options }),
     });
     return this.handleResponse(response);
   }
