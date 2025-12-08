@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import MenuBar from '../components/ide/MenuBar';
+import React, { useState, useEffect } from 'react';
+import Header from '../components/ide/Header';
 import Sidebar from '../components/ide/Sidebar';
 import LeftPanel from '../components/ide/LeftPanel';
 import RightPanel from '../components/ide/RightPanel';
@@ -7,19 +7,27 @@ import EditorTabs from '../components/ide/EditorTabs';
 import CodeEditor from '../components/ide/CodeEditor';
 import Terminal from '../components/ide/Terminal';
 import StatusBar from '../components/ide/StatusBar';
-import Toolbar from '../components/ide/Toolbar';
 import BuildStatus from '../components/ide/BuildStatus';
 import ResizeHandle from '../components/ide/ResizeHandle';
+import NexiHome from '../components/ide/NexiHome';
+import NewProjectDialog from '../components/ide/NewProjectDialog';
 import { BackendWakeUp } from '../components/BackendWakeUp';
 import { useIDEStore } from '../store/ideStore';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useResizable } from '../hooks/useResizable';
 
 const IDEPage: React.FC = () => {
-  const { leftPanelOpen, rightPanelOpen, bottomPanelOpen, toggleLeftPanel, toggleBottomPanel, toggleRightPanel, setRightPanelType, addTab } = useIDEStore();
+  const { leftPanelOpen, rightPanelOpen, bottomPanelOpen, toggleLeftPanel, toggleBottomPanel, toggleRightPanel, setRightPanelType, addTab, tabs } = useIDEStore();
   const [buildStatus, setBuildStatus] = useState<'idle' | 'building' | 'success' | 'error'>('idle');
   const [buildMessage, setBuildMessage] = useState('');
   const [backendReady, setBackendReady] = useState(false);
+  const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
+
+  useEffect(() => {
+    const handleNewProject = () => setShowNewProjectDialog(true);
+    document.addEventListener('ide:newProject', handleNewProject);
+    return () => document.removeEventListener('ide:newProject', handleNewProject);
+  }, []);
 
   // Enable keyboard shortcuts
   useKeyboardShortcuts();
@@ -49,8 +57,8 @@ const IDEPage: React.FC = () => {
     storageKey: 'ide-bottom-panel-height',
   });
 
-  // Handle menu bar events
-  React.useEffect(() => {
+  // Handle menu bar events (Moved to Header mostly, but keeping listeners if needed for shortcuts)
+  useEffect(() => {
     const handleNewFile = () => {
       const newTab = {
         id: `tab-${Date.now()}`,
@@ -65,35 +73,10 @@ const IDEPage: React.FC = () => {
 
     const handleSave = () => {
       console.log('Save triggered');
-      // Implement save logic
     };
 
-    const handleFind = () => {
-      console.log('Find triggered');
-      // Implement find logic
-    };
-
-    const handleToggleSidebar = () => {
-      toggleLeftPanel();
-    };
-
-    const handleTogglePanel = () => {
-      toggleBottomPanel();
-    };
-
-    const handleBuild = () => {
-      setBuildStatus('building');
-      setBuildMessage('Building project...');
-      setTimeout(() => {
-        setBuildStatus('success');
-        setBuildMessage('Build completed successfully');
-      }, 2000);
-    };
-
-    const handleTest = () => {
-      console.log('Test triggered');
-      // Implement test logic
-    };
+    const handleToggleSidebar = () => toggleLeftPanel();
+    const handleTogglePanel = () => toggleBottomPanel();
 
     const handleOpenExtensions = () => {
       setRightPanelType('extensions');
@@ -105,21 +88,15 @@ const IDEPage: React.FC = () => {
     document.addEventListener('ide:newFile', handleNewFile);
     document.addEventListener('ide:save', handleSave);
     document.addEventListener('ide:openExtensions', handleOpenExtensions);
-    document.addEventListener('ide:find', handleFind);
     document.addEventListener('ide:toggleSidebar', handleToggleSidebar);
     document.addEventListener('ide:togglePanel', handleTogglePanel);
-    document.addEventListener('ide:build', handleBuild);
-    document.addEventListener('ide:test', handleTest);
 
     return () => {
       document.removeEventListener('ide:newFile', handleNewFile);
       document.removeEventListener('ide:save', handleSave);
       document.removeEventListener('ide:openExtensions', handleOpenExtensions);
-      document.removeEventListener('ide:find', handleFind);
       document.removeEventListener('ide:toggleSidebar', handleToggleSidebar);
       document.removeEventListener('ide:togglePanel', handleTogglePanel);
-      document.removeEventListener('ide:build', handleBuild);
-      document.removeEventListener('ide:test', handleTest);
     };
   }, [addTab, toggleLeftPanel, toggleBottomPanel, toggleRightPanel, setRightPanelType, rightPanelOpen]);
 
@@ -128,24 +105,24 @@ const IDEPage: React.FC = () => {
       {/* Backend Wake-Up Screen */}
       {!backendReady && <BackendWakeUp onReady={() => setBackendReady(true)} />}
 
-      <div className="h-screen flex flex-col bg-walrus-dark-950 text-gray-300 overflow-hidden">
-        {/* Menu Bar */}
-        <MenuBar />
+      <div className="h-screen flex flex-col bg-walrus-dark-950 text-gray-300 overflow-hidden selection:bg-walrus-cyan/30 selection:text-walrus-cyan">
 
-        {/* Top Header Bar with Gradient */}
-        <div className="h-14 bg-walrus-dark-900 border-b border-walrus-dark-600 flex items-center justify-between px-4 relative z-30">
-          <Toolbar />
-        </div>
+        {/* New Professional Header */}
+        <Header />
 
-        <div className="flex-1 flex overflow-hidden relative">
-          {/* Left Sidebar */}
-          <Sidebar />
+        {/* Main Content Area */}
+        <div className="flex-1 flex overflow-hidden relative p-4 pt-0 gap-4">
 
-          {/* File Explorer Panel */}
+          {/* Activity Bar (Sidebar) */}
+          <div className="flex flex-col z-20 pt-2">
+            <Sidebar />
+          </div>
+
+          {/* Left Panel */}
           {leftPanelOpen && (
-            <>
+            <div className="flex flex-row overflow-hidden rounded-2xl bg-walrus-dark-900 border border-white/5 shadow-premium backdrop-blur-sm z-10 mt-2">
               <div
-                className="bg-walrus-dark-900 border-r border-walrus-dark-600 overflow-hidden flex-shrink-0"
+                className="overflow-hidden flex-shrink-0 h-full"
                 style={{ width: `${leftPanel.size}px` }}
               >
                 <LeftPanel />
@@ -155,54 +132,74 @@ const IDEPage: React.FC = () => {
                 onMouseDown={leftPanel.handleMouseDown}
                 isResizing={leftPanel.isResizing}
               />
-            </>
+            </div>
           )}
 
-          {/* Main Editor Area */}
-          <div className="flex-1 flex flex-col min-w-0 bg-walrus-dark-950 relative">
-            <EditorTabs />
+          {/* Center Area (Editor + Terminal) */}
+          <div className="flex-1 flex flex-col min-w-0 rounded-2xl overflow-hidden bg-walrus-dark-900/50 border border-white/5 shadow-2xl relative mt-2">
 
-            <div className="flex-1 overflow-hidden relative">
-              <CodeEditor />
+            {/* Editor Area */}
+            <div className="flex-1 flex flex-col min-h-0 relative">
+              <EditorTabs />
+              <div className="flex-1 overflow-hidden relative bg-walrus-dark-950/50">
+                {/* Show NexiHome if no tabs are open, overlay CodeEditor if tabs exist */}
+                <div className="absolute inset-0 z-0">
+                  <NexiHome />
+                </div>
+                <div
+                  className="absolute inset-0 z-10 transition-all duration-300 bg-walrus-dark-950"
+                  style={{
+                    opacity: tabs.length > 0 ? 1 : 0,
+                    pointerEvents: tabs.length > 0 ? 'auto' : 'none'
+                  }}
+                >
+                  <CodeEditor />
+                </div>
+              </div>
             </div>
 
-            {/* Bottom Panel (Terminal/Tests) */}
+            {/* Bottom Panel (Terminal) */}
             {bottomPanelOpen && (
-              <>
+              <div className="flex flex-col border-t border-white/5 bg-walrus-dark-900/90 backdrop-blur-xl">
                 <ResizeHandle
                   direction="vertical"
                   onMouseDown={bottomPanel.handleMouseDown}
                   isResizing={bottomPanel.isResizing}
                 />
                 <div
-                  className="border-t border-walrus-dark-600 bg-walrus-dark-900 overflow-hidden flex-shrink-0"
+                  className="overflow-hidden flex-shrink-0"
                   style={{ height: `${bottomPanel.size}px` }}
                 >
                   <Terminal />
                 </div>
-              </>
+              </div>
             )}
           </div>
 
           {/* Right Panel */}
           {rightPanelOpen && (
-            <>
+            <div className="flex flex-row overflow-hidden rounded-2xl bg-walrus-dark-900 border border-white/5 shadow-premium backdrop-blur-sm z-10 mt-2">
               <ResizeHandle
                 direction="horizontal"
                 onMouseDown={rightPanel.handleMouseDown}
                 isResizing={rightPanel.isResizing}
               />
               <div
-                className="border-l border-walrus-dark-600 bg-walrus-dark-900 overflow-hidden flex-shrink-0"
+                className="overflow-hidden flex-shrink-0 h-full"
                 style={{ width: `${rightPanel.size}px` }}
               >
                 <RightPanel />
               </div>
-            </>
+            </div>
           )}
         </div>
 
-        <StatusBar />
+        {/* Status Bar */}
+        <div className="px-2 pb-1">
+          <div className="rounded-lg overflow-hidden border border-white/5 bg-walrus-dark-900/80 backdrop-blur">
+            <StatusBar />
+          </div>
+        </div>
 
         {/* Build Status Toast */}
         <BuildStatus
@@ -210,6 +207,11 @@ const IDEPage: React.FC = () => {
           message={buildMessage}
           onClose={() => setBuildStatus('idle')}
         />
+
+        {/* New Project Dialog */}
+        {showNewProjectDialog && (
+          <NewProjectDialog onClose={() => setShowNewProjectDialog(false)} />
+        )}
       </div>
     </>
   );

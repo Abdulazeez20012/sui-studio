@@ -42,10 +42,6 @@ const Hero: React.FC = () => {
     y.set(0);
   };
 
-  // IDE Animation State
-  const [isCompiling, setIsCompiling] = useState(false);
-  const [compileSuccess, setCompileSuccess] = useState(false);
-
   const handleStartBuilding = () => {
     if (isAuthenticated) {
       navigate('/ide');
@@ -59,24 +55,8 @@ const Hero: React.FC = () => {
     navigate('/ide');
   };
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setIsCompiling(true);
-      setTimeout(() => {
-        setIsCompiling(false);
-        setCompileSuccess(true);
-        setTimeout(() => setCompileSuccess(false), 2000);
-      }, 1500);
-    }, 8000);
-    return () => clearInterval(timer);
-  }, []);
-
   return (
     <section className="pt-32 pb-32 min-h-[110vh] flex items-center justify-center overflow-hidden relative perspective-[2000px] w-full" id="hero">
-      {/* Abstract Background Layer */}
-      {/* Abstract Background Layer - Apple Style Clean */}
-
-
       <div
         ref={containerRef}
         onMouseMove={handleMouseMove}
@@ -158,104 +138,11 @@ const Hero: React.FC = () => {
           transition={{ duration: 1.2, delay: 0.2, type: "spring", bounce: 0.2 }}
           className="relative w-full max-w-5xl z-20"
         >
-          {/* Glow Behind Mockup */}
-          <div className="absolute inset-0 bg-gradient-to-t from-sui-cyan/20 via-sui-indigo/10 to-transparent blur-3xl -z-10 transform translate-y-10 opacity-60" />
+          {/* Glow Behind Mockup - Intensified */}
+          <div className="absolute inset-0 bg-gradient-to-t from-sui-cyan/30 via-sui-indigo/20 to-transparent blur-3xl -z-10 transform translate-y-10 opacity-70" />
 
-          <div className="rounded-2xl overflow-hidden border border-white/10 bg-[#0e1217] shadow-2xl shadow-black/50 ring-1 ring-white/5">
-            {/* Window Header */}
-            <div className="h-10 bg-[#161b22]/90 flex items-center justify-between px-4 border-b border-white/5">
-              <div className="flex gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#FF5F56] border border-black/10" />
-                <div className="w-3 h-3 rounded-full bg-[#FFBD2E] border border-black/10" />
-                <div className="w-3 h-3 rounded-full bg-[#27C93F] border border-black/10" />
-              </div>
-              <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-black/20 border border-white/5 text-xs text-slate-400 font-mono">
-                <Terminal className="w-3 h-3" />
-                <span>defi_protocol::amm</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className={`flex items-center gap-1.5 text-[10px] font-medium transition-colors ${isCompiling ? 'text-yellow-400' : compileSuccess ? 'text-green-400' : 'text-slate-500'}`}>
-                  {isCompiling ? (
-                    <>
-                      <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
-                      Compiling...
-                    </>
-                  ) : compileSuccess ? (
-                    <>
-                      <CheckCircle2 className="w-3 h-3" />
-                      Ready
-                    </>
-                  ) : (
-                    <>
-                      <div className="w-1.5 h-1.5 rounded-full bg-slate-600" />
-                      Idle
-                    </>
-                  )}
-                </div>
-                <Copy className="w-3.5 h-3.5 text-slate-600 hover:text-white cursor-pointer transition-colors" />
-              </div>
-            </div>
+          <InteractiveIDEMock />
 
-            {/* Code Content */}
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_300px]">
-              <div className="p-6 md:p-8 bg-[#0B0F14]/50 font-mono text-sm leading-7 overflow-x-auto text-left">
-                <div className="flex"><span className="w-8 text-slate-700 select-none">1</span><span className="text-purple-400">module</span> <span className="text-white">defi::amm_pool</span> <span className="text-slate-500">{'{'}</span></div>
-                <div className="flex"><span className="w-8 text-slate-700 select-none">2</span><span className="text-purple-400 ml-4">use</span> <span className="text-sui-cyan">sui::object</span><span className="text-slate-500">::{'{'}</span><span className="text-yellow-200">UID</span><span className="text-slate-500">{'}'};</span></div>
-                <div className="flex"><span className="w-8 text-slate-700 select-none">3</span><span className="text-purple-400 ml-4">use</span> <span className="text-sui-cyan">sui::coin</span><span className="text-slate-500">::{'{'}</span><span className="text-yellow-200">Coin</span><span className="text-slate-500">{'}'};</span></div>
-                <div className="flex"><span className="w-8 text-slate-700 select-none">4</span></div>
-                <div className="flex"><span className="w-8 text-slate-700 select-none">5</span><span className="text-slate-500 ml-4">/// The liquidity pool struct tracking reserves</span></div>
-                <div className="flex"><span className="w-8 text-slate-700 select-none">6</span><span className="text-purple-400 ml-4">public struct</span> <span className="text-yellow-200">Pool</span><span className="text-slate-300">&lt;</span><span className="text-orange-300">phantom</span> <span className="text-white">A</span>, <span className="text-orange-300">phantom</span> <span className="text-white">B</span><span className="text-slate-300">&gt;</span> <span className="text-purple-400">has</span> <span className="text-white">key</span> <span className="text-slate-500">{'{'}</span></div>
-                <div className="flex"><span className="w-8 text-slate-700 select-none">7</span><span className="text-white ml-8">id</span><span className="text-slate-500">:</span> <span className="text-yellow-200">UID</span><span className="text-slate-500">,</span></div>
-                <div className="flex"><span className="w-8 text-slate-700 select-none">8</span><span className="text-white ml-8">reserve_a</span><span className="text-slate-500">:</span> <span className="text-yellow-200">Coin</span><span className="text-slate-300">&lt;</span><span className="text-white">A</span><span className="text-slate-300">&gt;</span><span className="text-slate-500">,</span></div>
-                <div className="flex"><span className="w-8 text-slate-700 select-none">9</span><span className="text-white ml-8">reserve_b</span><span className="text-slate-500">:</span> <span className="text-yellow-200">Coin</span><span className="text-slate-300">&lt;</span><span className="text-white">B</span><span className="text-slate-300">&gt;</span><span className="text-slate-500">,</span></div>
-                <div className="flex"><span className="w-8 text-slate-700 select-none">10</span><span className="text-slate-500 ml-4">{'}'}</span></div>
-                <div className="flex"><span className="w-8 text-slate-700 select-none">11</span></div>
-                <div className="flex relative">
-                  <span className="w-8 text-slate-700 select-none">12</span>
-                  <span className="text-purple-400 ml-4">fun</span> <span className="text-blue-400">init</span><span className="text-slate-300">(ctx: &</span><span className="text-purple-400">mut</span> <span className="text-yellow-200">TxContext</span><span className="text-slate-300">)</span> <span className="text-slate-500">{'{'}</span>
-                  {/* Cursor */}
-                  <motion.div
-                    animate={{ opacity: [1, 0, 1] }}
-                    transition={{ duration: 0.8, repeat: Infinity }}
-                    className="absolute left-[280px] top-1 w-2 h-5 bg-sui-cyan"
-                  />
-                </div>
-              </div>
-
-              {/* Context Panel (Desktop) */}
-              <div className="hidden md:flex flex-col border-l border-white/5 bg-[#12171D]/50 p-4">
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-4">Environment</div>
-
-                <div className="space-y-3">
-                  <div className="p-3 rounded bg-white/5 border border-white/5">
-                    <div className="flex justify-between text-xs text-slate-300 mb-1">
-                      <span>Gas Budget</span>
-                      <span className="text-sui-cyan">0.01 SUI</span>
-                    </div>
-                    <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full w-[30%] bg-sui-cyan rounded-full" />
-                    </div>
-                  </div>
-
-                  <div className="p-3 rounded bg-white/5 border border-white/5">
-                    <div className="flex items-center gap-2 text-xs text-slate-300 mb-2">
-                      <div className={`w-2 h-2 rounded-full ${compileSuccess ? 'bg-green-500' : 'bg-slate-500'}`} />
-                      <span>Mainnet Fork</span>
-                    </div>
-                    <div className="text-[10px] font-mono text-slate-500 truncate">
-                      block_892910...a2c
-                    </div>
-                  </div>
-
-                  <div className="mt-auto pt-4">
-                    <Button size="sm" className="w-full text-xs py-2 bg-sui-cyan/10 text-sui-cyan border border-sui-cyan/20 hover:bg-sui-cyan hover:text-black">
-                      <Play className="w-3 h-3 mr-2" /> Deploy
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </motion.div>
       </div>
 
@@ -266,6 +153,157 @@ const Hero: React.FC = () => {
         onSuccess={handleAuthSuccess}
       />
     </section>
+  );
+};
+
+// Interactive Sub-Component to keep Hero clean
+const InteractiveIDEMock = () => {
+  const [code, setCode] = useState('');
+  const [deployState, setDeployState] = useState<'idle' | 'signing' | 'deploying' | 'success'>('idle');
+  const [gas, setGas] = useState(0.01);
+
+  const fullCode = `module defi::amm_pool {
+  use sui::object::{UID};
+  use sui::coin::{Coin};
+
+  /// The liquidity pool struct tracking reserves
+  public struct Pool<phantom A, phantom B> has key {
+    id: UID,
+    reserve_a: Coin<A>,
+    reserve_b: Coin<B>,
+  }
+
+  fun init(ctx: &mut TxContext) {
+    // Initialize AMM Pool
+  }
+}`;
+
+  // Typing Effect
+  useEffect(() => {
+    let i = 0;
+    const timer = setInterval(() => {
+      setCode(fullCode.slice(0, i));
+      i++;
+      if (i > fullCode.length) clearInterval(timer);
+    }, 30); // Speed of typing
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleDeploy = () => {
+    if (deployState !== 'idle') return;
+    setDeployState('signing');
+    setTimeout(() => setDeployState('deploying'), 1500);
+    setTimeout(() => setDeployState('success'), 4500);
+    setTimeout(() => setDeployState('idle'), 8000);
+  };
+
+  return (
+    <div className="rounded-2xl overflow-hidden border border-white/10 bg-[#0B0F14]/90 backdrop-blur-xl shadow-2xl shadow-black/50 ring-1 ring-white/5 font-mono text-sm leading-6 text-left">
+      {/* Window Header */}
+      <div className="h-10 bg-[#151a21] flex items-center justify-between px-4 border-b border-white/5 select-none">
+        <div className="flex gap-2">
+          <div className="w-3 h-3 rounded-full bg-[#FF5F56] border border-black/10 hover:brightness-110 transition-all cursor-pointer" />
+          <div className="w-3 h-3 rounded-full bg-[#FFBD2E] border border-black/10 hover:brightness-110 transition-all cursor-pointer" />
+          <div className="w-3 h-3 rounded-full bg-[#27C93F] border border-black/10 hover:brightness-110 transition-all cursor-pointer" />
+        </div>
+        <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-black/40 border border-white/5 text-xs text-slate-400 font-mono shadow-inner">
+          <Terminal className="w-3 h-3 text-sui-cyan" />
+          <span>defi_protocol::amm</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className={`flex items-center gap-1.5 text-[10px] font-medium transition-colors ${deployState === 'success' ? 'text-green-400' :
+              deployState === 'idle' ? 'text-slate-500' : 'text-sui-cyan'
+            }`}>
+            <div className={`w-1.5 h-1.5 rounded-full ${deployState === 'success' ? 'bg-green-500' :
+                deployState === 'idle' ? 'bg-slate-600' : 'bg-sui-cyan animate-pulse'
+              }`} />
+            {deployState === 'idle' ? 'Idle' :
+              deployState === 'signing' ? 'Signing...' :
+                deployState === 'deploying' ? 'Deploying...' : 'Live'}
+          </div>
+        </div>
+      </div>
+
+      {/* Code Content & Panel */}
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] h-[340px]">
+        {/* Editor Area */}
+        <div className="p-6 bg-[#0B0F14]/80 overflow-auto custom-scrollbar relative">
+          <pre className="font-mono text-sm leading-6">
+            <code dangerouslySetInnerHTML={{
+              __html: code
+                .replace(/module|use|public|struct|has|fun/g, '<span class="text-purple-400">$&</span>')
+                .replace(/sui::object|sui::coin|UID|Coin|TxContext|Pool/g, '<span class="text-yellow-200">$&</span>')
+                .replace(/phantom|u64|address/g, '<span class="text-orange-300">$&</span>')
+                .replace(/\/\/.*/g, '<span class="text-slate-500">$&</span>')
+                .replace(/init/g, '<span class="text-blue-400">$&</span>')
+            }} />
+            <motion.span
+              animate={{ opacity: [1, 0] }}
+              transition={{ duration: 0.8, repeat: Infinity }}
+              className="inline-block w-2.5 h-4 bg-sui-cyan ml-1 align-middle"
+            />
+          </pre>
+        </div>
+
+        {/* Right Panel - Environment */}
+        <div className="hidden md:flex flex-col border-l border-white/5 bg-[#12171D]/90 p-5 backdrop-blur-md">
+          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-6 flex items-center gap-2">
+            <Star className="w-3 h-3 text-sui-cyan" />
+            Environment
+          </div>
+
+          <div className="space-y-4">
+            {/* Gas Slider */}
+            <div className="p-4 rounded-xl bg-black/20 border border-white/5 space-y-3 group hover:border-white/10 transition-colors">
+              <div className="flex justify-between text-xs text-slate-400">
+                <span>Gas Budget</span>
+                <span className="text-sui-cyan font-mono">{gas} SUI</span>
+              </div>
+              <input
+                type="range"
+                min="0.001"
+                max="0.1"
+                step="0.001"
+                value={gas}
+                onChange={(e) => setGas(parseFloat(e.target.value))}
+                className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-sui-cyan"
+              />
+            </div>
+
+            {/* Network Status */}
+            <div className="p-4 rounded-xl bg-black/20 border border-white/5 space-y-2 group hover:border-white/10 transition-colors">
+              <div className="flex items-center gap-2 text-xs text-slate-300">
+                <div className="relative">
+                  <div className="w-2 h-2 rounded-full bg-green-500" />
+                  <div className="absolute inset-0 w-2 h-2 rounded-full bg-green-500 animate-ping opacity-75" />
+                </div>
+                <span>Mainnet Fork</span>
+              </div>
+              <div className="text-[10px] font-mono text-slate-500 truncate bg-black/40 p-1.5 rounded border border-white/5">
+                {deployState === 'success' ? 'tx_928...3f1 (Confirmed)' : 'block_892910...a2c'}
+              </div>
+            </div>
+
+            {/* Deploy Button */}
+            <div className="mt-auto pt-6">
+              <button
+                onClick={handleDeploy}
+                disabled={deployState !== 'idle'}
+                className={`w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 ${deployState === 'success' ? 'bg-green-500/20 text-green-400 border border-green-500/50' :
+                    deployState !== 'idle' ? 'bg-sui-cyan/10 text-sui-cyan border border-sui-cyan/30 cursor-wait' :
+                      'bg-sui-cyan text-black hover:bg-sui-blue transform hover:-translate-y-1 shadow-lg shadow-sui-cyan/20'
+                  }`}
+              >
+                {deployState === 'idle' && <><Play className="w-3 h-3 fill-current" /> Deploy Module</>}
+                {deployState === 'signing' && <span className="animate-pulse">Signing...</span>}
+                {deployState === 'deploying' && <span className="animate-pulse">Deploying...</span>}
+                {deployState === 'success' && <><CheckCircle2 className="w-3 h-3" /> Deployed</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

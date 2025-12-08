@@ -76,7 +76,8 @@ const CodeEditor: React.FC = () => {
   };
 
   if (!currentTab && files.length === 0) {
-    return <WelcomeScreen />;
+    // Return null or basic empty state - NexiHome will be shown by parent
+    return null;
   }
 
   if (!currentTab) {
@@ -91,16 +92,16 @@ const CodeEditor: React.FC = () => {
   }
 
   return (
-    <div className="h-full bg-walrus-dark-950 relative group">
+    <div className="h-full bg-walrus-dark-950/80 backdrop-blur-xl relative group rounded-2xl overflow-hidden border border-white/5 shadow-2xl">
       {/* Subtle Watermark */}
       <div
         className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0 overflow-hidden"
-        style={{ opacity: 0.02 }}
+        style={{ opacity: 0.03 }}
       >
         <img
-          src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763580906/sui-sui-logo_gmux9g.png"
+          src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1765140543/Logo_-_Cloud-removebg-preview_obkvso.png"
           alt="Sui Logo"
-          className="w-[800px] h-[800px] object-contain filter grayscale brightness-150"
+          className="w-[800px] h-[800px] object-contain filter grayscale brightness-150 animate-pulse-slow"
         />
       </div>
 

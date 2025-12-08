@@ -257,7 +257,7 @@ const Toolbar: React.FC = () => {
           >
             <div className="w-8 h-8 bg-walrus-cyan/10 rounded-lg flex items-center justify-center p-1 border border-walrus-cyan/30 group-hover:border-walrus-cyan group-hover:shadow-neon transition-all">
               <img
-                src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763580906/sui-sui-logo_gmux9g.png"
+                src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1765140543/Logo_-_Cloud-removebg-preview_obkvso.png"
                 alt="Sui Logo"
                 className="w-full h-full object-contain"
               />
@@ -276,8 +276,8 @@ const Toolbar: React.FC = () => {
           {/* Backend Status Indicator */}
           <div
             className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-bold uppercase tracking-wider transition-all ${backendConnected
-                ? 'bg-green-500/10 border-green-500/30 text-green-500'
-                : 'bg-red-500/10 border-red-500/30 text-red-500'
+              ? 'bg-green-500/10 border-green-500/30 text-green-500'
+              : 'bg-red-500/10 border-red-500/30 text-red-500'
               }`}
             title={backendConnected ? "Backend Connected" : "Backend Disconnected - Run start-backend.bat"}
           >

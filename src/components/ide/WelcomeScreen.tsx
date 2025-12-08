@@ -38,10 +38,10 @@ const WelcomeScreen: React.FC = () => {
       const file = files[i];
       const path = file.webkitRelativePath || file.name;
       const parts = path.split('/');
-      
+
       // Read file content
       const content = await file.text();
-      
+
       // Determine language based on extension
       const extension = file.name.split('.').pop()?.toLowerCase();
       const languageMap: Record<string, string> = {
@@ -118,7 +118,7 @@ const WelcomeScreen: React.FC = () => {
     try {
       // Simulate cloning (in production, this would call a backend API)
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // For demo, load a template
       loadTemplate('helloWorld');
       setShowCloneDialog(false);
@@ -138,14 +138,14 @@ const WelcomeScreen: React.FC = () => {
           {/* Sui Logo */}
           <div className="inline-flex items-center justify-center w-24 h-24 bg-sui-cyan/10 rounded-2xl mb-6 border-2 border-sui-cyan/30 shadow-neon-lg relative group">
             <div className="absolute inset-0 bg-gradient-neon opacity-0 group-hover:opacity-20 rounded-2xl transition-opacity"></div>
-            <img 
-              src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763580906/sui-sui-logo_gmux9g.png"
+            <img
+              src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1765140543/Logo_-_Cloud-removebg-preview_obkvso.png"
               alt="Sui Logo"
               className="w-16 h-16 object-contain"
             />
           </div>
-          <h1 
-            className="text-6xl font-black text-white mb-3 tracking-wide uppercase" 
+          <h1
+            className="text-6xl font-black text-white mb-3 tracking-wide uppercase"
             style={{ fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.1em' }}
           >
             WELCOME TO SUI STUDIO
@@ -205,7 +205,7 @@ const WelcomeScreen: React.FC = () => {
         </div>
 
         <div className="flex items-center justify-center gap-4 mb-8">
-          <button 
+          <button
             onClick={() => setShowNewProjectDialog(true)}
             className="flex items-center gap-2 px-6 py-3 bg-gradient-neon hover:shadow-neon-lg text-black rounded-lg transition-all font-bold uppercase text-sm tracking-wider"
             style={{ fontFamily: "'Rajdhani', sans-serif" }}
@@ -213,7 +213,7 @@ const WelcomeScreen: React.FC = () => {
             <Plus size={20} />
             <span>New Project</span>
           </button>
-          <button 
+          <button
             onClick={handleOpenFolder}
             className="flex items-center gap-2 px-6 py-3 bg-dark-panel border border-sui-cyan/30 rounded-lg hover:border-sui-cyan hover:shadow-neon transition-all text-slate-300 hover:text-sui-cyan font-bold uppercase text-sm tracking-wider"
             style={{ fontFamily: "'Rajdhani', sans-serif" }}
@@ -221,7 +221,7 @@ const WelcomeScreen: React.FC = () => {
             <Folder size={20} />
             <span>Open Folder</span>
           </button>
-          <button 
+          <button
             onClick={() => setShowCloneDialog(true)}
             className="flex items-center gap-2 px-6 py-3 bg-dark-panel border border-sui-cyan/30 rounded-lg hover:border-sui-cyan hover:shadow-neon transition-all text-slate-300 hover:text-sui-cyan font-bold uppercase text-sm tracking-wider"
             style={{ fontFamily: "'Rajdhani', sans-serif" }}

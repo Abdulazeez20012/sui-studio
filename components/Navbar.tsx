@@ -124,7 +124,7 @@ const Navbar: React.FC = () => {
           <div className="flex items-center gap-3 shrink-0 cursor-pointer">
             <div className="relative group">
               <img
-                src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763580906/sui-sui-logo_gmux9g.png"
+                src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1765140543/Logo_-_Cloud-removebg-preview_obkvso.png"
                 alt="Sui Logo"
                 className="w-8 h-8 object-contain transition-transform group-hover:scale-110 duration-200"
               />

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Terminal as TerminalIcon, X, Plus, ChevronDown, CheckCircle, Play, Send } from 'lucide-react';
+import { Terminal as TerminalIcon, X, Plus, ChevronDown, CheckCircle, Play, Send, Trash2 } from 'lucide-react';
 import { useIDEStore } from '../../store/ideStore';
 import { apiService } from '../../services/apiService';
 
@@ -47,7 +47,7 @@ const Terminal: React.FC = () => {
 
       // Execute command via backend
       const result = await apiService.executeCommand(command);
-      
+
       if (result.success) {
         // Add output line by line
         const lines = result.output.split('\n');
@@ -111,27 +111,37 @@ const Terminal: React.FC = () => {
   };
 
   return (
-    <div className="h-full bg-dark-surface flex flex-col">
-      {/* Tab Bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-sui-cyan/20 bg-dark-header relative">
-        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-sui-cyan/30 to-transparent"></div>
-        <div className="flex items-center gap-3">
-          <div className="flex gap-1">
-            <button className="px-4 py-1.5 text-sm font-bold text-sui-cyan bg-dark-surface rounded-t border-b-2 border-sui-cyan shadow-neon font-tech tracking-wider">
-              TESTS
-            </button>
-            <button className="px-4 py-1.5 text-sm font-bold text-slate-500 hover:text-sui-cyan hover:bg-sui-cyan/5 rounded-t transition-all font-tech tracking-wider">
-              CONSOLE
-            </button>
-          </div>
+    <div className="h-full bg-walrus-dark-900/50 flex flex-col font-mono relative group">
+      {/* Tab Bar - Glass Style */}
+      <div className="flex items-center justify-between px-4 py-0 border-b border-white/5 bg-black/20 shrink-0 select-none">
+        <div className="flex items-center gap-1 pt-2">
+          <button className="px-4 py-2 text-[10px] font-bold text-walrus-cyan border-t-2 border-walrus-cyan bg-walrus-cyan/5 rounded-t-lg tracking-widest transition-all shadow-[0_-10px_20px_-10px_rgba(60,185,255,0.1)]">
+            TERMINAL
+          </button>
+          <button className="px-4 py-2 text-[10px] font-bold text-gray-500 hover:text-gray-300 hover:bg-white/5 rounded-t-lg transition-all tracking-widest border-t-2 border-transparent">
+            OUTPUT
+          </button>
+          <button className="px-4 py-2 text-[10px] font-bold text-gray-500 hover:text-gray-300 hover:bg-white/5 rounded-t-lg transition-all tracking-widest border-t-2 border-transparent">
+            PROBLEMS
+          </button>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 mb-1">
           <button
             onClick={handleNewTerminal}
-            className="p-1.5 text-slate-500 hover:text-sui-cyan hover:bg-sui-cyan/10 rounded transition-all"
+            className="p-1.5 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-all"
             title="New Terminal"
           >
-            <Plus size={16} />
+            <Plus size={14} />
+          </button>
+          <button
+            onClick={() => clearTerminal(activeTerminal!)}
+            className="p-1.5 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+            title="Clear Terminal"
+          >
+            <Trash2 size={14} />
+          </button>
+          <button className="p-1.5 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-all">
+            <ChevronDown size={14} />
           </button>
         </div>
       </div>
@@ -139,29 +149,35 @@ const Terminal: React.FC = () => {
       {/* Terminal Output */}
       <div
         ref={outputRef}
-        className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-sui-cyan/30 scrollbar-track-transparent p-4 font-mono text-sm bg-[#0a0e13]"
+        className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent p-4 text-xs font-medium leading-relaxed"
         onClick={() => inputRef.current?.focus()}
       >
         {currentTerminal?.output.length === 0 ? (
-          <div className="text-slate-500">
-            <p>Sui Studio Terminal v1.0</p>
-            <p className="mt-2">Type 'help' for available commands</p>
-            <p className="mt-1">Type 'sui move build' to build your Move package</p>
-            <p className="mt-1">Type 'sui move test' to run tests</p>
+          <div className="text-gray-600 select-none flex flex-col items-center justify-center h-full opacity-40 hover:opacity-100 transition-opacity duration-500">
+            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+              <TerminalIcon size={32} strokeWidth={1.5} />
+            </div>
+            <p className="font-tech tracking-widest text-[10px] uppercase">Sui Studio Terminal v2.0</p>
+            <p className="mt-2 text-[10px] text-gray-500">Interact with Move CLI directly from your browser</p>
           </div>
         ) : (
           <div className="space-y-1">
             {currentTerminal?.output.map((line, index) => (
-              <div 
-                key={index} 
-                className={`${
-                  line.startsWith('$') ? 'text-sui-cyan font-bold' :
-                  line.includes('Error') || line.includes('error') ? 'text-neon-pink' :
-                  line.includes('Success') || line.includes('BUILDING') ? 'text-neon-green' :
-                  'text-slate-300'
-                }`}
+              <div
+                key={index}
+                className={`${line.startsWith('$') ? 'text-walrus-cyan font-bold mt-4 mb-2 flex items-center gap-2' :
+                  line.includes('Error') || line.includes('error') || line.includes('Failed') ? 'text-red-400 bg-red-500/5 -mx-4 px-4 py-0.5 border-l-2 border-red-500/50' :
+                    line.includes('Success') || line.includes('BUILDING') ? 'text-emerald-400' :
+                      line.includes('warning') ? 'text-yellow-400' :
+                        'text-gray-400'
+                  }`}
               >
-                {line}
+                {line.startsWith('$') ? (
+                  <>
+                    <span className="text-walrus-purple opacity-70 w-3">➜</span>
+                    {line.substring(2)}
+                  </>
+                ) : line}
               </div>
             ))}
           </div>
@@ -169,8 +185,8 @@ const Terminal: React.FC = () => {
       </div>
 
       {/* Command Input */}
-      <form onSubmit={handleSubmit} className="border-t border-sui-cyan/20 px-4 py-3 bg-dark-header flex items-center gap-2">
-        <span className="text-sui-cyan font-bold">$</span>
+      <form onSubmit={handleSubmit} className="px-4 py-3 bg-black/20 border-t border-white/5 flex items-center gap-3 shrink-0 backdrop-blur-sm">
+        <span className="text-walrus-cyan font-bold select-none text-sm animate-pulse">➜</span>
         <input
           ref={inputRef}
           type="text"
@@ -179,34 +195,17 @@ const Terminal: React.FC = () => {
           onKeyDown={handleKeyDown}
           disabled={isExecuting}
           placeholder={isExecuting ? "Executing..." : "Enter command..."}
-          className="flex-1 bg-transparent text-white outline-none font-mono text-sm disabled:opacity-50"
+          className="flex-1 bg-transparent text-gray-200 outline-none text-xs font-mono placeholder-gray-700 font-medium caret-walrus-cyan"
           autoFocus
+          spellCheck={false}
         />
         {isExecuting && (
-          <div className="animate-spin h-4 w-4 border-2 border-sui-cyan border-t-transparent rounded-full" />
+          <div className="flex items-center gap-2 px-2 py-1 bg-walrus-cyan/10 rounded text-[10px] font-bold text-walrus-cyan uppercase tracking-wider">
+            <div className="animate-spin h-3 w-3 border-2 border-walrus-cyan border-t-transparent rounded-full" />
+            Running
+          </div>
         )}
       </form>
-
-      {/* Bottom Status Bar */}
-      <div className="border-t border-sui-cyan/20 px-4 py-3 bg-dark-header flex items-center justify-between relative">
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sui-cyan/30 to-transparent"></div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 text-neon-green">
-            <CheckCircle size={16} className="animate-pulse" />
-            <span className="text-sm font-bold">300/300</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-4 py-2 bg-dark-panel hover:bg-sui-cyan/10 border border-sui-cyan/30 hover:border-sui-cyan text-slate-300 hover:text-sui-cyan rounded-lg text-sm font-bold transition-all shadow-neon font-tech tracking-wider">
-            <Play size={14} />
-            <span>RUN TEST</span>
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-gradient-neon hover:shadow-neon-lg text-black rounded-lg text-sm font-bold transition-all font-tech tracking-wider">
-            <Send size={14} />
-            <span>SUBMIT</span>
-          </button>
-        </div>
-      </div>
     </div>
   );
 };

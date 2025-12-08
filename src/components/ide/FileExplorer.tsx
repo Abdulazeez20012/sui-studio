@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { 
-  ChevronRight, ChevronDown, File, Folder, FolderOpen, 
+import {
+  ChevronRight, ChevronDown, File, Folder, FolderOpen,
   Plus, Trash2, Edit2, Download, Upload, MoreVertical,
   FilePlus, FolderPlus, X, Check
 } from 'lucide-react';
@@ -16,10 +16,10 @@ interface FileTreeItemProps {
   onCreateFolder: (parentNode: FileNode) => void;
 }
 
-const FileTreeItem: React.FC<FileTreeItemProps> = ({ 
-  node, 
-  level, 
-  onRename, 
+const FileTreeItem: React.FC<FileTreeItemProps> = ({
+  node,
+  level,
+  onRename,
   onDelete,
   onCreateFile,
   onCreateFolder
@@ -33,7 +33,7 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
 
   const handleClick = () => {
     if (isRenaming) return;
-    
+
     if (node.type === 'folder') {
       setIsOpen(!isOpen);
     } else {
@@ -70,23 +70,23 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
   return (
     <div>
       <div
-        className="flex items-center gap-2 px-2 py-1.5 hover:bg-sui-cyan/5 cursor-pointer group rounded-sm transition-all duration-200 border-l-2 border-transparent hover:border-sui-cyan/50 relative"
-        style={{ paddingLeft: `${level * 16 + 8}px` }}
+        className="flex items-center gap-2 px-3 py-2 hover:bg-white/5 cursor-pointer group transition-all duration-200 border-l-2 border-transparent hover:border-walrus-cyan/50 relative"
+        style={{ paddingLeft: `${level * 12 + 12}px` }}
       >
-        <div className="flex items-center gap-2 flex-1" onClick={handleClick}>
+        <div className="flex items-center gap-2.5 flex-1 min-w-0" onClick={handleClick}>
           {node.type === 'folder' && (
-            <span className="text-slate-600 group-hover:text-sui-cyan transition-colors">
-              {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            <span className="text-gray-500 group-hover:text-white transition-colors">
+              {isOpen ? <ChevronDown size={14} strokeWidth={2.5} /> : <ChevronRight size={14} strokeWidth={2.5} />}
             </span>
           )}
-          <span className={node.type === 'folder' ? 'text-neon-purple' : 'text-slate-500 group-hover:text-sui-cyan'}>
+          <span className={node.type === 'folder' ? 'text-walrus-purple group-hover:text-walrus-purple-light transition-colors' : 'text-gray-500 group-hover:text-walrus-cyan transition-colors'}>
             {node.type === 'folder' ? (
-              isOpen ? <FolderOpen size={16} /> : <Folder size={16} />
+              isOpen ? <FolderOpen size={16} strokeWidth={2} /> : <Folder size={16} strokeWidth={2} />
             ) : (
-              <File size={16} />
+              <File size={16} strokeWidth={2} />
             )}
           </span>
-          
+
           {isRenaming ? (
             <div className="flex items-center gap-1 flex-1" onClick={(e) => e.stopPropagation()}>
               <input
@@ -102,26 +102,11 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                     setIsRenaming(false);
                   }
                 }}
-                className="flex-1 px-1 py-0.5 bg-dark-panel border border-sui-cyan/50 rounded text-xs text-white focus:outline-none focus:border-sui-cyan"
+                className="flex-1 px-1.5 py-0.5 bg-black/40 border border-walrus-cyan/50 rounded text-xs text-white focus:outline-none focus:border-walrus-cyan focus:shadow-neon-sm"
               />
-              <button
-                onClick={handleRename}
-                className="p-0.5 text-neon-green hover:bg-neon-green/10 rounded"
-              >
-                <Check size={12} />
-              </button>
-              <button
-                onClick={() => {
-                  setNewName(node.name);
-                  setIsRenaming(false);
-                }}
-                className="p-0.5 text-neon-pink hover:bg-neon-pink/10 rounded"
-              >
-                <X size={12} />
-              </button>
             </div>
           ) : (
-            <span className="text-sm text-slate-400 group-hover:text-white font-medium transition-colors">
+            <span className="text-sm text-gray-400 group-hover:text-white font-medium transition-colors truncate">
               {node.name}
             </span>
           )}
@@ -134,7 +119,7 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                 e.stopPropagation();
                 setShowMenu(!showMenu);
               }}
-              className="p-1 text-slate-500 hover:text-sui-cyan hover:bg-sui-cyan/10 rounded transition-all"
+              className="p-1 text-gray-500 hover:text-white hover:bg-white/10 rounded transition-all"
             >
               <MoreVertical size={14} />
             </button>
@@ -143,7 +128,7 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
 
         {/* Context Menu */}
         {showMenu && (
-          <div className="absolute right-2 top-8 bg-dark-surface border border-sui-cyan/30 rounded-lg shadow-neon-lg py-1 z-50 min-w-[160px]">
+          <div className="absolute right-2 top-8 bg-walrus-dark-800 border border-white/10 rounded-xl shadow-glass py-1 z-50 min-w-[160px] backdrop-blur-xl">
             {node.type === 'folder' && (
               <>
                 <button
@@ -152,7 +137,7 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                     onCreateFile(node);
                     setShowMenu(false);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-400 hover:text-sui-cyan hover:bg-sui-cyan/5 transition-all"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:text-walrus-cyan hover:bg-walrus-cyan/5 transition-all font-medium"
                 >
                   <FilePlus size={14} />
                   <span>New File</span>
@@ -163,12 +148,12 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                     onCreateFolder(node);
                     setShowMenu(false);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-400 hover:text-sui-cyan hover:bg-sui-cyan/5 transition-all"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:text-walrus-cyan hover:bg-walrus-cyan/5 transition-all font-medium"
                 >
                   <FolderPlus size={14} />
                   <span>New Folder</span>
                 </button>
-                <div className="h-px bg-sui-cyan/10 my-1" />
+                <div className="h-px bg-white/5 my-1" />
               </>
             )}
             <button
@@ -176,7 +161,7 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                 e.stopPropagation();
                 startRename();
               }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-400 hover:text-neon-purple hover:bg-neon-purple/5 transition-all"
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:text-white hover:bg-white/5 transition-all font-medium"
             >
               <Edit2 size={14} />
               <span>Rename</span>
@@ -187,7 +172,7 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                 onDelete(node);
                 setShowMenu(false);
               }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-400 hover:text-neon-pink hover:bg-neon-pink/5 transition-all"
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:text-red-400 hover:bg-red-400/5 transition-all font-medium"
             >
               <Trash2 size={14} />
               <span>Delete</span>
@@ -195,13 +180,13 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
           </div>
         )}
       </div>
-      
+
       {node.type === 'folder' && isOpen && node.children && (
-        <div>
+        <div className="border-l border-white/5 ml-[23px]">
           {node.children.map((child) => (
-            <FileTreeItem 
-              key={child.id} 
-              node={child} 
+            <FileTreeItem
+              key={child.id}
+              node={child}
               level={level + 1}
               onRename={onRename}
               onDelete={onDelete}
@@ -343,7 +328,7 @@ const FileExplorer: React.FC = () => {
         language: file.name.endsWith('.move') ? 'move' : 'plaintext'
       };
       setFiles([...files, newFile]);
-      
+
       // Open the uploaded file
       addTab({
         id: `tab-${Date.now()}`,
@@ -355,7 +340,7 @@ const FileExplorer: React.FC = () => {
       });
     };
     reader.readAsText(file);
-    
+
     // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -374,23 +359,23 @@ const FileExplorer: React.FC = () => {
   };
 
   return (
-    <div className="h-full bg-dark-surface overflow-y-auto scrollbar-thin scrollbar-thumb-sui-cyan/30 scrollbar-track-transparent">
-      <div className="p-4 border-b border-sui-cyan/10">
+    <div className="h-full bg-transparent overflow-y-auto scrollbar-thin scrollbar-thumb-sui-cyan/20 scrollbar-track-transparent">
+      <div className="p-4 border-b border-white/5 mx-2">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-bold text-sui-cyan uppercase tracking-widest font-tech">
-            FILES
+          <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest font-tech select-none">
+            EXPLORER
           </h3>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="p-1.5 text-slate-500 hover:text-neon-green hover:bg-neon-green/10 rounded transition-all"
+              className="p-1.5 text-gray-400 hover:text-neon-green hover:bg-neon-green/10 rounded-lg transition-all"
               title="Upload File"
             >
               <Upload size={14} />
             </button>
             <button
               onClick={handleDownloadAll}
-              className="p-1.5 text-slate-500 hover:text-neon-purple hover:bg-neon-purple/10 rounded transition-all"
+              className="p-1.5 text-gray-400 hover:text-neon-purple hover:bg-neon-purple/10 rounded-lg transition-all"
               title="Download Project"
             >
               <Download size={14} />
@@ -398,20 +383,20 @@ const FileExplorer: React.FC = () => {
             <div className="relative">
               <button
                 onClick={() => setShowNewMenu(!showNewMenu)}
-                className="p-1.5 text-slate-500 hover:text-sui-cyan hover:bg-sui-cyan/10 rounded transition-all"
+                className="p-1.5 text-gray-400 hover:text-sui-cyan hover:bg-sui-cyan/10 rounded-lg transition-all"
                 title="New File/Folder"
               >
                 <Plus size={14} />
               </button>
-              
+
               {showNewMenu && (
-                <div className="absolute right-0 top-8 bg-dark-surface border border-sui-cyan/30 rounded-lg shadow-neon-lg py-1 z-50 min-w-[140px]">
+                <div className="absolute right-0 top-8 bg-walrus-dark-800 border border-white/10 rounded-xl shadow-glass py-1 z-50 min-w-[140px] backdrop-blur-xl">
                   <button
                     onClick={() => {
                       handleCreateFile();
                       setShowNewMenu(false);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-400 hover:text-sui-cyan hover:bg-sui-cyan/5 transition-all"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:text-sui-cyan hover:bg-sui-cyan/5 transition-all"
                   >
                     <FilePlus size={14} />
                     <span>New File</span>
@@ -421,7 +406,7 @@ const FileExplorer: React.FC = () => {
                       handleCreateFolder();
                       setShowNewMenu(false);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-400 hover:text-sui-cyan hover:bg-sui-cyan/5 transition-all"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:text-sui-cyan hover:bg-sui-cyan/5 transition-all"
                   >
                     <FolderPlus size={14} />
                     <span>New Folder</span>
@@ -431,7 +416,7 @@ const FileExplorer: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Hidden file input */}
         <input
           ref={fileInputRef}
@@ -441,24 +426,24 @@ const FileExplorer: React.FC = () => {
           accept=".move,.toml,.json,.md,.txt"
         />
       </div>
-      
-      <div className="py-2 px-1">
+
+      <div className="py-2 px-2 group">
         {files.length === 0 ? (
-          <div className="text-center py-8 px-4">
-            <Folder size={48} className="text-slate-600 mx-auto mb-3" />
-            <p className="text-sm text-slate-500 mb-4 font-tech">No files yet</p>
+          <div className="text-center py-8 px-4 opacity-60 hover:opacity-100 transition-opacity">
+            <Folder size={40} className="text-gray-600 mx-auto mb-3" />
+            <p className="text-xs text-gray-500 mb-4 font-tech">No files yet</p>
             <button
               onClick={() => handleCreateFile()}
-              className="px-4 py-2 bg-sui-cyan/10 border border-sui-cyan/30 rounded-lg text-sui-cyan hover:bg-sui-cyan/20 transition-all text-xs font-bold uppercase tracking-wider font-tech"
+              className="px-4 py-2 bg-sui-cyan/5 border border-sui-cyan/20 rounded-lg text-sui-cyan hover:bg-sui-cyan/10 transition-all text-[10px] font-bold uppercase tracking-wider font-tech shadow-neon-sm"
             >
-              Create First File
+              Initialize Project
             </button>
           </div>
         ) : (
           files.map((node) => (
-            <FileTreeItem 
-              key={node.id} 
-              node={node} 
+            <FileTreeItem
+              key={node.id}
+              node={node}
               level={0}
               onRename={handleRename}
               onDelete={handleDelete}

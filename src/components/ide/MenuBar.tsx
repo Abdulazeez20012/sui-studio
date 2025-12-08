@@ -151,133 +151,101 @@ const MenuBar: React.FC<MenuBarProps> = ({ onMinimize, onMaximize, onClose }) =>
   };
 
   return (
-    <div className="h-9 bg-walrus-dark-950 border-b border-walrus-dark-600 flex items-center justify-between px-2 relative z-50">
+    <div className="h-10 bg-transparent flex items-center justify-between px-4 relative z-50 select-none">
       {/* Left Section - Logo & Menus */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-4">
         {/* Logo */}
-        <div className="flex items-center gap-2 px-2 mr-2">
-          <div className="w-5 h-5 bg-walrus-cyan/10 rounded flex items-center justify-center border border-walrus-cyan/30">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 bg-gradient-to-br from-walrus-cyan to-walrus-purple rounded-lg flex items-center justify-center shadow-neon-sm">
             <img
-              src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1763580906/sui-sui-logo_gmux9g.png"
-              alt="Sui"
-              className="w-3 h-3 object-contain"
+              src="https://res.cloudinary.com/dwiewdn6f/image/upload/v1765140543/Logo_-_Cloud-removebg-preview_obkvso.png"
+              alt="Sui Studio"
+              className="w-5 h-5 object-contain"
             />
           </div>
+          <span className="font-bold text-gray-200 tracking-wide font-display text-sm">Sui Studio</span>
         </div>
+
+        <div className="w-px h-4 bg-white/10 mx-2" />
 
         {/* Menu Items */}
-        {menus.map((menu) => (
-          <div key={menu.label} className="relative">
-            <button
-              onClick={() => handleMenuClick(menu.label)}
-              className={`px-3 py-1 text-xs font-medium transition-all rounded ${activeMenu === menu.label
-                  ? 'bg-walrus-cyan/10 text-walrus-cyan'
+        <div className="flex items-center">
+          {menus.map((menu) => (
+            <div key={menu.label} className="relative">
+              <button
+                onClick={() => handleMenuClick(menu.label)}
+                className={`px-3 py-1.5 text-xs font-medium transition-all rounded-lg ${activeMenu === menu.label
+                  ? 'bg-white/10 text-white'
                   : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-            >
-              {menu.label}
-            </button>
+                  }`}
+              >
+                {menu.label}
+              </button>
 
-            {/* Dropdown Menu */}
-            {activeMenu === menu.label && (
-              <>
-                {/* Backdrop */}
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setActiveMenu(null)}
-                />
-
-                {/* Menu Dropdown */}
-                <div className="absolute top-full left-0 mt-1 w-64 bg-walrus-dark-800 border border-walrus-dark-600 rounded-lg shadow-glass py-1 z-50 backdrop-blur-xl">
-                  {menu.items.map((item, index) => (
-                    item.divider ? (
-                      <div key={index} className="h-px bg-white/5 my-1" />
-                    ) : (
-                      <button
-                        key={index}
-                        onClick={() => handleMenuItemClick(item)}
-                        className="w-full flex items-center justify-between px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-all"
-                      >
-                        <span className="font-medium">{item.label}</span>
-                        {item.shortcut && (
-                          <span className="text-xs text-gray-500 font-mono">
-                            {item.shortcut}
-                          </span>
-                        )}
-                      </button>
-                    )
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        ))}
+              {/* Dropdown Menu */}
+              {activeMenu === menu.label && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setActiveMenu(null)}
+                  />
+                  <div className="absolute top-full left-0 mt-2 w-64 bg-walrus-dark-900/95 border border-white/10 rounded-xl shadow-premium py-1 z-50 backdrop-blur-xl ring-1 ring-black/50">
+                    {menu.items.map((item, index) => (
+                      item.divider ? (
+                        <div key={index} className="h-px bg-white/5 my-1 mx-2" />
+                      ) : (
+                        <button
+                          key={index}
+                          onClick={() => handleMenuItemClick(item)}
+                          className="w-full flex items-center justify-between px-4 py-2 text-xs text-gray-300 hover:text-white hover:bg-walrus-cyan/10 transition-all group"
+                        >
+                          <span className="font-medium group-hover:translate-x-1 transition-transform">{item.label}</span>
+                          {item.shortcut && (
+                            <span className="text-[10px] text-gray-600 font-mono group-hover:text-walrus-cyan/70">
+                              {item.shortcut}
+                            </span>
+                          )}
+                        </button>
+                      )
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Center Section - Navigation & Search */}
-      <div className="flex items-center gap-2 flex-1 max-w-xl mx-4">
-        {/* Navigation Arrows */}
-        <div className="flex items-center gap-1">
-          <button className="p-1 text-gray-500 hover:text-white hover:bg-white/5 rounded transition-all">
-            <ChevronLeft size={16} />
-          </button>
-          <button className="p-1 text-gray-500 hover:text-white hover:bg-white/5 rounded transition-all">
-            <ChevronRight size={16} />
-          </button>
-        </div>
-
-        {/* Search Bar */}
-        <div className={`flex-1 flex items-center gap-2 px-3 py-1 bg-walrus-dark-900 rounded-lg border transition-all ${searchFocused
-            ? 'border-walrus-cyan/50 shadow-neon'
-            : 'border-walrus-dark-600'
+      {/* Center Section - Search */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-w-md w-full px-4">
+        <div className={`flex items-center gap-2 px-3 py-1.5 bg-walrus-dark-800/50 rounded-xl border transition-all duration-300 ${searchFocused
+          ? 'border-walrus-cyan/30 shadow-neon-sm bg-walrus-dark-900'
+          : 'border-white/5 hover:border-white/10'
           }`}>
-          <Search size={14} className="text-gray-500" />
+          <Search size={14} className={`transition-colors ${searchFocused ? 'text-walrus-cyan' : 'text-gray-600'}`} />
           <input
             type="text"
-            placeholder="sui-studio"
+            placeholder="Search files, commands, symbols..."
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setSearchFocused(false)}
-            className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 outline-none font-tech"
+            className="flex-1 bg-transparent text-xs text-gray-200 placeholder-gray-600 outline-none font-medium"
           />
-          <kbd className="px-1.5 py-0.5 text-xs bg-walrus-dark-800 border border-white/10 rounded text-gray-500 font-mono">
-            Ctrl+P
+          <kbd className="px-1.5 py-0.5 text-[10px] bg-white/5 border border-white/5 rounded-md text-gray-500 font-mono">
+            ⌘P
           </kbd>
         </div>
       </div>
 
       {/* Right Section - Window Controls */}
-      <div className="flex items-center gap-1">
-        {/* Settings */}
-        <button className="p-1.5 text-gray-500 hover:text-white hover:bg-white/5 rounded transition-all">
-          <Settings size={16} />
-        </button>
-
-        {/* User */}
-        <button className="p-1.5 text-gray-500 hover:text-white hover:bg-white/5 rounded transition-all">
-          <User size={16} />
-        </button>
-
-        <div className="w-px h-4 bg-white/10 mx-1" />
-
-        {/* Window Controls */}
-        <button
-          onClick={onMinimize}
-          className="p-1.5 text-gray-500 hover:text-white hover:bg-white/10 rounded transition-all"
-        >
-          <Minimize size={14} />
-        </button>
-        <button
-          onClick={onMaximize}
-          className="p-1.5 text-gray-500 hover:text-white hover:bg-white/10 rounded transition-all"
-        >
-          <Maximize size={14} />
-        </button>
-        <button
-          onClick={onClose}
-          className="p-1.5 text-gray-500 hover:text-white hover:bg-red-500/20 rounded transition-all"
-        >
-          <CloseIcon size={14} />
-        </button>
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 opacity-60 hover:opacity-100 transition-opacity">
+          {/* Avatar / User */}
+          <button className="w-7 h-7 rounded-full bg-gradient-to-tr from-walrus-cyan to-walrus-purple p-[1px]">
+            <div className="w-full h-full rounded-full bg-walrus-dark-950 flex items-center justify-center">
+              <User size={14} className="text-gray-400" />
+            </div>
+          </button>
+        </div>
       </div>
     </div>
   );
