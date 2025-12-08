@@ -24,7 +24,7 @@ const Sidebar: React.FC = () => {
               onClick={() => {
                 if (item.type === 'home') {
                   if (leftPanelOpen) toggleLeftPanel();
-                  settingsLeftPanelType(null);
+                  setLeftPanelType(null);
                   return;
                 }
 

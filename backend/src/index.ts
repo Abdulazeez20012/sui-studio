@@ -24,6 +24,10 @@ import yjsRoutes, { setupYjsWebSocket } from './routes/yjs';
 import gitRoutes from './routes/git';
 import formatRoutes from './routes/format';
 import testRoutes from './routes/test';
+import packagesRoutes from './routes/packages';
+import debuggerRoutes from './routes/debugger';
+import designerRoutes from './routes/designer';
+import profilerRoutes from './routes/profiler';
 
 const app: Express = express();
 const PORT = process.env.PORT || 3001;
@@ -36,6 +40,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
   'https://suistudio.live',
+  'https://sui-studio.onrender.com',
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
@@ -91,6 +96,10 @@ app.use('/api/yjs', yjsRoutes);
 app.use('/api/git', gitRoutes);
 app.use('/api/format', formatRoutes);
 app.use('/api/test', testRoutes);
+app.use('/api/packages', packagesRoutes);
+app.use('/api/debugger', debuggerRoutes);
+app.use('/api/designer', designerRoutes);
+app.use('/api/profiler', profilerRoutes);
 
 // Error handling middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {

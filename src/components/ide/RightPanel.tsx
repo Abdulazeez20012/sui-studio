@@ -9,6 +9,10 @@ import StatsPanel from './StatsPanel';
 import ExtensionsMarketplace from './ExtensionsMarketplace';
 import { WalletPanel } from './WalletPanel';
 import { ContractInteractionPanel } from './ContractInteractionPanel';
+import { PackageManager } from './PackageManager';
+import { Debugger } from './Debugger';
+import { SystemDesigner } from './SystemDesigner';
+import { Profiler } from './Profiler';
 
 const RightPanel: React.FC = () => {
   const { rightPanelType } = useIDEStore();
@@ -33,6 +37,14 @@ const RightPanel: React.FC = () => {
         return <WalletPanel />;
       case 'contract':
         return <ContractInteractionPanel />;
+      case 'packages':
+        return <PackageManager />;
+      case 'debugger':
+        return <Debugger />;
+      case 'designer':
+        return <SystemDesigner />;
+      case 'profiler':
+        return <Profiler />;
       case 'docs':
         return (
           <div className="h-full bg-dark-surface p-4">
