@@ -309,16 +309,17 @@ app.on('activate', () => {
 });
 
 // Handle app updates (optional)
-if (!isDev) {
-  const { autoUpdater } = require('electron-updater');
-  
-  autoUpdater.checkForUpdatesAndNotify();
-  
-  autoUpdater.on('update-available', () => {
-    dialog.showMessageBox(mainWindow, {
-      type: 'info',
-      title: 'Update Available',
-      message: 'A new version is available. It will be downloaded in the background.',
-    });
-  });
-}
+// TODO: Enable auto-updates in future releases
+// if (!isDev) {
+//   const { autoUpdater } = require('electron-updater');
+//   
+//   autoUpdater.checkForUpdatesAndNotify();
+//   
+//   autoUpdater.on('update-available', () => {
+//     dialog.showMessageBox(mainWindow, {
+//       type: 'info',
+//       title: 'Update Available',
+//       message: 'A new version is available. It will be downloaded in the background.',
+//     });
+//   });
+// }
