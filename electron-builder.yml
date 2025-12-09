@@ -1,0 +1,133 @@
+appId: com.suistudio.ide
+productName: Sui Studio
+copyright: Copyright © 2024 Sui Studio
+
+# Directories
+directories:
+  output: dist-electron
+  buildResources: electron
+
+# Files to include
+files:
+  - dist/**/*
+  - electron/**/*
+  - package.json
+  - "!**/*.map"
+  - "!**/*.md"
+  - "!**/test/**"
+  - "!**/.git/**"
+  - "!**/node_modules/**/{CHANGELOG.md,README.md,README,readme.md,readme}"
+  - "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}"
+  - "!**/node_modules/*.d.ts"
+  - "!**/node_modules/.bin"
+  - "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}"
+  - "!.editorconfig"
+  - "!**/._*"
+  - "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}"
+  - "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}"
+  - "!**/{appveyor.yml,.travis.yml,circle.yml}"
+  - "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+
+# Compression
+compression: maximum
+asar: true
+
+# Linux configuration
+linux:
+  target:
+    - AppImage
+    - deb
+    - rpm
+  category: Development
+  icon: electron/icon.png
+  executableName: sui-studio
+  synopsis: Sui Move Development IDE
+  description: Professional IDE for Sui blockchain development with Move language support
+
+# AppImage configuration
+appImage:
+  artifactName: ${productName}-${version}.${ext}
+
+# Debian package configuration
+deb:
+  depends:
+    - gconf2
+    - gconf-service
+    - libnotify4
+    - libappindicator1
+    - libxtst6
+    - libnss3
+  artifactName: ${name}_${version}_${arch}.${ext}
+
+# RPM package configuration
+rpm:
+  depends:
+    - libXScrnSaver
+    - libappindicator
+    - libnotify
+  artifactName: ${productName}-${version}.${arch}.${ext}
+
+# Windows configuration
+win:
+  target:
+    - nsis
+    - portable
+  icon: electron/icon.png
+  artifactName: ${productName}-${version}.${ext}
+
+# NSIS installer configuration
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: Sui Studio
+  artifactName: ${productName}-setup-${version}.${ext}
+  deleteAppDataOnUninstall: false
+  installerIcon: electron/icon.png
+  uninstallerIcon: electron/icon.png
+  installerHeader: electron/icon.png
+  installerHeaderIcon: electron/icon.png
+
+# Portable configuration
+portable:
+  artifactName: ${productName}-${version}-portable.${ext}
+
+# macOS configuration
+mac:
+  target:
+    - dmg
+    - zip
+  category: public.app-category.developer-tools
+  icon: electron/icon.png
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  darkModeSupport: true
+  type: distribution
+
+# DMG configuration
+dmg:
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+  artifactName: ${productName}-${version}.${ext}
+
+# Auto-update configuration (optional)
+publish:
+  provider: github
+  owner: your-username
+  repo: sui-studio
+  releaseType: release
+
+# Snap configuration (optional)
+snap:
+  confinement: classic
+  grade: stable
+  summary: Sui Move Development IDE
+  description: |
+    A complete browser-based IDE for Sui Move development with integrated
+    compilation, deployment, and collaboration features.

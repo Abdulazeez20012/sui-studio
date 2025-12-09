@@ -1,15 +1,30 @@
 {
-  "name": "new-sui-studio",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "name": "sui-studio",
+  "productName": "Sui Studio",
+  "version": "1.0.0",
+  "description": "Professional IDE for Sui Move Development",
+  "author": {
+    "name": "Sui Studio Team",
+    "email": "team@suistudio.io"
+  },
+  "license": "MIT",
+  "main": "electron/main.js",
+  "homepage": "https://suistudio.io",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
+    "electron:build": "npm run build && electron-builder",
+    "electron:build:linux": "npm run build && electron-builder --linux",
+    "electron:build:windows": "npm run build && electron-builder --windows",
+    "electron:build:mac": "npm run build && electron-builder --mac",
+    "electron:build:all": "npm run build && electron-builder --linux --windows --mac",
+    "electron:package": "npm run build && electron-builder --dir",
+    "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -39,9 +54,15 @@
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
     "@vitest/ui": "^1.6.1",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^39.2.6",
+    "electron-builder": "^26.0.12",
+    "electron-updater": "^6.6.2",
     "jsdom": "^23.2.0",
     "typescript": "~5.8.2",
     "vite": "^6.4.1",
-    "vitest": "^1.6.1"
+    "vitest": "^1.6.1",
+    "wait-on": "^9.0.3"
   }
 }
