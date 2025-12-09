@@ -13,6 +13,7 @@ import { PackageManager } from './PackageManager';
 import { Debugger } from './Debugger';
 import { SystemDesigner } from './SystemDesigner';
 import { Profiler } from './Profiler';
+import { SecurityAudit } from './SecurityAudit';
 
 const RightPanel: React.FC = () => {
   const { rightPanelType } = useIDEStore();
@@ -45,6 +46,8 @@ const RightPanel: React.FC = () => {
         return <SystemDesigner />;
       case 'profiler':
         return <Profiler />;
+      case 'audit':
+        return <SecurityAudit />;
       case 'docs':
         return (
           <div className="h-full bg-dark-surface p-4">
