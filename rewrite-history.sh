@@ -9,9 +9,11 @@ echo ""
 
 # Create replacement file
 echo "Creating replacement patterns..."
+echo "NOTE: Edit secrets-to-remove.txt manually with your actual secrets"
+echo "Example format: old-secret==>placeholder-text"
 cat > secrets-to-remove.txt << 'EOF'
-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==>your-anthropic-api-key-here
-npg_MdO9AVl3QyUN==>your-neon-password-here
+your-actual-exposed-api-key-here==>your-anthropic-api-key-here
+your-actual-exposed-password-here==>your-neon-password-here
 EOF
 
 echo "✅ Replacement patterns created"

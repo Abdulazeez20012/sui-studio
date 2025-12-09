@@ -13,9 +13,11 @@ pause
 
 REM Create replacement file
 echo Creating replacement patterns...
+echo NOTE: Edit secrets-to-remove.txt manually with your actual secrets
+echo Example format: old-secret==^>placeholder-text
 (
-echo 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==^>your-anthropic-api-key-here
-echo npg_MdO9AVl3QyUN==^>your-neon-password-here
+echo your-actual-exposed-api-key-here==^>your-anthropic-api-key-here
+echo your-actual-exposed-password-here==^>your-neon-password-here
 ) > secrets-to-remove.txt
 
 echo Replacement patterns created

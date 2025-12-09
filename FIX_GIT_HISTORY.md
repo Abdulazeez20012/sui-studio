@@ -40,7 +40,7 @@ If you want to completely remove the secret from history:
 pip install git-filter-repo
 
 # 2. Create a file with the secret to remove
-echo "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" > secret.txt
+echo "your-actual-api-key-here" > secret.txt
 
 # 3. Remove secret from all history
 git filter-repo --replace-text secret.txt --force
@@ -85,7 +85,7 @@ rm secret.txt
 https://console.anthropic.com/settings/keys
 
 # Delete old key:
-sk-ant-api03-LLbBMK5Q7dHIDU8j1VQnveYGSRAeWnFMnJfT...
+sk-ant-api03-xxxxx... (your old exposed key)
 
 # Generate new key
 # Copy the new key
