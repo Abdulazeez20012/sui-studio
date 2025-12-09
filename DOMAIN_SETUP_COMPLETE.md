@@ -71,7 +71,7 @@ DATABASE_URL=postgresql://neondb_owner:npg_MdO9AVl3QyUN@ep-fragrant-mode-ahofuda
 
 # AI Provider
 AI_PROVIDER=claude
-ANTHROPIC_API_KEY=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
+ANTHROPIC_API_KEY=your-anthropic-api-key-here
 ANTHROPIC_MODEL=claude-3-5-sonnet-20241022
 ANTHROPIC_MAX_TOKENS=4096
 
