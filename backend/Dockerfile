@@ -11,10 +11,11 @@ RUN apt-get update && apt-get install -y \
 # Using official releases from GitHub
 RUN curl -fLJ https://github.com/MystenLabs/sui/releases/download/mainnet-v1.36.2/sui-mainnet-v1.36.2-ubuntu-x86_64.tgz \
     -o sui.tgz && \
-    tar -xzf sui.tgz && \
-    mv target/release/sui /usr/local/bin/sui && \
+    mkdir -p sui-temp && \
+    tar -xzf sui.tgz -C sui-temp && \
+    find sui-temp -name "sui" -type f -executable -exec mv {} /usr/local/bin/sui \; && \
     chmod +x /usr/local/bin/sui && \
-    rm -rf sui.tgz target && \
+    rm -rf sui.tgz sui-temp && \
     sui --version && echo "✅ Sui CLI installed successfully"
 
 # Create workspace directory for user projects
