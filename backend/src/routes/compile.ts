@@ -1,179 +1,86 @@
 import express, { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { optionalAuth, AuthRequest } from '../middleware/auth';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { suiCompiler } from '../services/suiCompiler';
 import * as crypto from 'crypto';
-import * as fs from 'fs/promises';
-import * as path from 'path';
 import { z } from 'zod';
 
 const router: Router = express.Router();
 const prisma = new PrismaClient();
-const execAsync = promisify(exec);
 
 router.use(optionalAuth);
 
 const compileSchema = z.object({
   code: z.string(),
   packageName: z.string().optional(),
+  options: z.object({
+    skipFetch: z.boolean().optional(),
+    testMode: z.boolean().optional(),
+    generateDocs: z.boolean().optional(),
+  }).optional(),
 });
 
 // Compile Move code
 router.post('/', async (req: AuthRequest, res) => {
   try {
-    const { code, packageName = 'temp_package' } = compileSchema.parse(req.body);
+    const { code, packageName = 'temp_package', options = {} } = compileSchema.parse(req.body);
 
     // Generate hash for caching
     const codeHash = crypto.createHash('sha256').update(code).digest('hex');
 
-    // Check cache
-    const cached = await prisma.compilationCache.findUnique({
-      where: { codeHash },
-    });
-
-    if (cached && cached.expiresAt > new Date()) {
-      return res.json({
-        success: cached.success,
-        bytecode: cached.bytecode,
-        errors: cached.errors,
-        cached: true,
+    // Check cache (optional - skip if database not configured)
+    try {
+      const cached = await prisma.compilationCache.findUnique({
+        where: { codeHash },
       });
+
+      if (cached && cached.expiresAt > new Date()) {
+        return res.json({
+          success: cached.success,
+          bytecode: cached.bytecode,
+          errors: cached.errors,
+          warnings: cached.warnings || [],
+          cached: true,
+        });
+      }
+    } catch (cacheError) {
+      // Database not configured - skip caching
+      console.log('Cache unavailable, compiling without cache');
     }
 
-    // Check if Sui CLI is installed
+    // Compile using enhanced compiler service
+    const result = await suiCompiler.compile(code, packageName, options);
+
+    // Cache result (optional - skip if database not configured)
     try {
-      await execAsync('sui --version', { timeout: 5000 });
-    } catch (error) {
-      // Sui CLI not installed, return simulated success
-      const simulatedBytecode = Buffer.from('simulated-bytecode-' + codeHash.substring(0, 16)).toString('base64');
-      
-      return res.json({
-        success: true,
-        bytecode: simulatedBytecode,
-        message: 'Compilation successful (simulated - Sui CLI not installed)',
-        cached: false,
-        simulated: true,
-      });
-    }
-
-    // Create temporary directory
-    const tempDir = path.join('/tmp', `sui-compile-${Date.now()}`);
-    await fs.mkdir(tempDir, { recursive: true });
-
-    try {
-      // Create Move.toml
-      const moveToml = `[package]
-name = "${packageName}"
-version = "0.0.1"
-
-[dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/mainnet" }
-
-[addresses]
-${packageName} = "0x0"
-`;
-
-      await fs.writeFile(path.join(tempDir, 'Move.toml'), moveToml);
-
-      // Create sources directory
-      const sourcesDir = path.join(tempDir, 'sources');
-      await fs.mkdir(sourcesDir);
-
-      // Write Move code
-      await fs.writeFile(path.join(sourcesDir, 'main.move'), code);
-
-      // Compile using Sui CLI
-      const { stdout, stderr } = await execAsync(
-        `sui move build --path ${tempDir}`,
-        { 
-          timeout: 30000,
-          maxBuffer: 1024 * 1024 * 10 // 10MB buffer for large outputs
-        }
-      );
-
-      // Read compiled bytecode modules
-      const buildDir = path.join(tempDir, 'build', packageName);
-      const bytecodeModulesDir = path.join(buildDir, 'bytecode_modules');
-      const bytecodeFiles = await fs.readdir(bytecodeModulesDir);
-      
-      // Read all compiled modules
-      const modules: string[] = [];
-      for (const file of bytecodeFiles) {
-        const bytecodeContent = await fs.readFile(
-          path.join(bytecodeModulesDir, file)
-        );
-        // Convert to base64 for transmission
-        modules.push(bytecodeContent.toString('base64'));
-      }
-
-      // Read dependencies from build manifest
-      let dependencies: string[] = ['0x1', '0x2']; // Sui framework dependencies
-      try {
-        const manifestPath = path.join(buildDir, 'BuildInfo.yaml');
-        const manifestContent = await fs.readFile(manifestPath, 'utf-8');
-        // Parse dependencies from manifest (simplified)
-        // In production, properly parse YAML
-      } catch (error) {
-        console.log('Could not read build manifest');
-      }
-
-      const bytecode = modules[0] || ''; // Keep for backward compatibility
-
-      // Cache successful compilation
       await prisma.compilationCache.create({
         data: {
           codeHash,
-          bytecode,
-          success: true,
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+          bytecode: result.bytecode || '',
+          success: result.success,
+          errors: JSON.parse(JSON.stringify(result.errors || [])),
+          warnings: JSON.parse(JSON.stringify(result.warnings || [])),
+          expiresAt: new Date(
+            Date.now() + (result.success ? 24 * 60 * 60 * 1000 : 60 * 60 * 1000)
+          ),
         },
       });
-
-      res.json({
-        success: true,
-        bytecode, // Legacy field
-        modules, // Array of compiled modules for publishing
-        dependencies, // Package dependencies
-        message: 'Compilation successful',
-        cached: false,
-      });
-    } catch (error: any) {
-      // Capture full error output with increased buffer
-      const fullOutput = [
-        error.stdout || '',
-        error.stderr || '',
-        error.message || ''
-      ].filter(Boolean).join('\n');
-
-      // Parse compilation errors with better context
-      const errors = parseCompilationErrors(fullOutput);
-
-      // Cache failed compilation
-      await prisma.compilationCache.create({
-        data: {
-          codeHash,
-          bytecode: '',
-          success: false,
-          errors: errors,
-          expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
-        },
-      });
-
-      res.json({
-        success: false,
-        errors,
-        fullOutput, // Include full output for debugging
-        message: 'Compilation failed',
-        cached: false,
-      });
-    } finally {
-      // Cleanup temp directory
-      await fs.rm(tempDir, { recursive: true, force: true });
+    } catch (cacheError) {
+      // Cache error shouldn't fail the request
+      console.log('Cache write failed, continuing without cache');
     }
+
+    res.json(result);
   } catch (error: any) {
     console.error('Compilation error:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      success: false,
+      error: error.message,
+      errors: [{
+        message: error.message,
+        severity: 'error',
+      }],
+    });
   }
 });
 
@@ -208,53 +115,27 @@ router.post('/estimate-gas', async (req: AuthRequest, res) => {
   }
 });
 
-// Helper functions
-function parseCompilationErrors(output: string): any[] {
-  const errors: any[] = [];
-  const lines = output.split('\n');
+// Check compiler health
+router.get('/health', async (req, res) => {
+  try {
+    const cliAvailable = await suiCompiler.checkSuiCLI();
+    const testPassed = await suiCompiler.test();
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    
-    // Capture error lines
-    if (line.includes('error') || line.includes('Error') || line.includes('ERROR')) {
-      const error: any = {
-        message: line.trim(),
-        severity: 'error',
-      };
-
-      // Try to extract file location
-      const locationMatch = line.match(/([^:]+):(\d+):(\d+)/);
-      if (locationMatch) {
-        error.file = locationMatch[1];
-        error.line = parseInt(locationMatch[2]);
-        error.column = parseInt(locationMatch[3]);
-      }
-
-      // Include context lines
-      const context: string[] = [];
-      for (let j = Math.max(0, i - 2); j <= Math.min(lines.length - 1, i + 2); j++) {
-        if (lines[j].trim()) {
-          context.push(lines[j]);
-        }
-      }
-      error.context = context;
-
-      errors.push(error);
-    }
-  }
-
-  // If no structured errors found, return the full output as one error
-  if (errors.length === 0 && output.trim()) {
-    errors.push({
-      message: output.trim(),
-      severity: 'error',
+    res.json({
+      status: 'ok',
+      suiCLI: cliAvailable ? 'available' : 'unavailable',
+      mode: cliAvailable ? 'real' : 'simulated',
+      testPassed,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      status: 'error',
+      error: error.message,
     });
   }
+});
 
-  return errors;
-}
-
+// Helper function for complexity calculation
 function calculateComplexity(code: string): number {
   let complexity = 0;
 

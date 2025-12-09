@@ -73,6 +73,7 @@ model CompilationCache {
   codeHash      String    @unique
   bytecode      String
   errors        Json?
+  warnings      Json?
   success       Boolean
   
   createdAt     DateTime  @default(now())
