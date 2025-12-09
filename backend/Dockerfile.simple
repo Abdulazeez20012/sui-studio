@@ -1,21 +1,13 @@
+# Simplified Dockerfile without Sui CLI compilation
+# This version is much faster to build and deploy
+
 FROM node:20-slim
 
-# Install system dependencies (minimal set)
+# Install minimal system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
-    git \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
-
-# Download pre-built Sui CLI binary (much faster than compiling)
-# Using official releases from GitHub
-RUN curl -fLJ https://github.com/MystenLabs/sui/releases/download/mainnet-v1.36.2/sui-mainnet-v1.36.2-ubuntu-x86_64.tgz \
-    -o sui.tgz && \
-    tar -xzf sui.tgz && \
-    mv target/release/sui /usr/local/bin/sui && \
-    chmod +x /usr/local/bin/sui && \
-    rm -rf sui.tgz target && \
-    sui --version && echo "✅ Sui CLI installed successfully"
 
 # Create workspace directory for user projects
 RUN mkdir -p /app/workspaces && chmod 777 /app/workspaces
@@ -27,7 +19,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci --only=production
 
 # Copy source code
 COPY . .

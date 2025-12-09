@@ -28,6 +28,7 @@ import packagesRoutes from './routes/packages';
 import debuggerRoutes from './routes/debugger';
 import designerRoutes from './routes/designer';
 import profilerRoutes from './routes/profiler';
+import auditRoutes from './routes/audit';
 
 const app: Express = express();
 const PORT = process.env.PORT || 3001;
@@ -40,8 +41,10 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
   'https://suistudio.live',
+  'https://www.suistudio.live',
   'https://sui-studio.onrender.com',
   process.env.FRONTEND_URL,
+  process.env.CORS_ORIGIN,
 ].filter(Boolean);
 
 app.use(cors({
@@ -54,14 +57,26 @@ app.use(cors({
       return callback(null, true);
     }
 
+    // Allow custom domain and subdomains
+    if (origin.includes('suistudio.live')) {
+      return callback(null, true);
+    }
+
     // Check if origin is in allowed list
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
+    // Log rejected origins in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('CORS rejected origin:', origin);
+    }
+
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 
 app.use(express.json({ limit: '10mb' }));
@@ -100,6 +115,7 @@ app.use('/api/packages', packagesRoutes);
 app.use('/api/debugger', debuggerRoutes);
 app.use('/api/designer', designerRoutes);
 app.use('/api/profiler', profilerRoutes);
+app.use('/api/audit', auditRoutes);
 
 // Error handling middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
