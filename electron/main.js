@@ -32,12 +32,12 @@ function createWindow() {
 
   // Load the app
   if (isDev) {
-    // Development: load from Vite dev server
-    mainWindow.loadURL('http://localhost:5173');
+    // Development: load from Vite dev server - go directly to IDE
+    mainWindow.loadURL('http://localhost:3000/ide');
     mainWindow.webContents.openDevTools();
   } else {
-    // Production: load from built files
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    // Production: load from built files - go directly to IDE
+    mainWindow.loadURL(`file://${path.join(__dirname, '../dist/index.html')}#/ide`);
   }
 
   // Show window when ready
@@ -281,6 +281,68 @@ ipcMain.handle('delete-file', async (event, filePath) => {
   } catch (error) {
     return { success: false, error: error.message };
   }
+});
+
+ipcMain.handle('rename-file', async (event, oldPath, newPath) => {
+  try {
+    await fs.promises.rename(oldPath, newPath);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Terminal command execution
+ipcMain.handle('execute-command', async (event, command, cwd) => {
+  return new Promise((resolve) => {
+    const { spawn } = require('child_process');
+    
+    // Parse command and arguments
+    const isWindows = process.platform === 'win32';
+    const shell = isWindows ? 'cmd.exe' : '/bin/bash';
+    const shellArgs = isWindows ? ['/c', command] : ['-c', command];
+    
+    const child = spawn(shell, shellArgs, {
+      cwd: cwd || process.cwd(),
+      env: process.env,
+      shell: false,
+    });
+    
+    let output = '';
+    let error = '';
+    
+    child.stdout.on('data', (data) => {
+      const text = data.toString();
+      output += text;
+      // Send real-time output to renderer
+      mainWindow.webContents.send('terminal-output', text);
+    });
+    
+    child.stderr.on('data', (data) => {
+      const text = data.toString();
+      error += text;
+      // Send real-time output to renderer
+      mainWindow.webContents.send('terminal-output', text);
+    });
+    
+    child.on('error', (err) => {
+      resolve({
+        success: false,
+        output: output,
+        error: err.message,
+        exitCode: 1
+      });
+    });
+    
+    child.on('close', (code) => {
+      resolve({
+        success: code === 0,
+        output: output,
+        error: error,
+        exitCode: code
+      });
+    });
+  });
 });
 
 ipcMain.handle('show-open-dialog', async (event, options) => {

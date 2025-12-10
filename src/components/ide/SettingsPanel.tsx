@@ -1,56 +1,43 @@
 import React, { useState } from 'react';
 import { Settings, User, Code, Terminal as TerminalIcon, Palette, Save, X } from 'lucide-react';
-
-interface SettingsState {
-  fontSize: number;
-  tabSize: number;
-  theme: 'dark' | 'light';
-  autoSave: boolean;
-  wordWrap: boolean;
-  minimap: boolean;
-  lineNumbers: boolean;
-  terminalFontSize: number;
-}
+import { useSettingsStore } from '../../store/settingsStore';
 
 const SettingsPanel: React.FC = () => {
-  const [settings, setSettings] = useState<SettingsState>({
-    fontSize: 14,
-    tabSize: 2,
-    theme: 'dark',
-    autoSave: true,
-    wordWrap: true,
-    minimap: true,
-    lineNumbers: true,
-    terminalFontSize: 14,
-  });
+  const {
+    fontSize,
+    tabSize,
+    wordWrap,
+    minimap,
+    lineNumbers,
+    terminalFontSize,
+    autoSave,
+    theme,
+    setFontSize,
+    setTabSize,
+    setWordWrap,
+    setMinimap,
+    setLineNumbers,
+    setTerminalFontSize,
+    setAutoSave,
+    setTheme,
+    resetToDefaults,
+  } = useSettingsStore();
 
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = () => {
     setIsSaving(true);
-    // Save to localStorage
-    localStorage.setItem('sui-studio-settings', JSON.stringify(settings));
-    
+    // Settings are automatically persisted by zustand
     setTimeout(() => {
       setIsSaving(false);
-      alert('Settings saved successfully!');
+      alert('Settings saved and applied!');
     }, 500);
   };
 
   const handleReset = () => {
     if (confirm('Reset all settings to default?')) {
-      const defaultSettings: SettingsState = {
-        fontSize: 14,
-        tabSize: 2,
-        theme: 'dark',
-        autoSave: true,
-        wordWrap: true,
-        minimap: true,
-        lineNumbers: true,
-        terminalFontSize: 14,
-      };
-      setSettings(defaultSettings);
-      localStorage.setItem('sui-studio-settings', JSON.stringify(defaultSettings));
+      resetToDefaults();
+      alert('Settings reset to defaults!');
     }
   };
 
@@ -78,14 +65,14 @@ const SettingsPanel: React.FC = () => {
             {/* Font Size */}
             <div>
               <label className="block text-xs text-slate-400 mb-1">
-                Font Size: {settings.fontSize}px
+                Font Size: {fontSize}px
               </label>
               <input
                 type="range"
                 min="10"
                 max="24"
-                value={settings.fontSize}
-                onChange={(e) => setSettings({ ...settings, fontSize: parseInt(e.target.value) })}
+                value={fontSize}
+                onChange={(e) => setFontSize(parseInt(e.target.value))}
                 className="w-full accent-sui-cyan"
               />
             </div>
@@ -93,15 +80,15 @@ const SettingsPanel: React.FC = () => {
             {/* Tab Size */}
             <div>
               <label className="block text-xs text-slate-400 mb-1">
-                Tab Size: {settings.tabSize} spaces
+                Tab Size: {tabSize} spaces
               </label>
               <input
                 type="range"
                 min="2"
                 max="8"
                 step="2"
-                value={settings.tabSize}
-                onChange={(e) => setSettings({ ...settings, tabSize: parseInt(e.target.value) })}
+                value={tabSize}
+                onChange={(e) => setTabSize(parseInt(e.target.value))}
                 className="w-full accent-sui-cyan"
               />
             </div>
@@ -111,8 +98,8 @@ const SettingsPanel: React.FC = () => {
               <span className="text-xs text-slate-300">Word Wrap</span>
               <input
                 type="checkbox"
-                checked={settings.wordWrap}
-                onChange={(e) => setSettings({ ...settings, wordWrap: e.target.checked })}
+                checked={wordWrap}
+                onChange={(e) => setWordWrap(e.target.checked)}
                 className="w-4 h-4 accent-sui-cyan"
               />
             </label>
@@ -122,8 +109,8 @@ const SettingsPanel: React.FC = () => {
               <span className="text-xs text-slate-300">Show Minimap</span>
               <input
                 type="checkbox"
-                checked={settings.minimap}
-                onChange={(e) => setSettings({ ...settings, minimap: e.target.checked })}
+                checked={minimap}
+                onChange={(e) => setMinimap(e.target.checked)}
                 className="w-4 h-4 accent-sui-cyan"
               />
             </label>
@@ -133,8 +120,8 @@ const SettingsPanel: React.FC = () => {
               <span className="text-xs text-slate-300">Line Numbers</span>
               <input
                 type="checkbox"
-                checked={settings.lineNumbers}
-                onChange={(e) => setSettings({ ...settings, lineNumbers: e.target.checked })}
+                checked={lineNumbers}
+                onChange={(e) => setLineNumbers(e.target.checked)}
                 className="w-4 h-4 accent-sui-cyan"
               />
             </label>
@@ -152,14 +139,14 @@ const SettingsPanel: React.FC = () => {
             {/* Terminal Font Size */}
             <div>
               <label className="block text-xs text-slate-400 mb-1">
-                Font Size: {settings.terminalFontSize}px
+                Font Size: {terminalFontSize}px
               </label>
               <input
                 type="range"
                 min="10"
                 max="20"
-                value={settings.terminalFontSize}
-                onChange={(e) => setSettings({ ...settings, terminalFontSize: parseInt(e.target.value) })}
+                value={terminalFontSize}
+                onChange={(e) => setTerminalFontSize(parseInt(e.target.value))}
                 className="w-full accent-sui-cyan"
               />
             </div>
@@ -179,8 +166,8 @@ const SettingsPanel: React.FC = () => {
               <span className="text-xs text-slate-300">Auto Save</span>
               <input
                 type="checkbox"
-                checked={settings.autoSave}
-                onChange={(e) => setSettings({ ...settings, autoSave: e.target.checked })}
+                checked={autoSave}
+                onChange={(e) => setAutoSave(e.target.checked)}
                 className="w-4 h-4 accent-sui-cyan"
               />
             </label>
@@ -189,8 +176,8 @@ const SettingsPanel: React.FC = () => {
             <div>
               <label className="block text-xs text-slate-400 mb-2">Theme</label>
               <select
-                value={settings.theme}
-                onChange={(e) => setSettings({ ...settings, theme: e.target.value as 'dark' | 'light' })}
+                value={theme}
+                onChange={(e) => setTheme(e.target.value as 'dark' | 'light')}
                 className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded text-sm text-white focus:outline-none focus:border-sui-cyan"
               >
                 <option value="dark">Dark</option>

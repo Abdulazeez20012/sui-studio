@@ -12,13 +12,22 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
 
+  // Check if running in Electron (desktop app)
+  const isElectron = typeof window !== 'undefined' && (window as any).electron?.isElectron;
+
   useEffect(() => {
-    // Check authentication status
+    // Skip authentication for desktop app
+    if (isElectron) {
+      setIsChecking(false);
+      return;
+    }
+
+    // Check authentication status for web version
     if (!isAuthenticated) {
       setShowAuthModal(true);
     }
     setIsChecking(false);
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isElectron]);
 
   const handleAuthSuccess = () => {
     setShowAuthModal(false);
@@ -43,6 +52,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
+  // Desktop app: no authentication required
+  if (isElectron) {
+    return <>{children}</>;
+  }
+
+  // Web version: require authentication
   if (!isAuthenticated && !showAuthModal) {
     return <Navigate to="/" replace />;
   }

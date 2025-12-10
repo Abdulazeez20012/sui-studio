@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import {
     Rocket, Hammer, TestTube, UploadCloud, Plus,
     Menu, User, Settings, LogOut, Wifi, WifiOff,
-    ChevronDown, CheckCircle, XCircle, Loader
+    ChevronDown, CheckCircle, XCircle, Loader, FolderOpen, HelpCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useIDEStore } from '../../store/ideStore';
 import { apiService } from '../../services/apiService';
 import BuildStatus from './BuildStatus';
+import RecentFiles from './RecentFiles';
+import { useElectronFileSystem } from '../../hooks/useElectronFileSystem';
 
 const Header: React.FC = () => {
     const navigate = useNavigate();
@@ -24,7 +26,10 @@ const Header: React.FC = () => {
         toggleRightPanel,
         rightPanelType,
         setRightPanelType,
+        addTab,
     } = useIDEStore();
+    
+    const { readFile } = useElectronFileSystem();
 
     const [backendConnected, setBackendConnected] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
@@ -180,11 +185,21 @@ const Header: React.FC = () => {
                 {/* Center: 5 Critical Actions */}
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-3">
 
+                    {/* Open Folder (Desktop only) */}
+                    {typeof window !== 'undefined' && (window as any).electron?.isElectron && (
+                        <ActionButton
+                            icon={<FolderOpen size={18} />}
+                            label="Open"
+                            onClick={() => document.dispatchEvent(new CustomEvent('ide:openFolder'))}
+                            primary
+                        />
+                    )}
+
                     <ActionButton
                         icon={<Plus size={18} />}
                         label="Create"
                         onClick={handleCreate}
-                        primary
+                        primary={!(typeof window !== 'undefined' && (window as any).electron?.isElectron)}
                     />
 
                     <div className="w-px h-8 bg-white/10 mx-1" />
@@ -229,7 +244,47 @@ const Header: React.FC = () => {
                 {/* Right: User & Settings */}
                 <div className="flex items-center gap-4">
 
-                    <button className="p-2 text-gray-400 hover:text-white transition-colors">
+                    <RecentFiles 
+                        onFileSelect={async (path, name) => {
+                            try {
+                                const content = await readFile(path);
+                                const newTab = {
+                                    id: `tab-${Date.now()}`,
+                                    name,
+                                    path,
+                                    content,
+                                    language: path.endsWith('.move') ? 'move' : 'plaintext',
+                                    isDirty: false,
+                                };
+                                addTab(newTab);
+                            } catch (error) {
+                                console.error('Failed to open recent file:', error);
+                            }
+                        }}
+                    />
+
+                    <button 
+                        onClick={() => document.dispatchEvent(new CustomEvent('ide:showKeyboardShortcuts'))}
+                        className="p-2 text-gray-400 hover:text-white transition-colors"
+                        title="Keyboard Shortcuts (?)"
+                    >
+                        <HelpCircle size={20} />
+                    </button>
+
+                    <button 
+                        onClick={() => {
+                            if (rightPanelOpen && rightPanelType === 'settings') {
+                                // If settings panel is already open, close it
+                                toggleRightPanel();
+                            } else {
+                                // Otherwise, open settings panel
+                                setRightPanelType('settings');
+                                if (!rightPanelOpen) toggleRightPanel();
+                            }
+                        }}
+                        className="p-2 text-gray-400 hover:text-white transition-colors"
+                        title="Settings"
+                    >
                         <Settings size={20} />
                     </button>
 

@@ -31,8 +31,15 @@ export const useKeyboardShortcuts = () => {
       // Ctrl/Cmd + S: Save file
       if (modifier && e.key === 's') {
         e.preventDefault();
-        // TODO: Implement save functionality
-        console.log('Save file');
+        // Dispatch save event
+        document.dispatchEvent(new CustomEvent('ide:saveFile'));
+      }
+      
+      // Ctrl/Cmd + Shift + S: Save all files
+      if (modifier && e.shiftKey && e.key === 'S') {
+        e.preventDefault();
+        // Dispatch save all event
+        document.dispatchEvent(new CustomEvent('ide:saveAllFiles'));
       }
 
       // Ctrl/Cmd + W: Close tab

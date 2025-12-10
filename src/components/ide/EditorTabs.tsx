@@ -27,21 +27,30 @@ const EditorTabs: React.FC = () => {
               tab.language === 'typescript' ? 'text-blue-400' : 'text-gray-400'}
           `} />
 
-          <span className="text-xs font-medium truncate flex-1 font-mono">{tab.name}</span>
+          <span className="text-xs font-medium truncate flex-1 font-mono">
+            {tab.name}
+            {tab.isDirty && <span className="text-walrus-cyan ml-1">*</span>}
+          </span>
 
           {tab.isDirty && (
-            <Circle size={6} fill="currentColor" className="text-walrus-pink animate-pulse" />
+            <Circle size={6} fill="currentColor" className="text-walrus-cyan animate-pulse" />
           )}
 
           <button
             onClick={(e) => {
               e.stopPropagation();
+              // Confirm if file has unsaved changes
+              if (tab.isDirty) {
+                const confirmed = confirm(`"${tab.name}" has unsaved changes. Close anyway?`);
+                if (!confirmed) return;
+              }
               removeTab(tab.id);
             }}
             className={`p-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-all ${activeTab === tab.id
                 ? 'hover:bg-white/10 text-gray-400 hover:text-white'
                 : 'hover:bg-walrus-dark-700 text-gray-500 hover:text-gray-300'
               }`}
+            title={tab.isDirty ? 'Unsaved changes' : 'Close'}
           >
             <X size={14} />
           </button>

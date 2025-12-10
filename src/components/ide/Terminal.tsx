@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Terminal as TerminalIcon, X, Plus, ChevronDown, CheckCircle, Play, Send, Trash2 } from 'lucide-react';
 import { useIDEStore } from '../../store/ideStore';
 import { apiService } from '../../services/apiService';
+import { useElectronTerminal } from '../../hooks/useElectronTerminal';
+import { useElectronFileSystem } from '../../hooks/useElectronFileSystem';
 
 const Terminal: React.FC = () => {
   const { terminals, activeTerminal, setActiveTerminal, addTerminalOutput, addTerminal, clearTerminal } = useIDEStore();
@@ -12,13 +14,37 @@ const Terminal: React.FC = () => {
   const outputRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Electron terminal integration
+  const { isElectron, executeCommand: executeElectronCommand, currentDirectory } = useElectronTerminal();
+  const { currentFolder } = useElectronFileSystem();
+  
   const currentTerminal = terminals.find(t => t.id === activeTerminal);
+  const workingDirectory = currentFolder || currentDirectory;
 
   useEffect(() => {
     if (outputRef.current) {
       outputRef.current.scrollTop = outputRef.current.scrollHeight;
     }
   }, [currentTerminal?.output]);
+
+  // Listen for real-time terminal output (Electron only)
+  useEffect(() => {
+    if (!isElectron || !window.electron) return;
+
+    const handleOutput = (data: string) => {
+      if (activeTerminal) {
+        // Split by lines and add each line
+        const lines = data.split('\n');
+        lines.forEach(line => {
+          if (line.trim()) {
+            addTerminalOutput(activeTerminal, line);
+          }
+        });
+      }
+    };
+
+    window.electron.onTerminalOutput(handleOutput);
+  }, [isElectron, activeTerminal, addTerminalOutput]);
 
   const executeCommand = async (command: string) => {
     if (!activeTerminal) return;
@@ -41,12 +67,27 @@ const Terminal: React.FC = () => {
         addTerminalOutput(activeTerminal, '  sui client        - Sui client commands');
         addTerminalOutput(activeTerminal, '  clear             - Clear terminal');
         addTerminalOutput(activeTerminal, '  help              - Show this help message');
+        addTerminalOutput(activeTerminal, '  pwd               - Print working directory');
         setIsExecuting(false);
         return;
       }
 
-      // Execute command via backend
-      const result = await apiService.executeCommand(command);
+      if (command === 'pwd') {
+        addTerminalOutput(activeTerminal, workingDirectory || 'No working directory set');
+        setIsExecuting(false);
+        return;
+      }
+
+      // Execute command via Electron (desktop) or backend (web)
+      let result;
+      
+      if (isElectron) {
+        // Desktop: Execute real command
+        result = await executeElectronCommand(command, workingDirectory);
+      } else {
+        // Web: Execute via backend
+        result = await apiService.executeCommand(command);
+      }
 
       if (result.success) {
         // Add output line by line
@@ -185,26 +226,39 @@ const Terminal: React.FC = () => {
       </div>
 
       {/* Command Input */}
-      <form onSubmit={handleSubmit} className="px-4 py-3 bg-black/20 border-t border-white/5 flex items-center gap-3 shrink-0 backdrop-blur-sm">
-        <span className="text-walrus-cyan font-bold select-none text-sm animate-pulse">➜</span>
-        <input
-          ref={inputRef}
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={isExecuting}
-          placeholder={isExecuting ? "Executing..." : "Enter command..."}
-          className="flex-1 bg-transparent text-gray-200 outline-none text-xs font-mono placeholder-gray-700 font-medium caret-walrus-cyan"
-          autoFocus
-          spellCheck={false}
-        />
-        {isExecuting && (
-          <div className="flex items-center gap-2 px-2 py-1 bg-walrus-cyan/10 rounded text-[10px] font-bold text-walrus-cyan uppercase tracking-wider">
-            <div className="animate-spin h-3 w-3 border-2 border-walrus-cyan border-t-transparent rounded-full" />
-            Running
+      <form onSubmit={handleSubmit} className="px-4 py-3 bg-black/20 border-t border-white/5 shrink-0 backdrop-blur-sm">
+        {/* Working Directory Indicator (Desktop only) */}
+        {isElectron && workingDirectory && (
+          <div className="flex items-center gap-2 mb-2 text-[10px] text-gray-500">
+            <span className="font-bold uppercase tracking-wider">Working Directory:</span>
+            <span className="text-walrus-cyan font-mono">{workingDirectory.split('/').pop() || workingDirectory.split('\\').pop()}</span>
+            <span className="text-gray-600 font-mono truncate max-w-[300px]" title={workingDirectory}>
+              {workingDirectory}
+            </span>
           </div>
         )}
+        
+        <div className="flex items-center gap-3">
+          <span className="text-walrus-cyan font-bold select-none text-sm animate-pulse">➜</span>
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isExecuting}
+            placeholder={isExecuting ? "Executing..." : (isElectron ? "Enter command (real shell)..." : "Enter command...")}
+            className="flex-1 bg-transparent text-gray-200 outline-none text-xs font-mono placeholder-gray-700 font-medium caret-walrus-cyan"
+            autoFocus
+            spellCheck={false}
+          />
+          {isExecuting && (
+            <div className="flex items-center gap-2 px-2 py-1 bg-walrus-cyan/10 rounded text-[10px] font-bold text-walrus-cyan uppercase tracking-wider">
+              <div className="animate-spin h-3 w-3 border-2 border-walrus-cyan border-t-transparent rounded-full" />
+              Running
+            </div>
+          )}
+        </div>
       </form>
     </div>
   );

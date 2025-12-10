@@ -1,11 +1,13 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   ChevronRight, ChevronDown, File, Folder, FolderOpen,
   Plus, Trash2, Edit2, Download, Upload, MoreVertical,
-  FilePlus, FolderPlus, X, Check
+  FilePlus, FolderPlus, X, Check, FolderOpen as FolderOpenIcon
 } from 'lucide-react';
 import { FileNode } from '../../types/ide';
 import { useIDEStore } from '../../store/ideStore';
+import { useElectronFileSystem } from '../../hooks/useElectronFileSystem';
+import { useRecentFiles } from '../../hooks/useRecentFiles';
 
 interface FileTreeItemProps {
   node: FileNode;
@@ -29,9 +31,10 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
   const [newName, setNewName] = useState(node.name);
   const [showMenu, setShowMenu] = useState(false);
   const { addTab, setActiveTab, tabs } = useIDEStore();
+  const { addRecentFile } = useRecentFiles();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (isRenaming) return;
 
     if (node.type === 'folder') {
@@ -41,15 +44,30 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
       if (existingTab) {
         setActiveTab(existingTab.id);
       } else {
+        // Load file content if in Electron
+        let content = node.content || '';
+        if (window.electron?.isElectron && node.path) {
+          try {
+            content = await window.electron.readFile(node.id);
+          } catch (error) {
+            console.error('Failed to load file:', error);
+          }
+        }
+        
         const newTab = {
           id: `tab-${Date.now()}`,
           name: node.name,
           path: node.path,
-          content: node.content || '',
+          content,
           language: node.language || 'move',
           isDirty: false
         };
         addTab(newTab);
+        
+        // Add to recent files
+        if (node.path) {
+          addRecentFile(node.path, node.name);
+        }
       }
     }
   };
@@ -201,9 +219,23 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
 };
 
 const FileExplorer: React.FC = () => {
-  const { files, setFiles, addTab } = useIDEStore();
+  const { files, setFiles, addTab, tabs, activeTab, updateTabContent } = useIDEStore();
   const [showNewMenu, setShowNewMenu] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Electron file system integration
+  const {
+    isElectron,
+    currentFolder,
+    isLoading,
+    openFolder,
+    readFile,
+    writeFile,
+    createFile,
+    createDirectory,
+    deleteFile: deleteFileFromDisk,
+    renameFile: renameFileOnDisk,
+  } = useElectronFileSystem();
 
   const generateId = () => `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -243,70 +275,162 @@ const FileExplorer: React.FC = () => {
     });
   };
 
-  const handleCreateFile = (parentNode?: FileNode) => {
-    const newFile: FileNode = {
-      id: generateId(),
-      name: 'untitled.move',
-      type: 'file',
-      path: parentNode ? `${parentNode.path}/untitled.move` : '/untitled.move',
-      content: '// New Move file\n',
-      language: 'move'
-    };
+  const handleCreateFile = async (parentNode?: FileNode) => {
+    const fileName = prompt('Enter file name:', 'untitled.move');
+    if (!fileName) return;
 
-    if (parentNode) {
-      const updatedFiles = updateNodeInTree(files, parentNode.id, (node) => ({
-        ...node,
-        children: [...(node.children || []), newFile]
-      }));
-      setFiles(updatedFiles);
+    const filePath = parentNode ? `${parentNode.path}/${fileName}` : `/${fileName}`;
+    const content = '// New Move file\n';
+
+    // If in Electron, create file on disk
+    if (isElectron && currentFolder) {
+      try {
+        await createFile(filePath, content);
+        // Reload folder to show new file
+        const loadedFiles = await openFolder();
+        if (loadedFiles) {
+          setFiles(loadedFiles);
+        }
+      } catch (error: any) {
+        alert(`Failed to create file: ${error.message}`);
+        return;
+      }
     } else {
-      setFiles([...files, newFile]);
+      // Web: create in memory
+      const newFile: FileNode = {
+        id: generateId(),
+        name: fileName,
+        type: 'file',
+        path: filePath,
+        content,
+        language: fileName.endsWith('.move') ? 'move' : 'plaintext'
+      };
+
+      if (parentNode) {
+        const updatedFiles = updateNodeInTree(files, parentNode.id, (node) => ({
+          ...node,
+          children: [...(node.children || []), newFile]
+        }));
+        setFiles(updatedFiles);
+      } else {
+        setFiles([...files, newFile]);
+      }
     }
 
     // Open the new file in editor
     setTimeout(() => {
       addTab({
         id: `tab-${Date.now()}`,
-        name: newFile.name,
-        path: newFile.path,
-        content: newFile.content || '',
-        language: 'move',
+        name: fileName,
+        path: filePath,
+        content,
+        language: fileName.endsWith('.move') ? 'move' : 'plaintext',
         isDirty: false
       });
     }, 100);
   };
 
-  const handleCreateFolder = (parentNode?: FileNode) => {
-    const newFolder: FileNode = {
-      id: generateId(),
-      name: 'new-folder',
-      type: 'folder',
-      path: parentNode ? `${parentNode.path}/new-folder` : '/new-folder',
-      children: []
-    };
+  const handleCreateFolder = async (parentNode?: FileNode) => {
+    const folderName = prompt('Enter folder name:', 'new-folder');
+    if (!folderName) return;
 
-    if (parentNode) {
-      const updatedFiles = updateNodeInTree(files, parentNode.id, (node) => ({
-        ...node,
-        children: [...(node.children || []), newFolder]
-      }));
-      setFiles(updatedFiles);
+    const folderPath = parentNode ? `${parentNode.path}/${folderName}` : `/${folderName}`;
+
+    // If in Electron, create folder on disk
+    if (isElectron && currentFolder) {
+      try {
+        await createDirectory(folderPath);
+        // Reload folder to show new directory
+        const loadedFiles = await openFolder();
+        if (loadedFiles) {
+          setFiles(loadedFiles);
+        }
+      } catch (error: any) {
+        alert(`Failed to create folder: ${error.message}`);
+      }
     } else {
-      setFiles([...files, newFolder]);
+      // Web: create in memory
+      const newFolder: FileNode = {
+        id: generateId(),
+        name: folderName,
+        type: 'folder',
+        path: folderPath,
+        children: []
+      };
+
+      if (parentNode) {
+        const updatedFiles = updateNodeInTree(files, parentNode.id, (node) => ({
+          ...node,
+          children: [...(node.children || []), newFolder]
+        }));
+        setFiles(updatedFiles);
+      } else {
+        setFiles([...files, newFolder]);
+      }
     }
   };
 
-  const handleRename = (node: FileNode, newName: string) => {
-    const updatedFiles = updateNodeInTree(files, node.id, (n) => ({
-      ...n,
-      name: newName,
-      path: n.path.replace(n.name, newName)
-    }));
-    setFiles(updatedFiles);
+  const handleRename = async (node: FileNode, newName: string) => {
+    // If in Electron, rename on disk
+    if (isElectron && currentFolder) {
+      try {
+        const oldPath = node.path;
+        const newPath = node.path.replace(node.name, newName);
+        
+        // Use native rename
+        await renameFileOnDisk(oldPath, newPath);
+        
+        // Reload folder to show changes
+        const loadedFiles = await openFolder();
+        if (loadedFiles) {
+          setFiles(loadedFiles);
+        }
+        
+        // Update open tabs with new path
+        const openTab = tabs.find(t => t.path === oldPath);
+        if (openTab) {
+          // Update tab path
+          updateTabContent(openTab.id, openTab.content);
+        }
+      } catch (error: any) {
+        alert(`Failed to rename: ${error.message}`);
+      }
+    } else {
+      // Web: rename in memory
+      const updatedFiles = updateNodeInTree(files, node.id, (n) => ({
+        ...n,
+        name: newName,
+        path: n.path.replace(n.name, newName)
+      }));
+      setFiles(updatedFiles);
+    }
   };
 
-  const handleDelete = (node: FileNode) => {
-    if (confirm(`Are you sure you want to delete "${node.name}"?`)) {
+  const handleDelete = async (node: FileNode) => {
+    if (!confirm(`Are you sure you want to delete "${node.name}"?`)) return;
+
+    // If in Electron, delete from disk
+    if (isElectron && currentFolder) {
+      try {
+        await deleteFileFromDisk(node.path);
+        
+        // Reload folder to show changes
+        const loadedFiles = await openFolder();
+        if (loadedFiles) {
+          setFiles(loadedFiles);
+        }
+        
+        // Close tab if file is open
+        const openTab = tabs.find(t => t.path === node.path);
+        if (openTab) {
+          // Dispatch event to close tab
+          document.dispatchEvent(new CustomEvent('ide:closeTab', { detail: openTab.id }));
+        }
+      } catch (error: any) {
+        alert(`Failed to delete: ${error.message}`);
+      }
+    } else {
+      // Web: delete from memory
       const updatedFiles = deleteNodeFromTree(files, node.id);
       setFiles(updatedFiles);
     }
@@ -358,6 +482,101 @@ const FileExplorer: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  // Handle opening folder in Electron
+  const handleOpenFolder = async () => {
+    if (!isElectron) return;
+    
+    try {
+      const loadedFiles = await openFolder();
+      if (loadedFiles) {
+        setFiles(loadedFiles);
+        // Notify status bar of folder change
+        if (currentFolder) {
+          document.dispatchEvent(new CustomEvent('ide:folderChanged', { detail: currentFolder }));
+        }
+      }
+    } catch (error: any) {
+      alert(`Failed to open folder: ${error.message}`);
+    }
+  };
+  
+  // Update status bar when currentFolder changes
+  useEffect(() => {
+    if (currentFolder) {
+      document.dispatchEvent(new CustomEvent('ide:folderChanged', { detail: currentFolder }));
+    }
+  }, [currentFolder]);
+
+  // Listen for open folder event from header
+  useEffect(() => {
+    const handleOpenFolderEvent = () => handleOpenFolder();
+    document.addEventListener('ide:openFolder', handleOpenFolderEvent);
+    return () => document.removeEventListener('ide:openFolder', handleOpenFolderEvent);
+  }, []);
+
+  // Listen for save events (Ctrl+S)
+  useEffect(() => {
+    const handleSaveFile = async () => {
+      if (!isElectron || !currentFolder) return;
+      
+      const currentTab = tabs.find(t => t.id === activeTab);
+      if (currentTab && currentTab.isDirty && currentTab.path) {
+        try {
+          await writeFile(currentTab.path, currentTab.content);
+          updateTabContent(currentTab.id, currentTab.content); // Mark as saved
+          console.log('File saved:', currentTab.name);
+        } catch (error: any) {
+          alert(`Failed to save file: ${error.message}`);
+        }
+      }
+    };
+
+    const handleSaveAllFiles = async () => {
+      if (!isElectron || !currentFolder) return;
+      
+      for (const tab of tabs) {
+        if (tab.isDirty && tab.path) {
+          try {
+            await writeFile(tab.path, tab.content);
+            updateTabContent(tab.id, tab.content); // Mark as saved
+          } catch (error: any) {
+            console.error('Failed to save file:', tab.name, error);
+          }
+        }
+      }
+      console.log('All files saved');
+    };
+
+    document.addEventListener('ide:saveFile', handleSaveFile);
+    document.addEventListener('ide:saveAllFiles', handleSaveAllFiles);
+    
+    return () => {
+      document.removeEventListener('ide:saveFile', handleSaveFile);
+      document.removeEventListener('ide:saveAllFiles', handleSaveAllFiles);
+    };
+  }, [isElectron, currentFolder, tabs, activeTab, writeFile, updateTabContent]);
+
+  // Auto-save files when content changes (for Electron)
+  useEffect(() => {
+    if (!isElectron || !currentFolder) return;
+
+    const saveInterval = setInterval(async () => {
+      for (const tab of tabs) {
+        if (tab.isDirty && tab.path) {
+          try {
+            await writeFile(tab.path, tab.content);
+            // Mark as saved
+            updateTabContent(tab.id, tab.content);
+          } catch (error) {
+            console.error('Auto-save failed:', error);
+          }
+        }
+      }
+    }, 5000); // Auto-save every 5 seconds
+
+    return () => clearInterval(saveInterval);
+  }, [isElectron, currentFolder, tabs, writeFile, updateTabContent]);
+
   return (
     <div className="h-full bg-transparent overflow-y-auto scrollbar-thin scrollbar-thumb-sui-cyan/20 scrollbar-track-transparent">
       <div className="p-4 border-b border-white/5 mx-2">
@@ -366,6 +585,21 @@ const FileExplorer: React.FC = () => {
             EXPLORER
           </h3>
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            {/* Open Folder Button (Electron only) */}
+            {isElectron && (
+              <button
+                onClick={handleOpenFolder}
+                disabled={isLoading}
+                className="p-1.5 text-gray-400 hover:text-walrus-cyan hover:bg-walrus-cyan/10 rounded-lg transition-all disabled:opacity-50"
+                title="Open Folder"
+              >
+                {isLoading ? (
+                  <div className="w-3.5 h-3.5 border-2 border-walrus-cyan border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <FolderOpenIcon size={14} />
+                )}
+              </button>
+            )}
             <button
               onClick={() => fileInputRef.current?.click()}
               className="p-1.5 text-gray-400 hover:text-neon-green hover:bg-neon-green/10 rounded-lg transition-all"
@@ -431,13 +665,26 @@ const FileExplorer: React.FC = () => {
         {files.length === 0 ? (
           <div className="text-center py-8 px-4 opacity-60 hover:opacity-100 transition-opacity">
             <Folder size={40} className="text-gray-600 mx-auto mb-3" />
-            <p className="text-xs text-gray-500 mb-4 font-tech">No files yet</p>
-            <button
-              onClick={() => handleCreateFile()}
-              className="px-4 py-2 bg-sui-cyan/5 border border-sui-cyan/20 rounded-lg text-sui-cyan hover:bg-sui-cyan/10 transition-all text-[10px] font-bold uppercase tracking-wider font-tech shadow-neon-sm"
-            >
-              Initialize Project
-            </button>
+            <p className="text-xs text-gray-500 mb-4 font-tech">
+              {isElectron ? 'No folder opened' : 'No files yet'}
+            </p>
+            {isElectron ? (
+              <button
+                onClick={handleOpenFolder}
+                disabled={isLoading}
+                className="px-4 py-2 bg-walrus-cyan/10 border border-walrus-cyan/30 rounded-lg text-walrus-cyan hover:bg-walrus-cyan/20 transition-all text-[10px] font-bold uppercase tracking-wider font-tech shadow-neon-sm disabled:opacity-50 flex items-center gap-2 mx-auto"
+              >
+                <FolderOpenIcon size={14} />
+                {isLoading ? 'Opening...' : 'Open Folder'}
+              </button>
+            ) : (
+              <button
+                onClick={() => handleCreateFile()}
+                className="px-4 py-2 bg-sui-cyan/5 border border-sui-cyan/20 rounded-lg text-sui-cyan hover:bg-sui-cyan/10 transition-all text-[10px] font-bold uppercase tracking-wider font-tech shadow-neon-sm"
+              >
+                Initialize Project
+              </button>
+            )}
           </div>
         ) : (
           files.map((node) => (

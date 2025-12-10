@@ -11,22 +11,82 @@ import BuildStatus from '../components/ide/BuildStatus';
 import ResizeHandle from '../components/ide/ResizeHandle';
 import NexiHome from '../components/ide/NexiHome';
 import NewProjectDialog from '../components/ide/NewProjectDialog';
+import KeyboardShortcuts from '../components/ide/KeyboardShortcuts';
 import { BackendWakeUp } from '../components/BackendWakeUp';
 import { useIDEStore } from '../store/ideStore';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useResizable } from '../hooks/useResizable';
+import { useFileWatcher } from '../hooks/useFileWatcher';
+import { useElectronFileSystem } from '../hooks/useElectronFileSystem';
+import ToastContainer from '../components/ide/ToastContainer';
 
 const IDEPage: React.FC = () => {
-  const { leftPanelOpen, rightPanelOpen, bottomPanelOpen, toggleLeftPanel, toggleBottomPanel, toggleRightPanel, setRightPanelType, addTab, tabs } = useIDEStore();
+  const { leftPanelOpen, rightPanelOpen, bottomPanelOpen, toggleLeftPanel, toggleBottomPanel, toggleRightPanel, setRightPanelType, addTab, tabs, updateTabContent, removeTab } = useIDEStore();
   const [buildStatus, setBuildStatus] = useState<'idle' | 'building' | 'success' | 'error'>('idle');
   const [buildMessage, setBuildMessage] = useState('');
-  const [backendReady, setBackendReady] = useState(false);
+  
+  // Check if running in Electron (desktop app)
+  const isElectron = typeof window !== 'undefined' && (window as any).electron?.isElectron;
+  
+  // Skip backend check for desktop app
+  const [backendReady, setBackendReady] = useState(isElectron ? true : false);
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+
+  const { readFile } = useElectronFileSystem();
+
+  // File watcher integration
+  useFileWatcher({
+    onFileChanged: async (filePath) => {
+      // Find if this file is open in a tab
+      const openTab = tabs.find(tab => tab.path === filePath);
+      if (openTab && !openTab.isDirty) {
+        // Only reload if file is not dirty (no unsaved changes)
+        try {
+          const content = await readFile(filePath);
+          updateTabContent(openTab.id, content);
+          console.log('File reloaded:', filePath);
+        } catch (error) {
+          console.error('Failed to reload file:', error);
+        }
+      }
+    },
+    onFileDeleted: (filePath) => {
+      // Close tab if file was deleted
+      const openTab = tabs.find(tab => tab.path === filePath);
+      if (openTab) {
+        removeTab(openTab.id);
+        console.log('File deleted, tab closed:', filePath);
+      }
+    },
+  });
 
   useEffect(() => {
     const handleNewProject = () => setShowNewProjectDialog(true);
+    const handleShowShortcuts = () => setShowKeyboardShortcuts(true);
+    
     document.addEventListener('ide:newProject', handleNewProject);
-    return () => document.removeEventListener('ide:newProject', handleNewProject);
+    document.addEventListener('ide:showKeyboardShortcuts', handleShowShortcuts);
+    
+    // Listen for ? key to show keyboard shortcuts
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        // Only if not typing in an input
+        const target = e.target as HTMLElement;
+        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          setShowKeyboardShortcuts(true);
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyPress);
+    
+    return () => {
+      document.removeEventListener('ide:newProject', handleNewProject);
+      document.removeEventListener('ide:showKeyboardShortcuts', handleShowShortcuts);
+      window.removeEventListener('keydown', handleKeyPress);
+    };
   }, []);
 
   // Enable keyboard shortcuts
@@ -102,8 +162,11 @@ const IDEPage: React.FC = () => {
 
   return (
     <>
-      {/* Backend Wake-Up Screen */}
-      {!backendReady && <BackendWakeUp onReady={() => setBackendReady(true)} />}
+      {/* Backend Wake-Up Screen - Skip for desktop app */}
+      {!backendReady && !isElectron && <BackendWakeUp onReady={() => setBackendReady(true)} />}
+
+      {/* Toast Notifications */}
+      <ToastContainer />
 
       <div className="h-screen flex flex-col bg-walrus-dark-950 text-gray-300 overflow-hidden selection:bg-walrus-cyan/30 selection:text-walrus-cyan">
 
@@ -212,6 +275,12 @@ const IDEPage: React.FC = () => {
         {showNewProjectDialog && (
           <NewProjectDialog onClose={() => setShowNewProjectDialog(false)} />
         )}
+        
+        {/* Keyboard Shortcuts Panel */}
+        <KeyboardShortcuts 
+          isOpen={showKeyboardShortcuts} 
+          onClose={() => setShowKeyboardShortcuts(false)} 
+        />
       </div>
     </>
   );

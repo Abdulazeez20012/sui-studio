@@ -25,3 +25,14 @@ dist-ssr
 .env
 backend/.env
 
+
+# Desktop build files
+dist-electron/
+release/
+*.dmg
+*.exe
+*.AppImage
+*.deb
+*.rpm
+*.zip
+

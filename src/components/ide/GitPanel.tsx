@@ -14,8 +14,11 @@ import {
   FileText,
   GitMerge,
   Trash2,
+  AlertCircle,
 } from 'lucide-react';
-import { gitService, GitStatus, GitBranch as Branch, GitCommit as Commit } from '../../services/gitService';
+import { GitStatus, GitBranch as Branch, GitCommit as Commit } from '../../services/gitService';
+import { electronGitService } from '../../services/electronGitService';
+import { useElectronFileSystem } from '../../hooks/useElectronFileSystem';
 
 const GitPanel: React.FC = () => {
   const [status, setStatus] = useState<GitStatus | null>(null);
@@ -26,18 +29,32 @@ const GitPanel: React.FC = () => {
   const [commitMessage, setCommitMessage] = useState('');
   const [newBranchName, setNewBranchName] = useState('');
   const [showNewBranch, setShowNewBranch] = useState(false);
+  const [isGitRepo, setIsGitRepo] = useState(false);
+  
+  const { currentFolder, isElectron } = useElectronFileSystem();
 
   useEffect(() => {
-    loadGitData();
-  }, []);
+    if (currentFolder && isElectron) {
+      checkGitRepo();
+      loadGitData();
+    }
+  }, [currentFolder, isElectron]);
+
+  const checkGitRepo = async () => {
+    if (!currentFolder) return;
+    const isRepo = await electronGitService.isGitRepo(currentFolder);
+    setIsGitRepo(isRepo);
+  };
 
   const loadGitData = async () => {
+    if (!currentFolder || !isElectron) return;
+    
     setLoading(true);
     try {
       const [statusData, branchesData, commitsData] = await Promise.all([
-        gitService.status(),
-        gitService.branches(),
-        gitService.log(20),
+        electronGitService.status(currentFolder),
+        electronGitService.branches(currentFolder),
+        electronGitService.log(20, currentFolder),
       ]);
       setStatus(statusData);
       setBranches(branchesData);
@@ -49,51 +66,81 @@ const GitPanel: React.FC = () => {
     }
   };
 
+  const handleInitRepo = async () => {
+    if (!currentFolder) return;
+    const result = await electronGitService.init(currentFolder);
+    if (result.success) {
+      setIsGitRepo(true);
+      loadGitData();
+    } else {
+      alert(result.message);
+    }
+  };
+
   const handleStageFile = async (file: string) => {
-    await gitService.add([file]);
+    if (!currentFolder) return;
+    await electronGitService.add([file], currentFolder);
     loadGitData();
   };
 
   const handleUnstageFile = async (file: string) => {
-    await gitService.reset([file]);
+    if (!currentFolder) return;
+    await electronGitService.reset([file], currentFolder);
     loadGitData();
   };
 
   const handleCommit = async () => {
-    if (!commitMessage.trim()) return;
+    if (!commitMessage.trim() || !currentFolder) return;
     
-    const result = await gitService.commit(commitMessage);
+    const result = await electronGitService.commit(commitMessage, currentFolder);
     if (result.success) {
       setCommitMessage('');
       loadGitData();
+    } else {
+      alert(result.message);
     }
   };
 
   const handleCreateBranch = async () => {
-    if (!newBranchName.trim()) return;
+    if (!newBranchName.trim() || !currentFolder) return;
     
-    const result = await gitService.createBranch(newBranchName);
+    const result = await electronGitService.createBranch(newBranchName, currentFolder);
     if (result.success) {
       setNewBranchName('');
       setShowNewBranch(false);
       loadGitData();
+    } else {
+      alert(result.message);
     }
   };
 
   const handleCheckoutBranch = async (branchName: string) => {
-    await gitService.checkout(branchName);
-    loadGitData();
+    if (!currentFolder) return;
+    const result = await electronGitService.checkout(branchName, currentFolder);
+    if (result.success) {
+      loadGitData();
+    } else {
+      alert(result.message);
+    }
   };
 
   const handlePull = async () => {
+    if (!currentFolder) return;
     setLoading(true);
-    await gitService.pull();
+    const result = await electronGitService.pull(currentFolder);
+    if (!result.success) {
+      alert(result.message);
+    }
     loadGitData();
   };
 
   const handlePush = async () => {
+    if (!currentFolder) return;
     setLoading(true);
-    await gitService.push();
+    const result = await electronGitService.push(currentFolder);
+    if (!result.success) {
+      alert(result.message);
+    }
     loadGitData();
   };
 
@@ -145,6 +192,9 @@ const GitPanel: React.FC = () => {
             onCommit={handleCommit}
             onPull={handlePull}
             onPush={handlePush}
+            onInitRepo={handleInitRepo}
+            isElectron={isElectron}
+            currentFolder={currentFolder}
           />
         )}
 
@@ -179,15 +229,23 @@ const ChangesTab: React.FC<{
   onCommit: () => void;
   onPull: () => void;
   onPush: () => void;
-}> = ({ status, commitMessage, setCommitMessage, onStageFile, onUnstageFile, onCommit, onPull, onPush }) => {
+  onInitRepo: () => void;
+  isElectron: boolean;
+  currentFolder: string | null;
+}> = ({ status, commitMessage, setCommitMessage, onStageFile, onUnstageFile, onCommit, onPull, onPush, onInitRepo, isElectron, currentFolder }) => {
   if (!status) {
     return (
       <div className="text-center text-gray-500 py-8">
         <GitBranch className="w-12 h-12 mx-auto mb-2 opacity-50" />
         <p>No Git repository</p>
-        <button className="mt-4 px-4 py-2 bg-cyan-500/20 text-cyan-400 rounded hover:bg-cyan-500/30">
-          Initialize Repository
-        </button>
+        {isElectron && currentFolder && (
+          <button 
+            onClick={onInitRepo}
+            className="mt-4 px-4 py-2 bg-cyan-500/20 text-cyan-400 rounded hover:bg-cyan-500/30 transition-colors"
+          >
+            Initialize Repository
+          </button>
+        )}
       </div>
     );
   }

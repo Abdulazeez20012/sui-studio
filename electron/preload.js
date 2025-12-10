@@ -9,6 +9,20 @@ contextBridge.exposeInMainWorld('electron', {
   readDirectory: (dirPath) => ipcRenderer.invoke('read-directory', dirPath),
   createDirectory: (dirPath) => ipcRenderer.invoke('create-directory', dirPath),
   deleteFile: (filePath) => ipcRenderer.invoke('delete-file', filePath),
+  renameFile: (oldPath, newPath) => ipcRenderer.invoke('rename-file', oldPath, newPath),
+  
+  // Terminal operations
+  executeCommand: (command, cwd) => ipcRenderer.invoke('execute-command', command, cwd),
+  onTerminalOutput: (callback) => ipcRenderer.on('terminal-output', (event, data) => callback(data)),
+  
+  // File watcher operations
+  startFileWatcher: (folderPath) => ipcRenderer.invoke('start-file-watcher', folderPath),
+  stopFileWatcher: () => ipcRenderer.invoke('stop-file-watcher'),
+  onFileChanged: (callback) => ipcRenderer.on('file-changed', (event, filePath) => callback(filePath)),
+  onFileAdded: (callback) => ipcRenderer.on('file-added', (event, filePath) => callback(filePath)),
+  onFileDeleted: (callback) => ipcRenderer.on('file-deleted', (event, filePath) => callback(filePath)),
+  onDirectoryAdded: (callback) => ipcRenderer.on('directory-added', (event, dirPath) => callback(dirPath)),
+  onDirectoryDeleted: (callback) => ipcRenderer.on('directory-deleted', (event, dirPath) => callback(dirPath)),
   
   // Dialog operations
   showOpenDialog: (options) => ipcRenderer.invoke('show-open-dialog', options),

@@ -58,6 +58,16 @@ const NexiHome: React.FC = () => {
                         Your intelligent companion for building scalable decentralized applications.
                         Start chatting or choose a quick action.
                     </p>
+                    
+                    {/* Quick Start for Desktop */}
+                    {typeof window !== 'undefined' && (window as any).electron?.isElectron && (
+                        <div className="mt-6 p-4 bg-walrus-cyan/5 border border-walrus-cyan/20 rounded-xl max-w-md mx-auto">
+                            <p className="text-sm text-walrus-cyan font-bold mb-2">🚀 Quick Start</p>
+                            <p className="text-xs text-gray-400">
+                                Click <span className="text-white font-mono bg-white/10 px-1.5 py-0.5 rounded">Open</span> in the header to load your Sui Move project
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Action Cards */}
