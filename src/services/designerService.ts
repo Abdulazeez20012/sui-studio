@@ -1,6 +1,4 @@
-import { config } from '../config';
-
-const API_URL = config.api.baseUrl;
+import { apiService } from './api';
 
 export interface Component {
   id: string;
@@ -28,236 +26,138 @@ export interface GenerateCodeOptions {
 }
 
 class DesignerService {
-  private async request(endpoint: string, options?: RequestInit) {
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Request failed' }));
-      throw new Error(error.error || `HTTP ${response.status}`);
-    }
-
-    return response.json();
-  }
-
-  /**
-   * Create a new design
-   */
-  async createDesign(name: string, description?: string): Promise<Design> {
+  async createDesign(name: string, description?: string): Promise<{ success: boolean; data?: Design; error?: string }> {
     try {
-      const response = await this.request('/api/designer/design', {
-        method: 'POST',
-        body: JSON.stringify({ name, description }),
+      const response = await apiService.post<{ success: boolean; data: Design }>('/designer/design', {
+        name,
+        description
       });
-      return response.data;
-    } catch (error) {
-      console.error('Error creating design:', error);
-      throw error;
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Get design
-   */
-  async getDesign(id: string): Promise<Design> {
+  async getDesign(designId: string): Promise<{ success: boolean; data?: Design; error?: string }> {
     try {
-      const response = await this.request(`/api/designer/design/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching design:', error);
-      throw error;
+      const response = await apiService.get<{ success: boolean; data: Design }>(`/designer/design/${designId}`);
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Update design
-   */
-  async updateDesign(id: string, updates: Partial<Design>): Promise<Design> {
+  async updateDesign(designId: string, updates: Partial<Design>): Promise<{ success: boolean; data?: Design; error?: string }> {
     try {
-      const response = await this.request(`/api/designer/design/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(updates),
+      const response = await apiService.put<{ success: boolean; data: Design }>(`/designer/design/${designId}`, updates);
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async addComponent(designId: string, component: Omit<Component, 'id'>): Promise<{ success: boolean; data?: Design; error?: string }> {
+    try {
+      const response = await apiService.post<{ success: boolean; data: Design }>(`/designer/design/${designId}/component`, component);
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async updateComponent(designId: string, componentId: string, updates: Partial<Component>): Promise<{ success: boolean; data?: Design; error?: string }> {
+    try {
+      const response = await apiService.put<{ success: boolean; data: Design }>(`/designer/design/${designId}/component/${componentId}`, updates);
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async removeComponent(designId: string, componentId: string): Promise<{ success: boolean; data?: Design; error?: string }> {
+    try {
+      const response = await apiService.delete<{ success: boolean; data: Design }>(`/designer/design/${designId}/component/${componentId}`);
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async addConnection(designId: string, fromId: string, toId: string): Promise<{ success: boolean; data?: Design; error?: string }> {
+    try {
+      const response = await apiService.post<{ success: boolean; data: Design }>(`/designer/design/${designId}/connection`, {
+        fromId,
+        toId
       });
-      return response.data;
-    } catch (error) {
-      console.error('Error updating design:', error);
-      throw error;
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Add component
-   */
-  async addComponent(designId: string, component: Omit<Component, 'id'>): Promise<Design> {
+  async removeConnection(designId: string, fromId: string, toId: string): Promise<{ success: boolean; data?: Design; error?: string }> {
     try {
-      const response = await this.request(`/api/designer/design/${designId}/component`, {
-        method: 'POST',
-        body: JSON.stringify(component),
+      const response = await apiService.delete<{ success: boolean; data: Design }>(`/designer/design/${designId}/connection`, {
+        fromId,
+        toId
       });
-      return response.data;
-    } catch (error) {
-      console.error('Error adding component:', error);
-      throw error;
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Update component
-   */
-  async updateComponent(
-    designId: string,
-    componentId: string,
-    updates: Partial<Component>
-  ): Promise<Design> {
+  async generateCode(designId: string, options: GenerateCodeOptions = {}): Promise<{ success: boolean; data?: { code: string }; error?: string }> {
     try {
-      const response = await this.request(
-        `/api/designer/design/${designId}/component/${componentId}`,
-        {
-          method: 'PUT',
-          body: JSON.stringify(updates),
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error updating component:', error);
-      throw error;
+      const response = await apiService.post<{ success: boolean; data: { code: string } }>(`/designer/design/${designId}/generate-code`, options);
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Remove component
-   */
-  async removeComponent(designId: string, componentId: string): Promise<Design> {
+  async generateMermaidDiagram(designId: string): Promise<{ success: boolean; data?: { diagram: string }; error?: string }> {
     try {
-      const response = await this.request(
-        `/api/designer/design/${designId}/component/${componentId}`,
-        { method: 'DELETE' }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error removing component:', error);
-      throw error;
+      const response = await apiService.get<{ success: boolean; data: { diagram: string } }>(`/designer/design/${designId}/mermaid`);
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Add connection
-   */
-  async addConnection(designId: string, fromId: string, toId: string): Promise<Design> {
+  async generatePlantUMLDiagram(designId: string): Promise<{ success: boolean; data?: { diagram: string }; error?: string }> {
     try {
-      const response = await this.request(`/api/designer/design/${designId}/connection`, {
-        method: 'POST',
-        body: JSON.stringify({ fromId, toId }),
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error adding connection:', error);
-      throw error;
+      const response = await apiService.get<{ success: boolean; data: { diagram: string } }>(`/designer/design/${designId}/plantuml`);
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Remove connection
-   */
-  async removeConnection(designId: string, fromId: string, toId: string): Promise<Design> {
+  async validateDesign(designId: string): Promise<{ success: boolean; data?: { valid: boolean; errors: string[] }; error?: string }> {
     try {
-      const response = await this.request(`/api/designer/design/${designId}/connection`, {
-        method: 'DELETE',
-        body: JSON.stringify({ fromId, toId }),
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error removing connection:', error);
-      throw error;
+      const response = await apiService.get<{ success: boolean; data: { valid: boolean; errors: string[] } }>(`/designer/design/${designId}/validate`);
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Generate Move code
-   */
-  async generateCode(designId: string, options?: GenerateCodeOptions): Promise<string> {
+  async exportDesign(designId: string): Promise<{ success: boolean; data?: { json: string }; error?: string }> {
     try {
-      const response = await this.request(`/api/designer/design/${designId}/generate-code`, {
-        method: 'POST',
-        body: JSON.stringify(options || {}),
-      });
-      return response.data.code;
-    } catch (error) {
-      console.error('Error generating code:', error);
-      throw error;
+      const response = await apiService.get<{ success: boolean; data: { json: string } }>(`/designer/design/${designId}/export`);
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Generate Mermaid diagram
-   */
-  async generateMermaidDiagram(designId: string): Promise<string> {
+  async importDesign(json: string): Promise<{ success: boolean; data?: Design; error?: string }> {
     try {
-      const response = await this.request(`/api/designer/design/${designId}/mermaid`);
-      return response.data.diagram;
-    } catch (error) {
-      console.error('Error generating Mermaid diagram:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Generate PlantUML diagram
-   */
-  async generatePlantUMLDiagram(designId: string): Promise<string> {
-    try {
-      const response = await this.request(`/api/designer/design/${designId}/plantuml`);
-      return response.data.diagram;
-    } catch (error) {
-      console.error('Error generating PlantUML diagram:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Validate design
-   */
-  async validateDesign(designId: string): Promise<{ valid: boolean; errors: string[] }> {
-    try {
-      const response = await this.request(`/api/designer/design/${designId}/validate`);
-      return response.data;
-    } catch (error) {
-      console.error('Error validating design:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Export design
-   */
-  async exportDesign(designId: string): Promise<string> {
-    try {
-      const response = await this.request(`/api/designer/design/${designId}/export`);
-      return response.data.json;
-    } catch (error) {
-      console.error('Error exporting design:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Import design
-   */
-  async importDesign(json: string): Promise<Design> {
-    try {
-      const response = await this.request('/api/designer/import', {
-        method: 'POST',
-        body: JSON.stringify({ json }),
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error importing design:', error);
-      throw error;
+      const response = await apiService.post<{ success: boolean; data: Design }>('/designer/import', { json });
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
   }
 }

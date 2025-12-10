@@ -3,7 +3,7 @@ import { GitBranch, AlertCircle, CheckCircle, Hammer, TestTube, Rocket, Folder }
 import { useIDEStore } from '../../store/ideStore';
 
 const StatusBar: React.FC = () => {
-  const { activeTab, tabs } = useIDEStore();
+  const { activeTab, tabs, syntaxErrors, syntaxWarnings, setRightPanelType, toggleRightPanel, rightPanelOpen } = useIDEStore();
   const currentTab = tabs.find(t => t.id === activeTab);
   const [currentFolder, setCurrentFolder] = useState<string | null>(null);
   
@@ -39,10 +39,26 @@ const StatusBar: React.FC = () => {
           <GitBranch size={13} />
           <span className="font-semibold">main</span>
         </div>
-        <div className="flex items-center gap-1.5 text-neon-green">
-          <CheckCircle size={13} className="animate-pulse" />
-          <span className="font-semibold">Ready</span>
-        </div>
+        {/* Syntax Status */}
+        {syntaxErrors > 0 || syntaxWarnings > 0 ? (
+          <button
+            onClick={() => {
+              setRightPanelType('debugger');
+              if (!rightPanelOpen) toggleRightPanel();
+            }}
+            className="flex items-center gap-1.5 hover:bg-white/5 px-2 py-0.5 rounded transition-colors cursor-pointer"
+          >
+            <AlertCircle size={13} className={syntaxErrors > 0 ? 'text-red-400 animate-pulse' : 'text-yellow-400'} />
+            <span className={`font-semibold ${syntaxErrors > 0 ? 'text-red-400' : 'text-yellow-400'}`}>
+              {syntaxErrors > 0 ? `${syntaxErrors} Error${syntaxErrors !== 1 ? 's' : ''}` : `${syntaxWarnings} Warning${syntaxWarnings !== 1 ? 's' : ''}`}
+            </span>
+          </button>
+        ) : (
+          <div className="flex items-center gap-1.5 text-neon-green">
+            <CheckCircle size={13} />
+            <span className="font-semibold">No Issues</span>
+          </div>
+        )}
         <div className="h-3 w-px bg-sui-cyan/20"></div>
         <div className="flex items-center gap-3 text-slate-500">
           <div className="flex items-center gap-1 hover:text-sui-cyan transition-colors cursor-pointer" title="Last build status">

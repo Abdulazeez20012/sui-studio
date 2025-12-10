@@ -1,6 +1,7 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 import jwt from 'jsonwebtoken';
+import { editorMonitoringService } from '../services/EditorMonitoringService';
 
 interface Client {
   ws: WebSocket;
@@ -246,7 +247,7 @@ export class CollaborationServer {
     const room = this.rooms.get(projectId);
     if (!room) return;
 
-    const { changes, version } = message;
+    const { changes, version, fileName } = message;
 
     // Validate version (simple OT)
     if (version !== room.version) {
@@ -258,11 +259,28 @@ export class CollaborationServer {
     }
 
     // Apply changes
+    const oldContent = room.documentState;
     room.documentState = this.applyChanges(room.documentState, changes);
     room.version++;
 
-    // Broadcast to all clients except sender
+    // Get client info
     const client = this.getClientByWs(ws, room);
+    
+    // 🔍 LOG EVERY EDIT - This monitors all code changes
+    if (client) {
+      editorMonitoringService.logEditorEvent({
+        userId: client.userId,
+        userName: client.userName,
+        projectId,
+        fileName: fileName || 'untitled.move',
+        eventType: 'edit',
+        content: room.documentState,
+        changes,
+        timestamp: new Date()
+      });
+    }
+
+    // Broadcast to all clients except sender
     this.broadcastToRoom(projectId, {
       type: 'edit',
       changes,
@@ -282,6 +300,17 @@ export class CollaborationServer {
     if (!client) return;
 
     client.cursorPosition = message.position;
+
+    // 🔍 LOG CURSOR MOVEMENT - Track where users are looking
+    editorMonitoringService.logEditorEvent({
+      userId: client.userId,
+      userName: client.userName,
+      projectId,
+      fileName: message.fileName || 'untitled.move',
+      eventType: 'cursor',
+      position: message.position,
+      timestamp: new Date()
+    });
 
     // Broadcast cursor position
     this.broadcastToRoom(projectId, {
@@ -319,6 +348,21 @@ export class CollaborationServer {
     if (!room) return;
 
     room.documentState = message.content;
+
+    const client = this.getClientByWs(ws, room);
+
+    // 🔍 LOG EVERY SAVE - Capture complete file content
+    if (client) {
+      editorMonitoringService.logEditorEvent({
+        userId: client.userId,
+        userName: client.userName,
+        projectId,
+        fileName: message.fileName || 'untitled.move',
+        eventType: 'save',
+        content: message.content,
+        timestamp: new Date()
+      });
+    }
 
     // Notify all clients
     this.broadcastToRoom(projectId, {

@@ -1,46 +1,28 @@
-import express, { Router, Response } from 'express';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
-import { z } from 'zod';
+import express, { Router, Response, Request } from 'express';
 
 const router: Router = express.Router();
 
-// All routes require authentication
-router.use(authenticateToken);
+// No authentication required
 
 // Mock data for projects (replace with actual DB later)
 const mockProjects: any[] = [];
 
-// Validation schemas
-const createProjectSchema = z.object({
-  name: z.string().min(1).max(100),
-  description: z.string().optional(),
-  files: z.any(), // JSON structure
-  isPublic: z.boolean().optional(),
-});
+// No validation - accept any data
 
-const updateProjectSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
-  description: z.string().optional(),
-  files: z.any().optional(),
-  isPublic: z.boolean().optional(),
-});
-
-// Get all user projects
-router.get('/', async (req: AuthRequest, res: Response) => {
+// Get all projects - no auth required
+router.get('/', async (req: Request, res: Response) => {
   try {
-    const projects = mockProjects
-      .filter(p => p.userId === req.userId)
-      .map(p => ({
-        id: p.id,
-        name: p.name,
-        description: p.description,
-        isPublic: p.isPublic,
-        createdAt: p.createdAt,
-        updatedAt: p.updatedAt,
-        _count: {
-          deployments: 0,
-        },
-      }));
+    const projects = mockProjects.map(p => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      isPublic: p.isPublic,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      _count: {
+        deployments: 0,
+      },
+    }));
 
     res.json({ projects });
   } catch (error: any) {
@@ -48,12 +30,10 @@ router.get('/', async (req: AuthRequest, res: Response) => {
   }
 });
 
-// Get single project
-router.get('/:id', async (req: AuthRequest, res: Response) => {
+// Get single project - no auth required
+router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const project = mockProjects.find(
-      p => p.id === req.params.id && (p.userId === req.userId || p.isPublic)
-    );
+    const project = mockProjects.find(p => p.id === req.params.id);
 
     if (!project) {
       return res.status(404).json({ error: 'Project not found' });
@@ -70,15 +50,18 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
   }
 });
 
-// Create project
-router.post('/', async (req: AuthRequest, res: Response) => {
+// Create project - no validation or auth
+router.post('/', async (req: Request, res: Response) => {
   try {
-    const data = createProjectSchema.parse(req.body);
+    const data = req.body; // Accept any data without validation
 
     const project = {
       id: `project-${Date.now()}`,
-      ...data,
-      userId: req.userId!,
+      name: data.name || 'Untitled Project',
+      description: data.description || '',
+      files: data.files || {},
+      isPublic: data.isPublic || false,
+      userId: 'anonymous', // No user ID required
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -87,19 +70,16 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 
     res.status(201).json({ project });
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Update project
-router.put('/:id', async (req: AuthRequest, res: Response) => {
+// Update project - no validation or auth
+router.put('/:id', async (req: Request, res: Response) => {
   try {
-    const data = updateProjectSchema.parse(req.body);
+    const data = req.body; // Accept any data without validation
 
-    // Check ownership
-    const projectIndex = mockProjects.findIndex(
-      p => p.id === req.params.id && p.userId === req.userId
-    );
+    const projectIndex = mockProjects.findIndex(p => p.id === req.params.id);
 
     if (projectIndex === -1) {
       return res.status(404).json({ error: 'Project not found' });
@@ -113,17 +93,14 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
 
     res.json({ project: mockProjects[projectIndex] });
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Delete project
-router.delete('/:id', async (req: AuthRequest, res: Response) => {
+// Delete project - no auth required
+router.delete('/:id', async (req: Request, res: Response) => {
   try {
-    // Check ownership
-    const projectIndex = mockProjects.findIndex(
-      p => p.id === req.params.id && p.userId === req.userId
-    );
+    const projectIndex = mockProjects.findIndex(p => p.id === req.params.id);
 
     if (projectIndex === -1) {
       return res.status(404).json({ error: 'Project not found' });

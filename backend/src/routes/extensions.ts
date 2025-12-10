@@ -1,116 +1,381 @@
-import express, { Router, Response } from 'express';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import express from 'express';
 import { z } from 'zod';
+import { extensionsMarketplace } from '../services/extensionsMarketplace';
 
-const router: Router = express.Router();
+const router = express.Router();
 
-router.use(authenticateToken);
+// Validation schemas
+const searchSchema = z.object({
+  query: z.string().optional(),
+  category: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  verified: z.boolean().optional(),
+  featured: z.boolean().optional()
+});
 
-// Mock data for extensions (replace with actual DB later)
-const mockExtensions = [
-  {
-    id: 'move-analyzer',
-    userId: 'user-1',
-    extensionId: 'move-analyzer',
-    enabled: true,
-    installedAt: new Date(),
-    extension: {
-      id: 'move-analyzer',
-      name: 'Move Analyzer',
-      description: 'Static analysis for Move code',
-      version: '1.0.0',
-      downloads: 1250,
-    },
-  },
-];
+const installSchema = z.object({
+  extensionId: z.string(),
+  version: z.string().optional()
+});
 
-// Get user's installed extensions
-router.get('/installed', async (req: AuthRequest, res: Response) => {
+const toggleSchema = z.object({
+  enabled: z.boolean()
+});
+
+const settingsSchema = z.object({
+  settings: z.record(z.any())
+});
+
+const reviewSchema = z.object({
+  rating: z.number().min(1).max(5),
+  comment: z.string().optional()
+});
+
+/**
+ * GET /api/extensions
+ * Get all extensions
+ */
+router.get('/', async (req, res) => {
   try {
-    // Return mock data for now
-    const extensions = mockExtensions.filter(ext => ext.userId === req.userId);
-    res.json({ extensions });
+    const extensions = await extensionsMarketplace.getExtensions();
+    res.json({
+      success: true,
+      data: extensions,
+      total: extensions.length
+    });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('Error fetching extensions:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 });
 
-// Install extension
-router.post('/install', async (req: AuthRequest, res: Response) => {
+/**
+ * GET /api/extensions/search
+ * Search extensions
+ */
+router.get('/search', async (req, res) => {
   try {
-    const { extensionId } = z.object({
-      extensionId: z.string(),
-    }).parse(req.body);
-
-    // Check if already installed
-    const existing = mockExtensions.find(
-      ext => ext.userId === req.userId && ext.extensionId === extensionId
-    );
-
-    if (existing) {
-      return res.json({ message: 'Extension already installed', extension: existing });
-    }
-
-    // Mock installation
-    const newExtension = {
-      id: `ext-${Date.now()}`,
-      userId: req.userId!,
-      extensionId,
-      enabled: true,
-      installedAt: new Date(),
-      extension: {
-        id: extensionId,
-        name: extensionId,
-        description: 'Extension description',
-        version: '1.0.0',
-        downloads: 0,
-      },
-    };
-
-    mockExtensions.push(newExtension);
-
-    res.json({ message: 'Extension installed successfully', extension: newExtension });
+    const { query, category, tags, verified, featured } = searchSchema.parse(req.query);
+    const result = await extensionsMarketplace.searchExtensions(query, category, tags, verified, featured);
+    
+    res.json({
+      success: true,
+      data: result.extensions,
+      total: result.total,
+      categories: result.categories
+    });
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('Error searching extensions:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 });
 
-// Uninstall extension
-router.delete('/uninstall/:extensionId', async (req: AuthRequest, res: Response) => {
+/**
+ * GET /api/extensions/featured
+ * Get featured extensions
+ */
+router.get('/featured', async (req, res) => {
   try {
-    const index = mockExtensions.findIndex(
-      ext => ext.userId === req.userId && ext.extensionId === req.params.extensionId
-    );
-
-    if (index !== -1) {
-      mockExtensions.splice(index, 1);
-    }
-
-    res.json({ message: 'Extension uninstalled successfully' });
+    const extensions = await extensionsMarketplace.getFeaturedExtensions();
+    res.json({
+      success: true,
+      data: extensions
+    });
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('Error fetching featured extensions:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 });
 
-// Toggle extension enabled state
-router.patch('/toggle/:extensionId', async (req: AuthRequest, res: Response) => {
+/**
+ * GET /api/extensions/popular
+ * Get popular extensions
+ */
+router.get('/popular', async (req, res) => {
   try {
-    const { enabled } = z.object({
-      enabled: z.boolean(),
-    }).parse(req.body);
+    const limit = parseInt(req.query.limit as string) || 10;
+    const extensions = await extensionsMarketplace.getPopularExtensions(limit);
+    res.json({
+      success: true,
+      data: extensions
+    });
+  } catch (error: any) {
+    console.error('Error fetching popular extensions:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 
-    const extension = mockExtensions.find(
-      ext => ext.userId === req.userId && ext.extensionId === req.params.extensionId
+/**
+ * GET /api/extensions/categories
+ * Get extension categories
+ */
+router.get('/categories', async (req, res) => {
+  try {
+    const categories = await extensionsMarketplace.getCategories();
+    res.json({
+      success: true,
+      data: categories
+    });
+  } catch (error: any) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/extensions/:id
+ * Get extension details
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const extension = await extensionsMarketplace.getExtension(id);
+    
+    if (!extension) {
+      return res.status(404).json({
+        success: false,
+        error: 'Extension not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: extension
+    });
+  } catch (error: any) {
+    console.error('Error fetching extension:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/extensions/user/:userId/installed
+ * Get user's installed extensions
+ */
+router.get('/user/:userId/installed', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const installations = await extensionsMarketplace.getUserExtensions(userId);
+    
+    // Get full extension details for each installation
+    const extensionsWithDetails = await Promise.all(
+      installations.map(async (installation) => {
+        const extension = await extensionsMarketplace.getExtension(installation.extensionId);
+        return {
+          ...installation,
+          extension
+        };
+      })
     );
 
-    if (extension) {
-      extension.enabled = enabled;
-      res.json({ extension });
-    } else {
-      res.status(404).json({ error: 'Extension not found' });
-    }
+    res.json({
+      success: true,
+      data: extensionsWithDetails
+    });
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('Error fetching user extensions:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/extensions/user/:userId/install
+ * Install extension for user
+ */
+router.post('/user/:userId/install', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { extensionId, version } = installSchema.parse(req.body);
+    
+    const installation = await extensionsMarketplace.installExtension(userId, extensionId, version);
+    const extension = await extensionsMarketplace.getExtension(extensionId);
+    
+    res.json({
+      success: true,
+      data: {
+        ...installation,
+        extension
+      }
+    });
+  } catch (error: any) {
+    console.error('Error installing extension:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/extensions/user/:userId/uninstall/:extensionId
+ * Uninstall extension for user
+ */
+router.delete('/user/:userId/uninstall/:extensionId', async (req, res) => {
+  try {
+    const { userId, extensionId } = req.params;
+    const success = await extensionsMarketplace.uninstallExtension(userId, extensionId);
+    
+    if (!success) {
+      return res.status(404).json({
+        success: false,
+        error: 'Extension not installed'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Extension uninstalled successfully'
+    });
+  } catch (error: any) {
+    console.error('Error uninstalling extension:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * PATCH /api/extensions/user/:userId/toggle/:extensionId
+ * Toggle extension enabled state
+ */
+router.patch('/user/:userId/toggle/:extensionId', async (req, res) => {
+  try {
+    const { userId, extensionId } = req.params;
+    const { enabled } = toggleSchema.parse(req.body);
+    
+    const installation = await extensionsMarketplace.toggleExtension(userId, extensionId, enabled);
+    
+    if (!installation) {
+      return res.status(404).json({
+        success: false,
+        error: 'Extension not installed'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: installation
+    });
+  } catch (error: any) {
+    console.error('Error toggling extension:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * PUT /api/extensions/user/:userId/settings/:extensionId
+ * Update extension settings
+ */
+router.put('/user/:userId/settings/:extensionId', async (req, res) => {
+  try {
+    const { userId, extensionId } = req.params;
+    const { settings } = settingsSchema.parse(req.body);
+    
+    const installation = await extensionsMarketplace.updateExtensionSettings(userId, extensionId, settings);
+    
+    if (!installation) {
+      return res.status(404).json({
+        success: false,
+        error: 'Extension not installed'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: installation
+    });
+  } catch (error: any) {
+    console.error('Error updating extension settings:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/extensions/:id/review
+ * Submit extension review
+ */
+router.post('/:id/review', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rating, comment } = reviewSchema.parse(req.body);
+    const userId = req.headers['user-id'] as string || 'anonymous';
+    
+    const success = await extensionsMarketplace.submitReview(id, userId, rating, comment);
+    
+    if (!success) {
+      return res.status(404).json({
+        success: false,
+        error: 'Extension not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Review submitted successfully'
+    });
+  } catch (error: any) {
+    console.error('Error submitting review:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/extensions/:id/stats
+ * Get extension statistics
+ */
+router.get('/:id/stats', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const stats = await extensionsMarketplace.getExtensionStats(id);
+    
+    if (!stats) {
+      return res.status(404).json({
+        success: false,
+        error: 'Extension not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error: any) {
+    console.error('Error fetching extension stats:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 });
 

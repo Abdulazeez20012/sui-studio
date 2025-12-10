@@ -4,7 +4,7 @@ import Sidebar from '../components/ide/Sidebar';
 import LeftPanel from '../components/ide/LeftPanel';
 import RightPanel from '../components/ide/RightPanel';
 import EditorTabs from '../components/ide/EditorTabs';
-import CodeEditor from '../components/ide/CodeEditor';
+import SimpleEditor from '../components/ide/SimpleEditor';
 import Terminal from '../components/ide/Terminal';
 import StatusBar from '../components/ide/StatusBar';
 import BuildStatus from '../components/ide/BuildStatus';
@@ -216,7 +216,7 @@ const IDEPage: React.FC = () => {
                     pointerEvents: tabs.length > 0 ? 'auto' : 'none'
                   }}
                 >
-                  <CodeEditor />
+                  <SimpleEditor />
                 </div>
               </div>
             </div>

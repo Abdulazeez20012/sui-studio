@@ -232,12 +232,26 @@ const CodeEditor: React.FC = () => {
         />
       </div>
 
-      {/* Collaboration Indicator */}
-      {enableYjs && (
-        <div className="absolute top-4 right-4 z-20">
+      {/* Collaboration Controls */}
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+        {/* Collaboration Toggle */}
+        <button
+          onClick={() => setEnableYjs(!enableYjs)}
+          className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+            enableYjs 
+              ? 'bg-sui-cyan text-black' 
+              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+          }`}
+          title="Toggle real-time collaboration"
+        >
+          {enableYjs ? 'Collab ON' : 'Collab OFF'}
+        </button>
+        
+        {/* Collaboration Indicator */}
+        {enableYjs && (
           <CollaborationIndicator connected={yjs.connected} users={yjs.users} />
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Breadcrumbs */}
       {currentTab.path && (

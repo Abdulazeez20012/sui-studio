@@ -25,6 +25,10 @@ interface IDEState {
   rightPanelType: RightPanelType;
   collaborationEnabled: boolean;
   
+  // Syntax Errors
+  syntaxErrors: number;
+  syntaxWarnings: number;
+  
   // Actions
   setFiles: (files: FileNode[]) => void;
   setActiveFile: (path: string | null) => void;
@@ -33,6 +37,7 @@ interface IDEState {
   removeTab: (id: string) => void;
   setActiveTab: (id: string) => void;
   updateTabContent: (id: string, content: string) => void;
+  markTabAsSaved: (id: string) => void;
   
   toggleLeftPanel: () => void;
   setLeftPanelType: (type: PanelType) => void;
@@ -47,6 +52,8 @@ interface IDEState {
   clearTerminal: (id: string) => void;
   
   setViewMode: (mode: ViewMode) => void;
+  
+  setSyntaxErrors: (errors: number, warnings: number) => void;
 }
 
 export const useIDEStore = create<IDEState>((set) => ({
@@ -64,13 +71,16 @@ export const useIDEStore = create<IDEState>((set) => ({
   terminals: [{
     id: 'terminal-1',
     name: 'Terminal 1',
-    output: ['Welcome to Sui Studio IDE', '$ ']
+    output: []
   }],
   activeTerminal: 'terminal-1',
   
   viewMode: 'editor',
   rightPanelType: 'deployment',
   collaborationEnabled: false,
+  
+  syntaxErrors: 0,
+  syntaxWarnings: 0,
   
   setFiles: (files) => set({ files }),
   setActiveFile: (path) => set({ activeFile: path }),
@@ -93,6 +103,13 @@ export const useIDEStore = create<IDEState>((set) => ({
   updateTabContent: (id, content) => set((state) => ({
     tabs: state.tabs.map(tab => 
       tab.id === id ? { ...tab, content, isDirty: true } : tab
+    )
+  })),
+
+  // Mark tab as saved (not dirty)
+  markTabAsSaved: (id) => set((state) => ({
+    tabs: state.tabs.map(tab => 
+      tab.id === id ? { ...tab, isDirty: false } : tab
     )
   })),
   
@@ -123,4 +140,6 @@ export const useIDEStore = create<IDEState>((set) => ({
   })),
   
   setViewMode: (mode) => set({ viewMode: mode }),
+  
+  setSyntaxErrors: (errors, warnings) => set({ syntaxErrors: errors, syntaxWarnings: warnings }),
 }));

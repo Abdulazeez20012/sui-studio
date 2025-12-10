@@ -48,7 +48,10 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
         let content = node.content || '';
         if (window.electron?.isElectron && node.path) {
           try {
-            content = await window.electron.readFile(node.id);
+            const result = await window.electron.readFile(node.id);
+            if (result.success && typeof result.content === 'string') {
+              content = result.content;
+            }
           } catch (error) {
             console.error('Failed to load file:', error);
           }
@@ -58,7 +61,7 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
           id: `tab-${Date.now()}`,
           name: node.name,
           path: node.path,
-          content,
+          content: typeof content === 'string' ? content : '',
           language: node.language || 'move',
           isDirty: false
         };
@@ -219,7 +222,7 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
 };
 
 const FileExplorer: React.FC = () => {
-  const { files, setFiles, addTab, tabs, activeTab, updateTabContent } = useIDEStore();
+  const { files, setFiles, addTab, tabs, activeTab, updateTabContent, markTabAsSaved } = useIDEStore();
   const [showNewMenu, setShowNewMenu] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -523,7 +526,7 @@ const FileExplorer: React.FC = () => {
       if (currentTab && currentTab.isDirty && currentTab.path) {
         try {
           await writeFile(currentTab.path, currentTab.content);
-          updateTabContent(currentTab.id, currentTab.content); // Mark as saved
+          markTabAsSaved(currentTab.id); // Mark as saved (not dirty)
           console.log('File saved:', currentTab.name);
         } catch (error: any) {
           alert(`Failed to save file: ${error.message}`);
@@ -538,7 +541,7 @@ const FileExplorer: React.FC = () => {
         if (tab.isDirty && tab.path) {
           try {
             await writeFile(tab.path, tab.content);
-            updateTabContent(tab.id, tab.content); // Mark as saved
+            markTabAsSaved(tab.id); // Mark as saved (not dirty)
           } catch (error: any) {
             console.error('Failed to save file:', tab.name, error);
           }
@@ -554,7 +557,7 @@ const FileExplorer: React.FC = () => {
       document.removeEventListener('ide:saveFile', handleSaveFile);
       document.removeEventListener('ide:saveAllFiles', handleSaveAllFiles);
     };
-  }, [isElectron, currentFolder, tabs, activeTab, writeFile, updateTabContent]);
+  }, [isElectron, currentFolder, tabs, activeTab, writeFile, markTabAsSaved]);
 
   // Auto-save files when content changes (for Electron)
   useEffect(() => {
@@ -566,7 +569,7 @@ const FileExplorer: React.FC = () => {
           try {
             await writeFile(tab.path, tab.content);
             // Mark as saved
-            updateTabContent(tab.id, tab.content);
+            markTabAsSaved(tab.id);
           } catch (error) {
             console.error('Auto-save failed:', error);
           }
@@ -575,7 +578,7 @@ const FileExplorer: React.FC = () => {
     }, 5000); // Auto-save every 5 seconds
 
     return () => clearInterval(saveInterval);
-  }, [isElectron, currentFolder, tabs, writeFile, updateTabContent]);
+  }, [isElectron, currentFolder, tabs, writeFile, markTabAsSaved]);
 
   return (
     <div className="h-full bg-transparent overflow-y-auto scrollbar-thin scrollbar-thumb-sui-cyan/20 scrollbar-track-transparent">

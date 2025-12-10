@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Rocket, Hammer, TestTube, UploadCloud, Plus,
     Menu, User, Settings, LogOut, Wifi, WifiOff,
-    ChevronDown, CheckCircle, XCircle, Loader, FolderOpen, HelpCircle
+    ChevronDown, CheckCircle, XCircle, Loader, FolderOpen, HelpCircle, AlertCircle, Bug
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
@@ -244,6 +244,9 @@ const Header: React.FC = () => {
                 {/* Right: User & Settings */}
                 <div className="flex items-center gap-4">
 
+                    {/* Syntax Checker Error Indicator */}
+                    <SyntaxErrorIndicator />
+
                     <RecentFiles 
                         onFileSelect={async (path, name) => {
                             try {
@@ -321,6 +324,38 @@ const Header: React.FC = () => {
 
             </div>
         </>
+    );
+};
+
+// Syntax Error Indicator Component
+const SyntaxErrorIndicator: React.FC = () => {
+    const { syntaxErrors, syntaxWarnings, setRightPanelType, toggleRightPanel, rightPanelOpen } = useIDEStore();
+    
+    const hasIssues = syntaxErrors > 0 || syntaxWarnings > 0;
+    
+    if (!hasIssues) return null;
+    
+    const handleClick = () => {
+        setRightPanelType('debugger');
+        if (!rightPanelOpen) toggleRightPanel();
+    };
+    
+    return (
+        <button
+            onClick={handleClick}
+            className={`relative flex items-center gap-2 px-3 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all hover:scale-105 active:scale-95 ${
+                syntaxErrors > 0
+                    ? 'bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.2)] animate-pulse'
+                    : 'bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/20'
+            }`}
+            title={`${syntaxErrors > 0 ? `${syntaxErrors} Error${syntaxErrors !== 1 ? 's' : ''}` : `${syntaxWarnings} Warning${syntaxWarnings !== 1 ? 's' : ''}`} - Click to view`}
+        >
+            <Bug size={16} />
+            <span>{syntaxErrors > 0 ? syntaxErrors : syntaxWarnings}</span>
+            {syntaxErrors > 0 && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping" />
+            )}
+        </button>
     );
 };
 

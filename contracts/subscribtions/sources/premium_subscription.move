@@ -1,7 +1,7 @@
 
 /// Premium Subscription System for Sui Studio
 
-/// NFT-based subscription management with tiered pricing
+/// NFT-based subscription management with tiered pricin
 
 module subscribtions::premium_subscription {
     use sui::object::{Self, UID, ID};
@@ -10,7 +10,7 @@ module subscribtions::premium_subscription {
     use sui::coin::{Self, Coin};
     use sui::sui::SUI;
     use sui::balance::{Self, Balance};
-    use sui::clock::{Self, Clock};
+    use sui::clock::{Self, Clock}
     use sui::event;
 
     

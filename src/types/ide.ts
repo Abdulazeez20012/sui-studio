@@ -21,6 +21,7 @@ export interface Terminal {
   id: string;
   name: string;
   output: string[];
+  cwd?: string;
 }
 
 export interface Project {

@@ -1,6 +1,23 @@
-import { config } from '../config';
+import { error } from 'console';
+import { error } from 'console';
+import { error } from 'console';
+import { error } from 'console';
+import { apiService } from './api';
 
-const API_URL = config.api.baseUrl;
+export interface ProfileSession {
+  id: string;
+  code: string;
+  status: 'idle' | 'recording' | 'analyzing' | 'complete';
+  startTime?: Date;
+  endTime?: Date;
+  duration?: number;
+  profileData: ProfileData[];
+  memorySnapshots: MemorySnapshot[];
+  gasAnalysis: GasAnalysis;
+  hotspots: Hotspot[];
+  recommendations: string[];
+  createdAt: Date;
+}
 
 export interface ProfileData {
   function: string;
@@ -36,21 +53,6 @@ export interface Hotspot {
   gasImpact: number;
 }
 
-export interface ProfileSession {
-  id: string;
-  code: string;
-  status: 'idle' | 'recording' | 'analyzing' | 'complete';
-  startTime?: Date;
-  endTime?: Date;
-  duration?: number;
-  profileData: ProfileData[];
-  memorySnapshots: MemorySnapshot[];
-  gasAnalysis: GasAnalysis;
-  hotspots: Hotspot[];
-  recommendations: string[];
-  createdAt: Date;
-}
-
 export interface ProfilingOptions {
   sampleRate?: number;
   includeMemory?: boolean;
@@ -59,48 +61,82 @@ export interface ProfilingOptions {
 }
 
 class ProfilerService {
-  private async request(endpoint: string, options?: RequestInit) {
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Request failed' }));
-      throw new Error(error.error || `HTTP ${response.status}`);
-    }
-
-    return response.json();
-  }
-
-  /**
-   * Create profiling session
-   */
-  async createSession(code: string): Promise<ProfileSession> {
+  async createSession(code: string): Promise<{ success: boolean; data?: ProfileSession; error?: string }> {
     try {
-      const response = await this.request('/api/profiler/session', {
-        method: 'POST',
-        body: JSON.stringify({ code }),
+      const response = await apiService.post<{ success: boolean; data: ProfileSession }>('/profiler/session', {
+        code
       });
-      return response.data;
-    } catch (error) {
-      console.error('Error creating profiling session:', error);
-      throw error;
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Get session
-   */
-  async getSession(sessionId: string): Promise<ProfileSession> {
+  async getSession(sessionId: string): Promise<{ success: boolean; data?: ProfileSession; error?: string }> {
     try {
-      const response = await this.request(`/api/profiler/session/${sessionId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching session:', error);
+      const response = await apiService.get<{ success: boolean; data: ProfileSession }>(`/profiler/session/${sessionId}`);
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async startProfiling(sessionId: string, options: ProfilingOptions = {}): Promise<{ success: boolean; data?: ProfileSession; error?: string }> {
+    try {
+      const response = await apiService.post<{ success: boolean; data: ProfileSession }>(`/profiler/session/${sessionId}/start`, options);
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async stopProfiling(sessionId: string): Promise<{ success: boolean; data?: ProfileSession; error?: string }> {
+    try {
+      const response = await apiService.post<{ success: boolean; data: ProfileSession }>(`/profiler/session/${sessionId}/stop`);
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getGasAnalysis(sessionId: string): Promise<{ success: boolean; data?: GasAnalysis; error?: string }> {
+    try {
+      const response = await apiService.get<{ success: boolean; data: GasAnalysis }>(`/profiler/session/${sessionId}/gas-analysis`);
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getHotspots(sessionId: string): Promise<{ success: boolean; data?: Hotspot[]; error?: string }> {
+    try {
+      const response = await apiService.get<{ success: boolean; data: Hotspot[] }>(`/profiler/session/${sessionId}/hotspots`);
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getRecommendations(sessionId: string): Promise<{ success: boolean; data?: string[]; error?: string }> {
+    try {
+      const response = await apiService.get<{ success: boolean; data: string[] }>(`/profiler/session/${sessionId}/recommendations`);
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async exportProfile(sessionId: string): Promise<{ success: boolean; data?: { json: string }; error?: string }> {
+    try {
+      const response = await apiService.get<{ success: boolean; data: { json: string } }>(`/profiler/session/${sessionId}/export`);
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+}
+
+export const profilerService = new ProfilerService(); error);
       throw error;
     }
   }

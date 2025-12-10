@@ -1,6 +1,4 @@
-import { config } from '../config';
-
-const API_URL = config.api.baseUrl;
+import { apiService } from './api';
 
 export interface SuiPackage {
   name: string;
@@ -19,6 +17,7 @@ export interface SuiPackage {
 export interface PackageSearchResult {
   packages: SuiPackage[];
   total: number;
+  categories: string[];
 }
 
 export interface InstallResult {
@@ -30,150 +29,88 @@ export interface InstallResult {
 }
 
 class PackageService {
-  private async request(endpoint: string, options?: RequestInit) {
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Request failed' }));
-      throw new Error(error.error || `HTTP ${response.status}`);
-    }
-
-    return response.json();
-  }
-
-  /**
-   * Get all available packages
-   */
-  async getPackages(): Promise<SuiPackage[]> {
+  async getPackages(): Promise<{ success: boolean; data?: SuiPackage[]; total?: number; error?: string }> {
     try {
-      const response = await this.request('/api/packages');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching packages:', error);
-      throw error;
+      const response = await apiService.get<{ success: boolean; data: SuiPackage[]; total: number }>('/packages');
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Search packages
-   */
-  async searchPackages(query: string, category?: string): Promise<PackageSearchResult> {
+  async searchPackages(query?: string, category?: string): Promise<{ success: boolean; data?: SuiPackage[]; total?: number; error?: string }> {
     try {
       const params = new URLSearchParams();
       if (query) params.append('query', query);
       if (category) params.append('category', category);
-
-      const response = await this.request(`/api/packages/search?${params.toString()}`);
-      return {
-        packages: response.data,
-        total: response.total
-      };
-    } catch (error) {
-      console.error('Error searching packages:', error);
-      throw error;
+      
+      const response = await apiService.get<{ success: boolean; data: SuiPackage[]; total: number }>(`/packages/search?${params}`);
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Get package details
-   */
-  async getPackageDetails(packageName: string): Promise<SuiPackage> {
+  async getCategories(): Promise<{ success: boolean; data?: string[]; error?: string }> {
     try {
-      const response = await this.request(`/api/packages/${packageName}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching package details:', error);
-      throw error;
+      const response = await apiService.get<{ success: boolean; data: string[] }>('/packages/categories');
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Install package
-   */
+  async getPackageDetails(packageName: string): Promise<{ success: boolean; data?: SuiPackage; error?: string }> {
+    try {
+      const response = await apiService.get<{ success: boolean; data: SuiPackage }>(`/packages/${packageName}`);
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+
   async installPackage(packageName: string, projectPath?: string): Promise<InstallResult> {
     try {
-      const response = await this.request('/api/packages/install', {
-        method: 'POST',
-        body: JSON.stringify({ packageName, projectPath }),
+      const response = await apiService.post<InstallResult>('/packages/install', {
+        packageName,
+        projectPath
       });
-      return response.data;
+      return response;
     } catch (error: any) {
-      console.error('Error installing package:', error);
-      return {
-        success: false,
-        package: packageName,
-        version: '',
-        error: error.message
-      };
+      return { success: false, package: packageName, version: '', error: error.message };
     }
   }
 
-  /**
-   * Uninstall package
-   */
   async uninstallPackage(packageName: string, projectPath?: string): Promise<InstallResult> {
     try {
-      const response = await this.request('/api/packages/uninstall', {
-        method: 'POST',
-        body: JSON.stringify({ packageName, projectPath }),
+      const response = await apiService.post<InstallResult>('/packages/uninstall', {
+        packageName,
+        projectPath
       });
-      return response.data;
+      return response;
     } catch (error: any) {
-      console.error('Error uninstalling package:', error);
-      return {
-        success: false,
-        package: packageName,
-        version: '',
-        error: error.message
-      };
+      return { success: false, package: packageName, version: '', error: error.message };
     }
   }
 
-  /**
-   * Generate Move.toml
-   */
-  async generateMoveToml(projectName: string, packages: string[]): Promise<string> {
+  async generateMoveToml(projectName: string, packages: string[]): Promise<{ success: boolean; data?: { toml: string; packages: SuiPackage[] }; error?: string }> {
     try {
-      const response = await this.request('/api/packages/generate-toml', {
-        method: 'POST',
-        body: JSON.stringify({ projectName, packages }),
+      const response = await apiService.post<{ success: boolean; data: { toml: string; packages: SuiPackage[] } }>('/packages/generate-toml', {
+        projectName,
+        packages
       });
-      return response.data.toml;
-    } catch (error) {
-      console.error('Error generating Move.toml:', error);
-      throw error;
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Get package categories
-   */
-  async getCategories(): Promise<string[]> {
+  async verifyPackage(packageName: string): Promise<{ success: boolean; data?: { package: string; verified: boolean }; error?: string }> {
     try {
-      const response = await this.request('/api/packages/categories');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Verify package
-   */
-  async verifyPackage(packageName: string): Promise<boolean> {
-    try {
-      const response = await this.request(`/api/packages/${packageName}/verify`);
-      return response.data.verified;
-    } catch (error) {
-      console.error('Error verifying package:', error);
-      return false;
+      const response = await apiService.get<{ success: boolean; data: { package: string; verified: boolean } }>(`/packages/${packageName}/verify`);
+      return response;
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
   }
 }

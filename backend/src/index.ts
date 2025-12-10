@@ -28,6 +28,9 @@ import packagesRoutes from './routes/packages';
 import debuggerRoutes from './routes/debugger';
 import designerRoutes from './routes/designer';
 import profilerRoutes from './routes/profiler';
+import gasRoutes from './routes/gas';
+import contractRoutes from './routes/contract';
+import syntaxRoutes from './routes/syntax';
 
 const app: Express = express();
 const PORT = process.env.PORT || 3001;
@@ -38,6 +41,8 @@ const server = createServer(app);
 // Middleware - Allow multiple origins for Vercel preview deployments
 const allowedOrigins = [
   'http://localhost:3000',
+  'http://localhost:3002', // Add port 3002 for frontend
+  'http://localhost:3003', // Add port 3003 for frontend
   'http://localhost:5173',
   'https://suistudio.live',
   'https://sui-studio.onrender.com',
@@ -100,6 +105,9 @@ app.use('/api/packages', packagesRoutes);
 app.use('/api/debugger', debuggerRoutes);
 app.use('/api/designer', designerRoutes);
 app.use('/api/profiler', profilerRoutes);
+app.use('/api/gas', gasRoutes);
+app.use('/api/contract', contractRoutes);
+app.use('/api/syntax', syntaxRoutes);
 
 // Error handling middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {

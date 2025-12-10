@@ -10,7 +10,7 @@ import ExtensionsMarketplace from './ExtensionsMarketplace';
 import { WalletPanel } from './WalletPanel';
 import { ContractInteractionPanel } from './ContractInteractionPanel';
 import { PackageManager } from './PackageManager';
-import { Debugger } from './Debugger';
+import { SyntaxChecker } from './SyntaxChecker';
 import { SystemDesigner } from './SystemDesigner';
 import { Profiler } from './Profiler';
 
@@ -40,7 +40,7 @@ const RightPanel: React.FC = () => {
       case 'packages':
         return <PackageManager />;
       case 'debugger':
-        return <Debugger />;
+        return <SyntaxChecker />;
       case 'designer':
         return <SystemDesigner />;
       case 'profiler':
