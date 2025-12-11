@@ -29,7 +29,7 @@ const Header: React.FC = () => {
         addTab,
     } = useIDEStore();
     
-    const { readFile } = useElectronFileSystem();
+    const { readFile, currentFolder } = useElectronFileSystem();
 
     const [backendConnected, setBackendConnected] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
@@ -63,7 +63,8 @@ const Header: React.FC = () => {
     };
 
     const handleBuild = async () => {
-        if (!currentTab || isBuilding || !backendConnected) return;
+        if (isBuilding) return;
+        
         setIsBuilding(true);
         setBuildStatus('building');
         setBuildResult(null);
@@ -72,33 +73,68 @@ const Header: React.FC = () => {
         if (activeTerminal) addTerminalOutput(activeTerminal, '$ sui move build');
 
         try {
-            await apiService.executeCommand('save-file', currentTab.content);
-            const result = await apiService.executeCommand('sui move build');
+            // Use Electron terminal if available, otherwise use backend API
+            if (window.electron?.isElectron) {
+                const result = await window.electron.executeCommand('sui move build', currentFolder || undefined);
 
-            if (activeTerminal) {
-                result.output.split('\n').forEach((line: string) => {
-                    if (line.trim()) addTerminalOutput(activeTerminal, line);
-                });
-            }
+                if (activeTerminal && result.output) {
+                    result.output.split('\n').forEach((line: string) => {
+                        if (line.trim()) addTerminalOutput(activeTerminal, line);
+                    });
+                }
 
-            if (result.success) {
-                setBuildStatus('success');
-                setBuildResult({ status: 'success', message: 'Build successful' });
-                if (activeTerminal) addTerminalOutput(activeTerminal, '✓ Build successful!');
+                if (result.success) {
+                    setBuildStatus('success');
+                    setBuildResult({ status: 'success', message: 'Build successful' });
+                    if (activeTerminal) addTerminalOutput(activeTerminal, '✓ Build successful!');
+                } else {
+                    setBuildStatus('error');
+                    setBuildResult({ 
+                        status: 'error', 
+                        message: 'Build failed', 
+                        fullOutput: result.output || result.error 
+                    });
+                    if (activeTerminal && result.error) {
+                        addTerminalOutput(activeTerminal, `Error: ${result.error}`);
+                    }
+                }
+            } else if (backendConnected) {
+                // Fallback to backend API for web version
+                await apiService.executeCommand('save-file', currentTab?.content || '');
+                const result = await apiService.executeCommand('sui move build');
+
+                if (activeTerminal) {
+                    result.output.split('\n').forEach((line: string) => {
+                        if (line.trim()) addTerminalOutput(activeTerminal, line);
+                    });
+                }
+
+                if (result.success) {
+                    setBuildStatus('success');
+                    setBuildResult({ status: 'success', message: 'Build successful' });
+                    if (activeTerminal) addTerminalOutput(activeTerminal, '✓ Build successful!');
+                } else {
+                    setBuildStatus('error');
+                    setBuildResult({ status: 'error', message: 'Build failed', fullOutput: result.output });
+                }
             } else {
-                setBuildStatus('error');
-                setBuildResult({ status: 'error', message: 'Build failed', fullOutput: result.output });
+                throw new Error('No build system available. Please open a Sui Move project folder.');
             }
         } catch (error: any) {
             setBuildStatus('error');
             setBuildResult({ status: 'error', message: error.message, fullOutput: error.toString() });
+            if (activeTerminal) addTerminalOutput(activeTerminal, `Error: ${error.message}`);
         } finally {
             setIsBuilding(false);
+            setTimeout(() => {
+                if (buildStatus !== 'error') setBuildStatus('idle');
+            }, 3000);
         }
     };
 
     const handleTest = async () => {
-        if (!currentTab || isTesting || !backendConnected) return;
+        if (isTesting) return;
+        
         setIsTesting(true);
         setTestStatus('idle');
 
@@ -106,19 +142,43 @@ const Header: React.FC = () => {
         if (activeTerminal) addTerminalOutput(activeTerminal, '$ sui move test');
 
         try {
-            const result = await apiService.executeCommand('sui move test');
+            // Use Electron terminal if available, otherwise use backend API
+            if (window.electron?.isElectron) {
+                const result = await window.electron.executeCommand('sui move test', currentFolder || undefined);
 
-            if (activeTerminal) {
-                result.output.split('\n').forEach((line: string) => {
-                    if (line.trim()) addTerminalOutput(activeTerminal, line);
-                });
-            }
+                if (activeTerminal && result.output) {
+                    result.output.split('\n').forEach((line: string) => {
+                        if (line.trim()) addTerminalOutput(activeTerminal, line);
+                    });
+                }
 
-            if (result.success && !result.output.includes('FAILED')) {
-                setTestStatus('success');
-                if (activeTerminal) addTerminalOutput(activeTerminal, '✓ Tests passed!');
+                if (result.success && !result.output?.includes('FAILED')) {
+                    setTestStatus('success');
+                    if (activeTerminal) addTerminalOutput(activeTerminal, '✓ Tests passed!');
+                } else {
+                    setTestStatus('error');
+                    if (activeTerminal && result.error) {
+                        addTerminalOutput(activeTerminal, `Error: ${result.error}`);
+                    }
+                }
+            } else if (backendConnected) {
+                // Fallback to backend API for web version
+                const result = await apiService.executeCommand('sui move test');
+
+                if (activeTerminal) {
+                    result.output.split('\n').forEach((line: string) => {
+                        if (line.trim()) addTerminalOutput(activeTerminal, line);
+                    });
+                }
+
+                if (result.success && !result.output.includes('FAILED')) {
+                    setTestStatus('success');
+                    if (activeTerminal) addTerminalOutput(activeTerminal, '✓ Tests passed!');
+                } else {
+                    setTestStatus('error');
+                }
             } else {
-                setTestStatus('error');
+                throw new Error('No test system available. Please open a Sui Move project folder.');
             }
         } catch (error: any) {
             setTestStatus('error');
@@ -129,9 +189,50 @@ const Header: React.FC = () => {
         }
     };
 
-    const handlePublish = () => {
-        // Placeholder for publish logic
-        console.log("Publish triggered");
+    const handlePublish = async () => {
+        if (!bottomPanelOpen) toggleBottomPanel();
+        if (activeTerminal) addTerminalOutput(activeTerminal, '$ sui client publish --gas-budget 100000000');
+
+        try {
+            // Use Electron terminal if available
+            if (window.electron?.isElectron) {
+                const result = await window.electron.executeCommand(
+                    'sui client publish --gas-budget 100000000',
+                    currentFolder || undefined
+                );
+
+                if (activeTerminal && result.output) {
+                    result.output.split('\n').forEach((line: string) => {
+                        if (line.trim()) addTerminalOutput(activeTerminal, line);
+                    });
+                }
+
+                if (result.success) {
+                    if (activeTerminal) addTerminalOutput(activeTerminal, '✓ Package published successfully!');
+                } else {
+                    if (activeTerminal && result.error) {
+                        addTerminalOutput(activeTerminal, `Error: ${result.error}`);
+                    }
+                }
+            } else if (backendConnected) {
+                // Fallback to backend API for web version
+                const result = await apiService.executeCommand('sui client publish --gas-budget 100000000');
+                
+                if (activeTerminal) {
+                    result.output.split('\n').forEach((line: string) => {
+                        if (line.trim()) addTerminalOutput(activeTerminal, line);
+                    });
+                }
+
+                if (result.success) {
+                    if (activeTerminal) addTerminalOutput(activeTerminal, '✓ Package published successfully!');
+                }
+            } else {
+                throw new Error('No publish system available. Please open a Sui Move project folder.');
+            }
+        } catch (error: any) {
+            if (activeTerminal) addTerminalOutput(activeTerminal, `Error: ${error.message}`);
+        }
     };
 
     const handleDeploy = () => {
@@ -208,25 +309,28 @@ const Header: React.FC = () => {
                         icon={isBuilding ? <Loader size={18} className="animate-spin" /> : <Hammer size={18} />}
                         label={isBuilding ? "Building..." : "Build"}
                         onClick={handleBuild}
-                        disabled={isBuilding || !backendConnected}
+                        disabled={isBuilding || (!window.electron?.isElectron && !backendConnected) || !currentFolder}
                         active={buildStatus === 'success'}
                         error={buildStatus === 'error'}
+                        title={!currentFolder ? "Open a folder first" : "Build project (Ctrl+Shift+B)"}
                     />
 
                     <ActionButton
                         icon={isTesting ? <Loader size={18} className="animate-spin" /> : <TestTube size={18} />}
                         label={isTesting ? "Testing..." : "Test"}
                         onClick={handleTest}
-                        disabled={isTesting || !backendConnected}
+                        disabled={isTesting || (!window.electron?.isElectron && !backendConnected) || !currentFolder}
                         active={testStatus === 'success'}
                         error={testStatus === 'error'}
+                        title={!currentFolder ? "Open a folder first" : "Run tests (Ctrl+Shift+T)"}
                     />
 
                     <ActionButton
                         icon={<UploadCloud size={18} />}
                         label="Publish"
                         onClick={handlePublish}
-                        disabled={!backendConnected}
+                        disabled={(!window.electron?.isElectron && !backendConnected) || !currentFolder}
+                        title={!currentFolder ? "Open a folder first" : "Publish package to network"}
                     />
 
                     <div className="w-px h-8 bg-white/10 mx-1" />
@@ -237,6 +341,7 @@ const Header: React.FC = () => {
                         onClick={handleDeploy}
                         disabled={!backendConnected}
                         special
+                        title="Deploy contract"
                     />
 
                 </div>
@@ -369,13 +474,15 @@ const ActionButton: React.FC<{
     disabled?: boolean;
     active?: boolean;
     error?: boolean;
-}> = ({ icon, label, onClick, primary, special, disabled, active, error }) => {
+    title?: string;
+}> = ({ icon, label, onClick, primary, special, disabled, active, error, title }) => {
 
     if (primary) {
         return (
             <button
                 onClick={onClick}
                 disabled={disabled}
+                title={title}
                 className="flex items-center gap-2 px-5 py-2.5 bg-white text-black hover:bg-gray-200 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(255,255,255,0.2)] hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 {icon}
@@ -389,6 +496,7 @@ const ActionButton: React.FC<{
             <button
                 onClick={onClick}
                 disabled={disabled}
+                title={title}
                 className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-walrus-cyan to-walrus-purple text-black rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-neon hover:shadow-neon-lg hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 {icon}
@@ -401,6 +509,7 @@ const ActionButton: React.FC<{
         <button
             onClick={onClick}
             disabled={disabled}
+            title={title}
             className={`flex items-center gap-2 px-4 py-2 bg-walrus-dark-900 border rounded-xl font-bold text-xs uppercase tracking-wider transition-all hover:bg-walrus-dark-800 disabled:opacity-50 disabled:cursor-not-allowed ${active
                 ? 'border-green-500 text-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)]'
                 : error

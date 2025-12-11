@@ -95,43 +95,87 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({ onClose }) => {
     setError('');
 
     try {
-      const result = await apiService.initializeProject(projectName, template);
+      // Use Electron terminal to create project if available
+      if (window.electron?.isElectron) {
+        // Ask user where to create the project
+        const result = await window.electron.showOpenDialog({
+          properties: ['openDirectory'],
+          title: 'Select folder to create project in',
+        });
 
-      if (result.success) {
-        // Convert structure to FileNode format
-        const convertToFileNodes = (node: any): any => {
-          if (node.type === 'folder') {
-            return {
-              id: `folder-${node.path}`,
-              name: node.name,
-              type: 'folder',
-              path: node.path,
-              children: node.children?.map(convertToFileNodes) || [],
-            };
+        if (result.canceled || !result.filePaths[0]) {
+          setIsCreating(false);
+          return;
+        }
+
+        const parentFolder = result.filePaths[0];
+        
+        // Create project using Sui CLI
+        const createResult = await window.electron.executeCommand(
+          `sui move new ${projectName}`,
+          parentFolder
+        );
+
+        if (createResult.success) {
+          setSuccess(true);
+          setTimeout(() => {
+            onClose();
+            // Dispatch event to open the newly created project
+            document.dispatchEvent(new CustomEvent('ide:openFolder'));
+          }, 1500);
+        } else {
+          // Check if it's a "command not found" error
+          if (createResult.error?.includes('sui: command not found') || 
+              createResult.error?.includes('not found')) {
+            setError('Sui CLI is not installed. Please install it first:\n\n' +
+                    '1. Install Rust: curl --proto \'=https\' --tlsv1.2 -sSf https://sh.rustup.rs | sh\n' +
+                    '2. Install Sui: cargo install --locked --git https://github.com/MystenLabs/sui.git --branch mainnet sui\n' +
+                    '3. Restart the IDE\n\n' +
+                    'See SUI_CLI_INSTALLATION_GUIDE.md for detailed instructions.');
           } else {
-            return {
-              id: `file-${node.path}`,
-              name: node.name,
-              type: 'file',
-              path: node.path,
-              content: node.content || '',
-              language: node.language || 'plaintext',
-            };
+            setError(createResult.error || 'Failed to create project. Make sure Sui CLI is installed.');
           }
-        };
-
-        const fileNodes = result.structure.children.map(convertToFileNodes);
-        setFiles(fileNodes);
-
-        setSuccess(true);
-        setTimeout(() => {
-          onClose();
-        }, 1500);
+        }
       } else {
-        setError(result.message || 'Failed to create project');
+        // Fallback to backend API for web version
+        const result = await apiService.initializeProject(projectName, template);
+
+        if (result.success) {
+          // Convert structure to FileNode format
+          const convertToFileNodes = (node: any): any => {
+            if (node.type === 'folder') {
+              return {
+                id: `folder-${node.path}`,
+                name: node.name,
+                type: 'folder',
+                path: node.path,
+                children: node.children?.map(convertToFileNodes) || [],
+              };
+            } else {
+              return {
+                id: `file-${node.path}`,
+                name: node.name,
+                type: 'file',
+                path: node.path,
+                content: node.content || '',
+                language: node.language || 'plaintext',
+              };
+            }
+          };
+
+          const fileNodes = result.structure.children.map(convertToFileNodes);
+          setFiles(fileNodes);
+
+          setSuccess(true);
+          setTimeout(() => {
+            onClose();
+          }, 1500);
+        } else {
+          setError(result.message || 'Failed to create project');
+        }
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to create project');
+      setError(err.message || 'Failed to create project. Make sure Sui CLI is installed.');
     } finally {
       setIsCreating(false);
     }
@@ -248,7 +292,7 @@ const NewProjectDialog: React.FC<NewProjectDialogProps> = ({ onClose }) => {
               {error && (
                 <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3 backdrop-blur-sm">
                   <AlertCircle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-500 font-medium">{error}</p>
+                  <div className="text-sm text-red-500 font-medium whitespace-pre-line">{error}</div>
                 </div>
               )}
 

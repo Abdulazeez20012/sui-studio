@@ -71,7 +71,7 @@ const NexiHome: React.FC = () => {
                 </div>
 
                 {/* Action Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full animate-fade-in delay-200">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full animate-fade-in delay-200">
                     <button
                         onClick={() => handleAction('Generate API')}
                         className="group p-4 bg-walrus-dark-900/50 hover:bg-walrus-dark-800 border border-white/5 hover:border-walrus-cyan/30 rounded-xl transition-all text-left flex flex-col gap-3 backdrop-blur-sm"
@@ -95,6 +95,22 @@ const NexiHome: React.FC = () => {
                         <div>
                             <h3 className="text-sm font-bold text-gray-200 group-hover:text-walrus-purple transition-colors">Debug Transaction</h3>
                             <p className="text-xs text-gray-500 mt-1">Analyze failure reasons and fix errors</p>
+                        </div>
+                    </button>
+
+                    <button
+                        onClick={() => {
+                            setRightPanelType('marketplace');
+                            if (!rightPanelOpen) toggleRightPanel();
+                        }}
+                        className="group p-4 bg-gradient-to-br from-orange-500/10 to-yellow-500/10 hover:from-orange-500/20 hover:to-yellow-500/20 border border-orange-500/20 hover:border-orange-500/40 rounded-xl transition-all text-left flex flex-col gap-3 backdrop-blur-sm"
+                    >
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-yellow-500 flex items-center justify-center text-white group-hover:scale-110 transition-transform shadow-lg">
+                            <Sparkles size={18} />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-gray-200 group-hover:text-orange-400 transition-colors">Sui Marketplace</h3>
+                            <p className="text-xs text-gray-500 mt-1">Discover ecosystem tools & libraries</p>
                         </div>
                     </button>
 

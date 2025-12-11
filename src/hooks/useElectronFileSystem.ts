@@ -27,6 +27,7 @@ export const useElectronFileSystem = () => {
 
   // Open folder dialog and load files
   const openFolder = useCallback(async (): Promise<FileNode[] | null> => {
+    console.log('openFolder called, isElectron:', isElectron, 'window.electron:', !!window.electron);
     if (!isElectron || !window.electron) {
       console.warn('Not running in Electron environment');
       return null;
@@ -34,12 +35,15 @@ export const useElectronFileSystem = () => {
 
     try {
       setIsLoading(true);
+      console.log('Calling window.electron.showOpenDialog...');
       const result = await window.electron.showOpenDialog({
         properties: ['openDirectory'],
         title: 'Open Project Folder',
       });
+      console.log('Dialog result:', result);
 
       if (result.canceled || !result.filePaths[0]) {
+        console.log('Dialog was canceled or no path selected');
         return null;
       }
 

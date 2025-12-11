@@ -487,10 +487,16 @@ const FileExplorer: React.FC = () => {
 
   // Handle opening folder in Electron
   const handleOpenFolder = async () => {
-    if (!isElectron) return;
+    console.log('handleOpenFolder called, isElectron:', isElectron);
+    if (!isElectron) {
+      console.warn('Not in Electron environment');
+      return;
+    }
     
     try {
+      console.log('Calling openFolder...');
       const loadedFiles = await openFolder();
+      console.log('openFolder returned:', loadedFiles);
       if (loadedFiles) {
         setFiles(loadedFiles);
         // Notify status bar of folder change
@@ -499,6 +505,7 @@ const FileExplorer: React.FC = () => {
         }
       }
     } catch (error: any) {
+      console.error('Error in handleOpenFolder:', error);
       alert(`Failed to open folder: ${error.message}`);
     }
   };

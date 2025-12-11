@@ -13,6 +13,7 @@ import { PackageManager } from './PackageManager';
 import { SyntaxChecker } from './SyntaxChecker';
 import { SystemDesigner } from './SystemDesigner';
 import { Profiler } from './Profiler';
+import MarketplacePanel from './MarketplacePanel';
 
 const RightPanel: React.FC = () => {
   const { rightPanelType } = useIDEStore();
@@ -45,6 +46,8 @@ const RightPanel: React.FC = () => {
         return <SystemDesigner />;
       case 'profiler':
         return <Profiler />;
+      case 'marketplace':
+        return <MarketplacePanel />;
       case 'docs':
         return (
           <div className="h-full bg-dark-surface p-4">
