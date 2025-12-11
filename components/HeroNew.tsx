@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Rocket, Video, Code, Users, ArrowRight, Play } from 'lucide-react';
+import { Rocket, Video, Code, Users, ArrowRight, Play, Download, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../src/store/authStore';
 import AuthModal from '../src/components/auth/AuthModal';
@@ -9,6 +9,7 @@ const HeroNew: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
 
   const handleGetStarted = () => {
     if (isAuthenticated) {
@@ -108,16 +109,61 @@ const HeroNew: React.FC = () => {
                 <span className="text-lg">Start Building Free</span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
-              
-              <button
-                onClick={() => {
-                  document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="flex items-center justify-center gap-3 px-8 py-4 bg-white/5 border border-white/10 text-white font-semibold rounded-xl hover:bg-white/10 hover:border-white/20 transition-all duration-300"
-              >
-                <Play className="w-5 h-5" />
-                <span className="text-lg">Watch Demo</span>
-              </button>
+
+
+              {/* Download Button with Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                  onBlur={() => setTimeout(() => setShowDownloadMenu(false), 200)}
+                  className="flex items-center justify-center gap-3 px-8 py-4 bg-white/5 border border-white/10 text-white font-semibold rounded-xl hover:bg-white/10 hover:border-white/20 transition-all duration-300 group"
+                >
+                  <Download className="w-5 h-5" />
+                  <span className="text-lg">Download</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showDownloadMenu ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Dropdown Menu */}
+                {showDownloadMenu && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-dark-surface border border-white/10 rounded-xl shadow-2xl overflow-hidden backdrop-blur-xl z-50 animate-fade-in">
+                    <a
+                      href="https://github.com/Abdulazeez20012/sui-studio/releases/download/v1.0.0/Sui-Studio-Linux-1.0.0.AppImage"
+                      download
+                      className="flex items-center gap-3 px-6 py-4 hover:bg-white/5 transition-all duration-200 border-b border-white/5"
+                      onClick={() => setShowDownloadMenu(false)}
+                    >
+                      <div className="w-10 h-10 bg-sui-cyan/10 rounded-lg flex items-center justify-center border border-sui-cyan/30">
+                        <svg className="w-5 h-5 text-sui-cyan" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="text-white font-semibold">Download for Linux</div>
+                        <div className="text-xs text-gray-400">AppImage • v1.0.0</div>
+                      </div>
+                      <Download className="w-4 h-4 text-gray-400 group-hover:text-sui-cyan" />
+                    </a>
+
+                    <a
+                      href="https://github.com/Abdulazeez20012/sui-studio/releases/download/v1.0.0/Sui-Studio-1.0.0-Windows-Portable.zip"
+                      download
+                      className="flex items-center gap-3 px-6 py-4 hover:bg-white/5 transition-all duration-200"
+                      onClick={() => setShowDownloadMenu(false)}
+                    >
+                      <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center border border-blue-500/30">
+                        <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="text-white font-semibold">Download for Windows</div>
+                        <div className="text-xs text-gray-400">Portable ZIP • v1.0.0</div>
+                      </div>
+                      <Download className="w-4 h-4 text-gray-400 group-hover:text-blue-400" />
+                    </a>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Trust Signals */}

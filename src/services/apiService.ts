@@ -89,6 +89,41 @@ class APIService {
     return response.json();
   }
 
+  // Generic HTTP methods
+  async get<T = any>(endpoint: string): Promise<T> {
+    const response = await fetch(`${API_URL}/api${endpoint}`, {
+      method: 'GET',
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async post<T = any>(endpoint: string, data?: any): Promise<T> {
+    const response = await fetch(`${API_URL}/api${endpoint}`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    return this.handleResponse(response);
+  }
+
+  async put<T = any>(endpoint: string, data?: any): Promise<T> {
+    const response = await fetch(`${API_URL}/api${endpoint}`, {
+      method: 'PUT',
+      headers: this.getHeaders(),
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    return this.handleResponse(response);
+  }
+
+  async delete<T = any>(endpoint: string): Promise<T> {
+    const response = await fetch(`${API_URL}/api${endpoint}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
   // Auth endpoints
   async googleAuth(userData: any) {
     const response = await fetch(`${API_URL}/api/auth/google`, {
@@ -348,6 +383,55 @@ class APIService {
     } catch (error) {
       throw error;
     }
+  }
+
+  // Enhanced terminal session management
+  async createTerminalSession(data: { terminalId: string; cwd?: string }) {
+    const response = await fetch(`${API_URL}/api/terminal/session/create`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return this.handleResponse(response);
+  }
+
+  async executeTerminalCommand(data: {
+    terminalId: string;
+    command: string;
+    cwd?: string;
+    env?: Record<string, string>;
+    streaming?: boolean;
+  }) {
+    const response = await fetch(`${API_URL}/api/terminal/session/execute`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return this.handleResponse(response);
+  }
+
+  async killTerminalProcess(data: { terminalId: string; processId: string }) {
+    const response = await fetch(`${API_URL}/api/terminal/session/kill`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return this.handleResponse(response);
+  }
+
+  async destroyTerminalSession(terminalId: string) {
+    const response = await fetch(`${API_URL}/api/terminal/session/${terminalId}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async getTerminalSession(terminalId: string) {
+    const response = await fetch(`${API_URL}/api/terminal/session/${terminalId}`, {
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse(response);
   }
 
   // Simulate command execution locally (fallback)

@@ -1,7 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { useIDEStore } from '../../store/ideStore';
+import { useSettingsStore } from '../../store/settingsStore';
 import WelcomeScreen from './WelcomeScreen';
+import Breadcrumbs from './Breadcrumbs';
 import { registerMoveLanguage } from '../../utils/moveLanguage';
 import { collaborationService } from '../../services/collaborationService';
 import { useYjsCollaboration } from '../../hooks/useYjsCollaboration';
@@ -10,6 +12,7 @@ import './CodeEditor.css';
 
 const CodeEditor: React.FC = () => {
   const { tabs, activeTab, updateTabContent, files } = useIDEStore();
+  const { fontSize, tabSize, wordWrap, minimap, lineNumbers } = useSettingsStore();
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<any>(null);
   const [enableYjs, setEnableYjs] = useState(false);
@@ -186,6 +189,19 @@ const CodeEditor: React.FC = () => {
     }
   }, [yjs.text, enableYjs]);
 
+  // Apply settings to editor when they change
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.updateOptions({
+        fontSize,
+        tabSize,
+        wordWrap: wordWrap ? 'on' : 'off',
+        minimap: { enabled: minimap },
+        lineNumbers: lineNumbers ? 'on' : 'off',
+      });
+    }
+  }, [fontSize, tabSize, wordWrap, minimap, lineNumbers]);
+
   if (!currentTab && files.length === 0) {
     // Return null or basic empty state - NexiHome will be shown by parent
     return null;
@@ -203,7 +219,7 @@ const CodeEditor: React.FC = () => {
   }
 
   return (
-    <div className="h-full bg-walrus-dark-950/80 backdrop-blur-xl relative group rounded-2xl overflow-hidden border border-white/5 shadow-2xl">
+    <div className="h-full bg-walrus-dark-950/80 backdrop-blur-xl relative group rounded-2xl overflow-hidden border border-white/5 shadow-2xl flex flex-col">
       {/* Subtle Watermark */}
       <div
         className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0 overflow-hidden"
@@ -216,14 +232,35 @@ const CodeEditor: React.FC = () => {
         />
       </div>
 
-      {/* Collaboration Indicator */}
-      {enableYjs && (
-        <div className="absolute top-4 right-4 z-20">
+      {/* Collaboration Controls */}
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+        {/* Collaboration Toggle */}
+        <button
+          onClick={() => setEnableYjs(!enableYjs)}
+          className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+            enableYjs 
+              ? 'bg-sui-cyan text-black' 
+              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+          }`}
+          title="Toggle real-time collaboration"
+        >
+          {enableYjs ? 'Collab ON' : 'Collab OFF'}
+        </button>
+        
+        {/* Collaboration Indicator */}
+        {enableYjs && (
           <CollaborationIndicator connected={yjs.connected} users={yjs.users} />
+        )}
+      </div>
+
+      {/* Breadcrumbs */}
+      {currentTab.path && (
+        <div className="relative z-10">
+          <Breadcrumbs filePath={currentTab.path} fileName={currentTab.name} />
         </div>
       )}
 
-      <div className="relative z-10 h-full">
+      <div className="relative z-10 flex-1">
         <Editor
           height="100%"
           language={currentTab.language === 'move' ? 'move' : currentTab.language}
@@ -232,20 +269,20 @@ const CodeEditor: React.FC = () => {
           onMount={handleEditorDidMount}
           theme="walrus-dark"
           options={{
-            fontSize: 14,
+            fontSize,
             fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
             fontLigatures: true,
             minimap: {
-              enabled: true,
+              enabled: minimap,
               scale: 1,
               showSlider: 'mouseover'
             },
             scrollBeyondLastLine: false,
             automaticLayout: true,
-            tabSize: 4,
+            tabSize,
             insertSpaces: true,
-            wordWrap: 'on',
-            lineNumbers: 'on',
+            wordWrap: wordWrap ? 'on' : 'off',
+            lineNumbers: lineNumbers ? 'on' : 'off',
             renderWhitespace: 'selection',
             bracketPairColorization: { enabled: true },
             padding: { top: 20, bottom: 20 },

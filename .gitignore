@@ -29,3 +29,14 @@ backend/.env
 backend/.env.local
 backend/.env.production
 
+
+# Desktop build files
+dist-electron/
+release/
+*.dmg
+*.exe
+*.AppImage
+*.deb
+*.rpm
+*.zip
+

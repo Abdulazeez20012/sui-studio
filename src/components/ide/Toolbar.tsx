@@ -13,7 +13,7 @@ import {
 import { useIDEStore } from '../../store/ideStore';
 
 const Toolbar: React.FC = () => {
-  const { setRightPanelType, toggleRightPanel, rightPanelOpen } = useIDEStore();
+  const { setRightPanelType, toggleRightPanel, rightPanelOpen, syntaxErrors, syntaxWarnings } = useIDEStore();
 
   const tools = [
     { id: 'debugger', icon: Bug, label: 'Debugger', color: 'text-red-400' },
@@ -45,10 +45,21 @@ const Toolbar: React.FC = () => {
           <button
             key={tool.id}
             onClick={() => handleToolClick(tool.id)}
-            className={`p-2 rounded hover:bg-gray-800 transition-colors ${tool.color}`}
+            className={`p-2 rounded hover:bg-gray-800 transition-colors ${tool.color} relative`}
             title={tool.label}
           >
             <tool.icon className="w-4 h-4" />
+            
+            {/* Error Badge for Debugger/Syntax Checker */}
+            {tool.id === 'debugger' && (syntaxErrors > 0 || syntaxWarnings > 0) && (
+              <span className={`absolute -top-1 -right-1 flex items-center justify-center min-w-[16px] h-4 px-1 text-[10px] font-bold rounded-full ${
+                syntaxErrors > 0 
+                  ? 'bg-red-500 text-white' 
+                  : 'bg-yellow-500 text-black'
+              } shadow-lg animate-pulse`}>
+                {syntaxErrors > 0 ? syntaxErrors : syntaxWarnings}
+              </span>
+            )}
           </button>
         ))}
       </div>

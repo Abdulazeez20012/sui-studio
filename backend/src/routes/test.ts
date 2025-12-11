@@ -18,13 +18,17 @@ const getWorkspacePath = (userId: string, projectId?: string): string => {
 // Run all tests
 router.post('/run', async (req: AuthRequest, res) => {
   try {
-    const { projectId, filter, coverage } = req.body;
-    const workspacePath = getWorkspacePath(req.userId!, projectId);
-
-    const report = await testRunner.runTests(workspacePath, {
-      filter,
-      coverage,
-    });
+    const { projectId, filter, coverage, code, packageName } = req.body;
+    
+    // For now, use code from request body
+    const report = await testRunner.runTests(
+      code || 'module test::example { }',
+      packageName || 'test_package',
+      {
+        filter,
+        coverage,
+      }
+    );
 
     res.json({
       success: true,
@@ -41,10 +45,13 @@ router.post('/run', async (req: AuthRequest, res) => {
 // Run single test
 router.post('/run-single', async (req: AuthRequest, res) => {
   try {
-    const { projectId, testName } = req.body;
-    const workspacePath = getWorkspacePath(req.userId!, projectId);
+    const { code, testName, packageName } = req.body;
 
-    const result = await testRunner.runSingleTest(workspacePath, testName);
+    const result = await testRunner.runSingleTest(
+      code || 'module test::example { }',
+      testName,
+      packageName || 'test_package'
+    );
 
     res.json({
       success: true,
@@ -61,14 +68,17 @@ router.post('/run-single', async (req: AuthRequest, res) => {
 // Get coverage
 router.get('/coverage', async (req: AuthRequest, res) => {
   try {
-    const { projectId } = req.query;
-    const workspacePath = getWorkspacePath(req.userId!, projectId as string);
+    const { code, packageName } = req.query;
 
-    const coverage = await testRunner.getCoverage(workspacePath);
+    const report = await testRunner.runTests(
+      (code as string) || 'module test::example { }',
+      (packageName as string) || 'test_package',
+      { coverage: true }
+    );
 
     res.json({
       success: true,
-      coverage,
+      coverage: report.coverage,
     });
   } catch (error: any) {
     res.status(500).json({
@@ -81,14 +91,10 @@ router.get('/coverage', async (req: AuthRequest, res) => {
 // List tests
 router.get('/list', async (req: AuthRequest, res) => {
   try {
-    const { projectId } = req.query;
-    const workspacePath = getWorkspacePath(req.userId!, projectId as string);
-
-    const tests = await testRunner.listTests(workspacePath);
-
+    // For now, return empty array - would need to parse code to extract test functions
     res.json({
       success: true,
-      tests,
+      tests: [],
     });
   } catch (error: any) {
     res.status(500).json({

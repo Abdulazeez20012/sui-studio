@@ -1,36 +1,151 @@
 import express, { Router } from 'express';
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 import { optionalAuth, AuthRequest } from '../middleware/auth';
 import { z } from 'zod';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import * as os from 'os';
 
 const router: Router = express.Router();
 const execAsync = promisify(exec);
 
 router.use(optionalAuth);
 
-const executeSchema = z.object({
+const executeCommandSchema = z.object({
+  terminalId: z.string(),
   command: z.string(),
-  workingDir: z.string().optional(),
+  cwd: z.string().optional(),
+  env: z.record(z.string()).optional(),
 });
 
 // Execute terminal command
+router.post('/session/execute', async (req: AuthRequest, res) => {
+  try {
+    const { terminalId, command, cwd, env } = executeCommandSchema.parse(req.body);
+
+    // Handle built-in commands
+    if (command === 'clear') {
+      return res.json({ success: true, output: '', builtin: true });
+    }
+
+    if (command === 'help') {
+      const helpText = `Available commands:
+  Sui Development:
+    sui move build    - Build Move package
+    sui move test     - Run Move tests
+    sui client        - Sui client commands
+    
+  Node.js:
+    npm install       - Install dependencies
+    npm run dev       - Run development server
+    yarn/pnpm         - Alternative package managers
+    
+  Git:
+    git status        - Check repository status
+    git add/commit    - Stage and commit changes
+    git push/pull     - Sync with remote
+    
+  File Operations:
+    ls, cat, grep, find, mkdir, rm, cp, mv
+    
+  System:
+    pwd, whoami, date, ps, which
+    
+  Built-in:
+    clear             - Clear terminal
+    help              - Show this help`;
+      
+      return res.json({ success: true, output: helpText, builtin: true });
+    }
+
+    // Get working directory
+    const workingDir = cwd || os.homedir();
+    
+    // Ensure directory exists
+    try {
+      await fs.access(workingDir);
+    } catch {
+      return res.json({
+        success: false,
+        error: `Directory not found: ${workingDir}`
+      });
+    }
+
+    // Command validation - allow most development commands
+    const allowedPatterns = [
+      /^sui\s+/,                    // Sui commands
+      /^(npm|yarn|pnpm|node|npx)\s+/, // Node.js
+      /^git\s+/,                    // Git
+      /^(ls|cat|grep|find|mkdir|rm|cp|mv|touch|chmod|head|tail|wc|sort|uniq|echo|pwd|whoami|date|which|whereis)\s*/,
+      /^(pip|cargo|go|rustc|python|python3)\s+/, // Other languages
+    ];
+
+    const isAllowed = allowedPatterns.some(pattern => pattern.test(command));
+    
+    if (!isAllowed) {
+      return res.json({
+        success: false,
+        error: `Command not allowed: ${command}`,
+        output: `Command restricted. Use 'help' for available commands.`,
+      });
+    }
+
+    // Execute command
+    try {
+      const { stdout, stderr } = await execAsync(command, {
+        cwd: workingDir,
+        env: { ...process.env, ...env },
+        timeout: 60000, // 60 seconds
+        maxBuffer: 1024 * 1024 * 10, // 10MB
+      });
+
+      const output = stdout + (stderr ? '\n' + stderr : '');
+      
+      res.json({
+        success: true,
+        output: output.trim(),
+        cwd: workingDir,
+      });
+    } catch (error: any) {
+      // Command execution error
+      const errorOutput = error.stderr || error.stdout || error.message;
+      
+      res.json({
+        success: false,
+        error: 'Command execution failed',
+        output: errorOutput.trim(),
+      });
+    }
+  } catch (error: any) {
+    console.error('Terminal error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
+  }
+});
+
+// Legacy execute endpoint (backward compatibility)
 router.post('/execute', async (req: AuthRequest, res) => {
   try {
-    const { command, workingDir } = executeSchema.parse(req.body);
+    const { command, workingDir } = z.object({
+      command: z.string(),
+      workingDir: z.string().optional(),
+    }).parse(req.body);
 
     // Handle built-in commands
     if (command === 'help') {
       return res.json({
         success: true,
         output: `Available commands:
-  sui move build    - Build the current Move package
+  sui move build    - Build Move package
   sui move test     - Run Move tests
   sui client        - Sui client commands
+  npm/yarn          - Node.js commands
+  git               - Git commands
   clear             - Clear terminal
-  help              - Show this help message`,
+  help              - Show this help`,
       });
     }
 
@@ -41,12 +156,18 @@ router.post('/execute', async (req: AuthRequest, res) => {
       });
     }
 
-    // Security: Only allow specific Sui commands
+    // Security: Only allow specific commands
     const allowedCommands = [
       'sui move build',
       'sui move test',
       'sui client',
       'sui move',
+      'npm',
+      'yarn',
+      'git',
+      'ls',
+      'pwd',
+      'cat',
     ];
 
     const isAllowed = allowedCommands.some(cmd => 
@@ -56,8 +177,8 @@ router.post('/execute', async (req: AuthRequest, res) => {
     if (!isAllowed) {
       return res.json({
         success: false,
-        error: `Command not allowed. Allowed commands: ${allowedCommands.join(', ')}`,
-        output: `bash: ${command}: command not allowed\nTry 'help' for available commands.`,
+        error: `Command not allowed: ${command}`,
+        output: `Command restricted. Use 'help' for available commands.`,
       });
     }
 
@@ -73,15 +194,15 @@ router.post('/execute', async (req: AuthRequest, res) => {
       });
     }
 
-    // Create a temporary working directory if not provided
-    const tempDir = workingDir || path.join('/tmp', `sui-workspace-${req.userId}`);
+    // Create temporary working directory
+    const tempDir = workingDir || path.join(os.tmpdir(), `sui-workspace-${req.userId || 'anonymous'}`);
     
     try {
       await fs.access(tempDir);
     } catch {
       await fs.mkdir(tempDir, { recursive: true });
       
-      // Create a basic Move.toml if it doesn't exist
+      // Create basic Move.toml
       const moveTomlPath = path.join(tempDir, 'Move.toml');
       try {
         await fs.access(moveTomlPath);
@@ -104,11 +225,11 @@ my_project = "0x0"
       }
     }
 
-    // Execute command with timeout
+    // Execute command
     const { stdout, stderr } = await execAsync(command, {
       cwd: tempDir,
-      timeout: 60000, // 60 seconds timeout
-      maxBuffer: 1024 * 1024 * 10, // 10MB buffer
+      timeout: 60000,
+      maxBuffer: 1024 * 1024 * 10,
     });
 
     const output = stdout + (stderr ? '\n' + stderr : '');
@@ -121,7 +242,6 @@ my_project = "0x0"
   } catch (error: any) {
     console.error('Command execution error:', error);
     
-    // Handle execution errors
     const errorOutput = error.stderr || error.stdout || error.message;
     
     res.json({
@@ -140,7 +260,6 @@ INCLUDING DEPENDENCY Sui
 INCLUDING DEPENDENCY MoveStdlib
 BUILDING my_project
 Build Successful
-Generated bytecode: 0x1234...abcd
 
 Note: This is simulated output. Install Sui CLI for real compilation.`;
   }
@@ -156,59 +275,5 @@ Note: This is simulated output. Install Sui CLI for real testing.`;
 
   return `Command executed: ${command}\n\nNote: Sui CLI not installed. This is simulated output.`;
 }
-
-// Get working directory info
-router.get('/workspace', async (req: AuthRequest, res) => {
-  try {
-    const workspaceDir = path.join('/tmp', `sui-workspace-${req.userId}`);
-    
-    try {
-      await fs.access(workspaceDir);
-      const files = await fs.readdir(workspaceDir);
-      
-      res.json({
-        workspaceDir,
-        exists: true,
-        files,
-      });
-    } catch {
-      res.json({
-        workspaceDir,
-        exists: false,
-        files: [],
-      });
-    }
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Save file to workspace
-router.post('/save-file', async (req: AuthRequest, res) => {
-  try {
-    const { filename, content } = z.object({
-      filename: z.string(),
-      content: z.string(),
-    }).parse(req.body);
-
-    const workspaceDir = path.join('/tmp', `sui-workspace-${req.userId}`);
-    const sourcesDir = path.join(workspaceDir, 'sources');
-    
-    // Ensure directories exist
-    await fs.mkdir(sourcesDir, { recursive: true });
-    
-    // Save file
-    const filePath = path.join(sourcesDir, filename);
-    await fs.writeFile(filePath, content);
-
-    res.json({
-      success: true,
-      filePath,
-      message: 'File saved successfully',
-    });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
 export default router;

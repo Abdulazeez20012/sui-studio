@@ -1,26 +1,21 @@
-import express, { Router } from 'express';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
-import { z } from 'zod';
+import express, { Router, Request, Response } from 'express';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
 const router: Router = express.Router();
 
-router.use(authenticateToken);
+// No authentication required
 
-const createProjectSchema = z.object({
-  name: z.string().min(1).max(100),
-  template: z.enum(['empty', 'hello_world', 'defi', 'nft', 'gaming']).optional(),
-});
+// No validation for project creation
 
-// Create a new Sui Move project structure
-router.post('/create', async (req: AuthRequest, res) => {
+// Create a new Sui Move project structure - no validation or auth
+router.post('/create', async (req: Request, res: Response) => {
   try {
-    const { name, template = 'empty' } = createProjectSchema.parse(req.body);
+    const { name, template = 'empty' } = req.body; // Accept any data
 
     // Sanitize project name
-    const projectName = name.toLowerCase().replace(/[^a-z0-9_]/g, '_');
-    const workspaceDir = path.join('/tmp', `sui-workspace-${req.userId}`);
+    const projectName = name?.toLowerCase().replace(/[^a-z0-9_]/g, '_') || 'untitled_project';
+    const workspaceDir = path.join('/tmp', `sui-workspace-anonymous`);
     const projectDir = path.join(workspaceDir, projectName);
 
     // Check if project already exists
@@ -82,11 +77,11 @@ router.post('/create', async (req: AuthRequest, res) => {
   }
 });
 
-// Get project structure
-router.get('/structure/:projectName', async (req: AuthRequest, res) => {
+// Get project structure - no auth required
+router.get('/structure/:projectName', async (req: Request, res: Response) => {
   try {
     const { projectName } = req.params;
-    const workspaceDir = path.join('/tmp', `sui-workspace-${req.userId}`);
+    const workspaceDir = path.join('/tmp', `sui-workspace-anonymous`);
     const projectDir = path.join(workspaceDir, projectName);
 
     const structure = await readProjectStructure(projectDir, projectName);
@@ -101,19 +96,13 @@ router.get('/structure/:projectName', async (req: AuthRequest, res) => {
   }
 });
 
-// Create a new Move module in existing project
-const createModuleSchema = z.object({
-  projectName: z.string().min(1),
-  moduleName: z.string().min(1).max(100),
-  includeTests: z.boolean().optional().default(true),
-});
-
-router.post('/create-module', async (req: AuthRequest, res) => {
+// Create a new Move module in existing project - no validation or auth
+router.post('/create-module', async (req: Request, res: Response) => {
   try {
-    const { projectName, moduleName, includeTests } = createModuleSchema.parse(req.body);
+    const { projectName, moduleName, includeTests = true } = req.body; // Accept any data
 
-    const sanitizedModule = moduleName.toLowerCase().replace(/[^a-z0-9_]/g, '_');
-    const workspaceDir = path.join('/tmp', `sui-workspace-${req.userId}`);
+    const sanitizedModule = moduleName?.toLowerCase().replace(/[^a-z0-9_]/g, '_') || 'untitled_module';
+    const workspaceDir = path.join('/tmp', `sui-workspace-anonymous`);
     const projectDir = path.join(workspaceDir, projectName);
 
     // Check if project exists

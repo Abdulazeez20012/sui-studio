@@ -21,6 +21,7 @@ export interface Terminal {
   id: string;
   name: string;
   output: string[];
+  cwd?: string;
 }
 
 export interface Project {
@@ -33,5 +34,5 @@ export interface Project {
 }
 
 export type PanelType = 'explorer' | 'search' | 'git' | 'extensions';
-export type RightPanelType = 'deployment' | 'gas' | 'collaboration' | 'settings' | 'stats' | 'docs' | 'extensions' | 'nexi' | 'wallet' | 'contract' | 'packages' | 'debugger' | 'designer' | 'profiler' | 'audit';
+export type RightPanelType = 'deployment' | 'gas' | 'collaboration' | 'settings' | 'stats' | 'docs' | 'extensions' | 'nexi' | 'wallet' | 'contract' | 'packages' | 'debugger' | 'designer' | 'profiler' | 'marketplace';
 export type ViewMode = 'editor' | 'split' | 'preview';

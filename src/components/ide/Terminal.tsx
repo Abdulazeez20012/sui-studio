@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Terminal as TerminalIcon, X, Plus, ChevronDown, CheckCircle, Play, Send, Trash2 } from 'lucide-react';
+import { Terminal as TerminalIcon, Plus, Trash2, X } from 'lucide-react';
 import { useIDEStore } from '../../store/ideStore';
 import { apiService } from '../../services/apiService';
+import { useElectronTerminal } from '../../hooks/useElectronTerminal';
+import { useElectronFileSystem } from '../../hooks/useElectronFileSystem';
 
 const Terminal: React.FC = () => {
   const { terminals, activeTerminal, setActiveTerminal, addTerminalOutput, addTerminal, clearTerminal } = useIDEStore();
@@ -12,13 +14,37 @@ const Terminal: React.FC = () => {
   const outputRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Electron terminal integration
+  const { isElectron, executeCommand: executeElectronCommand, currentDirectory } = useElectronTerminal();
+  const { currentFolder } = useElectronFileSystem();
+  
   const currentTerminal = terminals.find(t => t.id === activeTerminal);
+  const workingDirectory = currentFolder || currentDirectory || currentTerminal?.cwd || '';
 
+  // Auto-scroll to bottom when output changes
   useEffect(() => {
     if (outputRef.current) {
       outputRef.current.scrollTop = outputRef.current.scrollHeight;
     }
   }, [currentTerminal?.output]);
+
+  // Listen for real-time terminal output (Electron only)
+  useEffect(() => {
+    if (!isElectron || !window.electron) return;
+
+    const handleOutput = (data: string) => {
+      if (activeTerminal) {
+        const lines = data.split('\n');
+        lines.forEach(line => {
+          if (line.trim()) {
+            addTerminalOutput(activeTerminal, line);
+          }
+        });
+      }
+    };
+
+    window.electron.onTerminalOutput(handleOutput);
+  }, [isElectron, activeTerminal, addTerminalOutput]);
 
   const executeCommand = async (command: string) => {
     if (!activeTerminal) return;
@@ -36,28 +62,42 @@ const Terminal: React.FC = () => {
 
       if (command === 'help') {
         addTerminalOutput(activeTerminal, 'Available commands:');
-        addTerminalOutput(activeTerminal, '  sui move build    - Build the current Move package');
+        addTerminalOutput(activeTerminal, '  sui move build    - Build Move package');
         addTerminalOutput(activeTerminal, '  sui move test     - Run Move tests');
         addTerminalOutput(activeTerminal, '  sui client        - Sui client commands');
+        addTerminalOutput(activeTerminal, '  npm/yarn          - Node.js commands');
+        addTerminalOutput(activeTerminal, '  git               - Git commands');
         addTerminalOutput(activeTerminal, '  clear             - Clear terminal');
-        addTerminalOutput(activeTerminal, '  help              - Show this help message');
+        addTerminalOutput(activeTerminal, '  help              - Show this help');
         setIsExecuting(false);
         return;
       }
 
-      // Execute command via backend
-      const result = await apiService.executeCommand(command);
+      // Execute command
+      let result;
+      
+      if (isElectron) {
+        // Desktop: Execute real command via Electron
+        result = await executeElectronCommand(command, workingDirectory);
+      } else {
+        // Web: Execute via backend
+        result = await apiService.executeTerminalCommand({
+          terminalId: activeTerminal,
+          command,
+          cwd: workingDirectory
+        });
+      }
 
       if (result.success) {
         // Add output line by line
-        const lines = result.output.split('\n');
-        lines.forEach(line => {
-          if (line.trim()) {
+        if (result.output) {
+          const lines = result.output.split('\n');
+          lines.forEach(line => {
             addTerminalOutput(activeTerminal, line);
-          }
-        });
+          });
+        }
       } else {
-        addTerminalOutput(activeTerminal, `Error: ${result.error}`);
+        addTerminalOutput(activeTerminal, `Error: ${result.error || 'Command failed'}`);
       }
     } catch (error: any) {
       addTerminalOutput(activeTerminal, `Error: ${error.message}`);
@@ -79,6 +119,7 @@ const Terminal: React.FC = () => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Arrow up - previous command
     if (e.key === 'ArrowUp') {
       e.preventDefault();
       if (commandHistory.length > 0) {
@@ -86,7 +127,9 @@ const Terminal: React.FC = () => {
         setHistoryIndex(newIndex);
         setInput(commandHistory[newIndex]);
       }
-    } else if (e.key === 'ArrowDown') {
+    }
+    // Arrow down - next command
+    else if (e.key === 'ArrowDown') {
       e.preventDefault();
       if (historyIndex !== -1) {
         const newIndex = historyIndex + 1;
@@ -99,49 +142,85 @@ const Terminal: React.FC = () => {
         }
       }
     }
+    // Ctrl+C - clear input
+    else if (e.ctrlKey && e.key === 'c') {
+      e.preventDefault();
+      setInput('');
+    }
+    // Ctrl+L - clear terminal
+    else if (e.ctrlKey && e.key === 'l') {
+      e.preventDefault();
+      if (activeTerminal) {
+        clearTerminal(activeTerminal);
+      }
+    }
   };
 
   const handleNewTerminal = () => {
     const newTerminal = {
       id: `terminal-${Date.now()}`,
       name: `Terminal ${terminals.length + 1}`,
-      output: ['$ ']
+      output: []
     };
     addTerminal(newTerminal);
   };
 
+  const handleCloseTerminal = (terminalId: string) => {
+    if (terminals.length > 1) {
+      // Close terminal logic would go here
+      // For now, just switch to another terminal
+      const otherTerminal = terminals.find(t => t.id !== terminalId);
+      if (otherTerminal) {
+        setActiveTerminal(otherTerminal.id);
+      }
+    }
+  };
+
   return (
-    <div className="h-full bg-walrus-dark-900/50 flex flex-col font-mono relative group">
-      {/* Tab Bar - Glass Style */}
-      <div className="flex items-center justify-between px-4 py-0 border-b border-white/5 bg-black/20 shrink-0 select-none">
-        <div className="flex items-center gap-1 pt-2">
-          <button className="px-4 py-2 text-[10px] font-bold text-walrus-cyan border-t-2 border-walrus-cyan bg-walrus-cyan/5 rounded-t-lg tracking-widest transition-all shadow-[0_-10px_20px_-10px_rgba(60,185,255,0.1)]">
-            TERMINAL
-          </button>
-          <button className="px-4 py-2 text-[10px] font-bold text-gray-500 hover:text-gray-300 hover:bg-white/5 rounded-t-lg transition-all tracking-widest border-t-2 border-transparent">
-            OUTPUT
-          </button>
-          <button className="px-4 py-2 text-[10px] font-bold text-gray-500 hover:text-gray-300 hover:bg-white/5 rounded-t-lg transition-all tracking-widest border-t-2 border-transparent">
-            PROBLEMS
-          </button>
+    <div className="h-full bg-[#1e1e1e] flex flex-col font-mono text-sm">
+      {/* Terminal Tabs */}
+      <div className="flex items-center bg-[#252526] border-b border-[#3e3e42] px-2">
+        <div className="flex items-center gap-1 flex-1 overflow-x-auto">
+          {terminals.map(terminal => (
+            <div
+              key={terminal.id}
+              onClick={() => setActiveTerminal(terminal.id)}
+              className={`flex items-center gap-2 px-3 py-1.5 cursor-pointer transition-colors ${
+                terminal.id === activeTerminal
+                  ? 'bg-[#1e1e1e] text-white'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <TerminalIcon size={14} />
+              <span className="text-xs">{terminal.name}</span>
+              {terminals.length > 1 && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCloseTerminal(terminal.id);
+                  }}
+                  className="hover:bg-white/10 rounded p-0.5"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+          ))}
         </div>
-        <div className="flex items-center gap-1 mb-1">
+        <div className="flex items-center gap-1">
           <button
             onClick={handleNewTerminal}
-            className="p-1.5 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+            className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors"
             title="New Terminal"
           >
-            <Plus size={14} />
+            <Plus size={16} />
           </button>
           <button
-            onClick={() => clearTerminal(activeTerminal!)}
-            className="p-1.5 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+            onClick={() => activeTerminal && clearTerminal(activeTerminal)}
+            className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors"
             title="Clear Terminal"
           >
-            <Trash2 size={14} />
-          </button>
-          <button className="p-1.5 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-all">
-            <ChevronDown size={14} />
+            <Trash2 size={16} />
           </button>
         </div>
       </div>
@@ -149,35 +228,32 @@ const Terminal: React.FC = () => {
       {/* Terminal Output */}
       <div
         ref={outputRef}
-        className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent p-4 text-xs font-medium leading-relaxed"
+        className="flex-1 overflow-y-auto p-3 text-[13px] leading-relaxed"
         onClick={() => inputRef.current?.focus()}
       >
         {currentTerminal?.output.length === 0 ? (
-          <div className="text-gray-600 select-none flex flex-col items-center justify-center h-full opacity-40 hover:opacity-100 transition-opacity duration-500">
-            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-              <TerminalIcon size={32} strokeWidth={1.5} />
-            </div>
-            <p className="font-tech tracking-widest text-[10px] uppercase">Sui Studio Terminal v2.0</p>
-            <p className="mt-2 text-[10px] text-gray-500">Interact with Move CLI directly from your browser</p>
+          <div className="text-gray-500 select-none">
+            <p>Terminal {currentTerminal.name}</p>
+            <p className="text-xs mt-1">Type 'help' for available commands</p>
           </div>
         ) : (
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {currentTerminal?.output.map((line, index) => (
               <div
                 key={index}
-                className={`${line.startsWith('$') ? 'text-walrus-cyan font-bold mt-4 mb-2 flex items-center gap-2' :
-                  line.includes('Error') || line.includes('error') || line.includes('Failed') ? 'text-red-400 bg-red-500/5 -mx-4 px-4 py-0.5 border-l-2 border-red-500/50' :
-                    line.includes('Success') || line.includes('BUILDING') ? 'text-emerald-400' :
-                      line.includes('warning') ? 'text-yellow-400' :
-                        'text-gray-400'
-                  }`}
+                className={`${
+                  line.startsWith('$') 
+                    ? 'text-green-400 font-semibold' 
+                    : line.toLowerCase().includes('error') || line.toLowerCase().includes('failed')
+                    ? 'text-red-400'
+                    : line.toLowerCase().includes('warning')
+                    ? 'text-yellow-400'
+                    : line.toLowerCase().includes('success') || line.toLowerCase().includes('building')
+                    ? 'text-green-400'
+                    : 'text-gray-300'
+                }`}
               >
-                {line.startsWith('$') ? (
-                  <>
-                    <span className="text-walrus-purple opacity-70 w-3">➜</span>
-                    {line.substring(2)}
-                  </>
-                ) : line}
+                {line}
               </div>
             ))}
           </div>
@@ -185,26 +261,33 @@ const Terminal: React.FC = () => {
       </div>
 
       {/* Command Input */}
-      <form onSubmit={handleSubmit} className="px-4 py-3 bg-black/20 border-t border-white/5 flex items-center gap-3 shrink-0 backdrop-blur-sm">
-        <span className="text-walrus-cyan font-bold select-none text-sm animate-pulse">➜</span>
-        <input
-          ref={inputRef}
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={isExecuting}
-          placeholder={isExecuting ? "Executing..." : "Enter command..."}
-          className="flex-1 bg-transparent text-gray-200 outline-none text-xs font-mono placeholder-gray-700 font-medium caret-walrus-cyan"
-          autoFocus
-          spellCheck={false}
-        />
-        {isExecuting && (
-          <div className="flex items-center gap-2 px-2 py-1 bg-walrus-cyan/10 rounded text-[10px] font-bold text-walrus-cyan uppercase tracking-wider">
-            <div className="animate-spin h-3 w-3 border-2 border-walrus-cyan border-t-transparent rounded-full" />
-            Running
+      <form onSubmit={handleSubmit} className="border-t border-[#3e3e42] bg-[#1e1e1e] p-3">
+        {workingDirectory && (
+          <div className="text-[11px] text-gray-500 mb-1">
+            {workingDirectory}
           </div>
         )}
+        <div className="flex items-center gap-2">
+          <span className="text-green-400 select-none">$</span>
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isExecuting}
+            placeholder={isExecuting ? "Executing..." : "Type a command..."}
+            className="flex-1 bg-transparent text-gray-200 outline-none placeholder-gray-600 caret-green-400"
+            autoFocus
+            spellCheck={false}
+          />
+          {isExecuting && (
+            <div className="flex items-center gap-2 text-xs text-yellow-400">
+              <div className="animate-spin h-3 w-3 border-2 border-yellow-400 border-t-transparent rounded-full" />
+              Running
+            </div>
+          )}
+        </div>
       </form>
     </div>
   );

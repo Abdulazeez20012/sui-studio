@@ -15,9 +15,9 @@ const Sidebar: React.FC = () => {
   ];
 
   return (
-    <div className="w-14 flex flex-col items-center py-4 gap-3 z-20 h-[calc(100vh-60px)]">
+    <div className="w-12 sm:w-14 flex flex-col items-center py-3 sm:py-4 gap-2 sm:gap-3 z-20 h-[calc(100vh-60px)]">
       {/* Floating Pill Container */}
-      <div className="flex-1 flex flex-col items-center bg-walrus-dark-900/80 backdrop-blur-md border border-white/5 rounded-2xl py-4 gap-4 shadow-premium w-full">
+      <div className="flex-1 flex flex-col items-center bg-walrus-dark-900/80 backdrop-blur-md border border-white/5 rounded-2xl py-3 sm:py-4 gap-3 sm:gap-4 shadow-premium w-full transition-all duration-300">
         {items.map((item) => (
           <div key={item.type} className="relative group w-full flex justify-center px-2">
             <button
@@ -35,21 +35,23 @@ const Sidebar: React.FC = () => {
                   if (!leftPanelOpen) toggleLeftPanel();
                 }
               }}
-              className={`p-2.5 rounded-xl transition-all duration-300 relative group-hover:shadow-neon-sm ${item.type !== 'home' && leftPanelType === item.type && leftPanelOpen
-                ? 'text-walrus-cyan bg-walrus-cyan/10 shadow-neon'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+              className={`p-2 sm:p-2.5 rounded-xl transition-all duration-300 relative group-hover:shadow-neon-sm ${item.type !== 'home' && leftPanelType === item.type && leftPanelOpen
+                  ? 'text-walrus-cyan bg-walrus-cyan/10 shadow-neon scale-105'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5 hover:scale-110 active:scale-95'
                 }`}
             >
-              {item.icon}
+              <span className="block transition-transform duration-300 group-hover:scale-110">
+                {item.icon}
+              </span>
 
               {/* Active Dot */}
               {item.type !== 'home' && leftPanelType === item.type && leftPanelOpen && (
-                <div className="absolute right-1 top-2 w-1 h-1 bg-walrus-cyan rounded-full shadow-neon"></div>
+                <div className="absolute right-1 top-2 w-1 h-1 bg-walrus-cyan rounded-full shadow-neon animate-pulse"></div>
               )}
             </button>
 
             {/* Tooltip */}
-            <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-walrus-dark-800 text-white text-xs font-medium rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-50 shadow-xl translate-x-2 group-hover:translate-x-0 backdrop-blur-xl">
+            <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-walrus-dark-800 text-white text-xs font-medium rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 whitespace-nowrap z-50 shadow-xl translate-x-0 group-hover:translate-x-2 backdrop-blur-xl">
               {item.label}
               <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 border-4 border-transparent border-r-walrus-dark-800"></div>
             </div>
@@ -60,8 +62,8 @@ const Sidebar: React.FC = () => {
 
         {/* Bottom Actions */}
         <div className="w-full flex flex-col items-center gap-2 pb-2">
-          <button className="p-2.5 text-gray-500 hover:text-white transition-all rounded-xl hover:bg-white/5 hover:shadow-neon-sm">
-            <Settings size={20} />
+          <button className="p-2 sm:p-2.5 text-gray-500 hover:text-white transition-all duration-300 rounded-xl hover:bg-white/5 hover:shadow-neon-sm hover:scale-110 active:scale-95">
+            <Settings size={18} className="sm:size-20" />
           </button>
         </div>
       </div>

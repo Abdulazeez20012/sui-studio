@@ -133,7 +133,7 @@ class GitService {
     branchName: string,
     force: boolean = false
   ): Promise<{ success: boolean; message: string }> {
-    const response = await apiService.delete(`/git/branch/${branchName}`, {
+    const response = await apiService.post(`/git/branch/${branchName}/delete`, {
       projectId: this.projectId,
       force,
     });

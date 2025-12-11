@@ -1,18 +1,33 @@
 {
-  "name": "new-sui-studio",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "name": "sui-studio",
+  "productName": "Sui Studio",
+  "version": "1.0.0",
+  "description": "Professional IDE for Sui Move Development",
+  "author": {
+    "name": "Sui Studio Team",
+    "email": "team@suistudio.io"
+  },
+  "license": "MIT",
+  "main": "electron/main.js",
+  "homepage": "https://suistudio.io",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron . --no-sandbox\"",
+    "electron:build": "npm run build && electron-builder",
+    "electron:build:linux": "npm run build && electron-builder --linux",
+    "electron:build:windows": "npm run build && electron-builder --windows",
+    "electron:build:mac": "npm run build && electron-builder --mac",
+    "electron:build:all": "npm run build && electron-builder --linux --windows --mac",
+    "electron:package": "npm run build && electron-builder --dir",
+    "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
-    "@monaco-editor/react": "^4.7.0",
+    "@monaco-editor/react": "^4.8.0-rc.3",
     "@mysten/dapp-kit": "^0.19.9",
     "@mysten/sui": "^1.45.2",
     "@react-oauth/google": "^0.12.2",
@@ -22,11 +37,13 @@
     "autoprefixer": "^10.4.22",
     "framer-motion": "^12.23.24",
     "jwt-decode": "^4.0.0",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.554.0",
+    "monaco-editor": "^0.55.1",
     "peerjs": "^1.5.5",
     "postcss": "^8.5.6",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-router-dom": "^7.9.6",
     "simple-peer": "^9.11.1",
     "tailwindcss": "^4.1.17",
@@ -41,9 +58,16 @@
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
     "@vitest/ui": "^1.6.1",
+    "chokidar": "^4.0.3",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^39.2.6",
+    "electron-builder": "^26.0.12",
+    "electron-updater": "^6.6.2",
     "jsdom": "^23.2.0",
     "typescript": "~5.8.2",
     "vite": "^6.4.1",
-    "vitest": "^1.6.1"
+    "vitest": "^1.6.1",
+    "wait-on": "^9.0.3"
   }
 }

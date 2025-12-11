@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
-import { ChevronRight, Play, Command, CheckCircle2, Copy, Terminal, Star } from 'lucide-react';
+import { ChevronRight, Play, Command, CheckCircle2, Copy, Terminal, Star, Download, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Button from './ui/Button';
 
@@ -12,6 +12,7 @@ const Hero: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
 
@@ -119,10 +120,59 @@ const Hero: React.FC = () => {
             {isAuthenticated ? 'Open IDE' : 'Start Building'}
             <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </button>
-          <button className="group min-w-[180px] px-8 py-4 rounded-full bg-surface/80 border border-border text-content font-medium text-lg hover:bg-surface transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2">
-            <Play className="w-5 h-5 fill-content" />
-            Watch Demo
-          </button>
+          {/* Download Button with Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+              onBlur={() => setTimeout(() => setShowDownloadMenu(false), 200)}
+              className="group min-w-[180px] px-8 py-4 rounded-full bg-surface/80 border border-border text-content font-medium text-lg hover:bg-surface transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
+            >
+              <Download className="w-5 h-5" />
+              Download
+              <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showDownloadMenu ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Dropdown Menu */}
+            {showDownloadMenu && (
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-surface/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl overflow-hidden z-50 animate-fade-in min-w-[300px]">
+                <a
+                  href="https://github.com/Abdulazeez20012/sui-studio/releases/download/v1.0.0/Sui-Studio-Linux-1.0.0.AppImage"
+                  download
+                  className="flex items-center gap-3 px-6 py-4 hover:bg-white/5 dark:hover:bg-white/5 transition-all duration-200 border-b border-border group"
+                  onClick={() => setShowDownloadMenu(false)}
+                >
+                  <div className="w-10 h-10 bg-cyan-500/10 rounded-lg flex items-center justify-center border border-cyan-500/30 flex-shrink-0">
+                    <svg className="w-5 h-5 text-cyan-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 text-left">
+                    <div className="text-content font-semibold text-sm">Download for Linux</div>
+                    <div className="text-xs text-content-muted">AppImage • v1.0.0</div>
+                  </div>
+                  <Download className="w-4 h-4 text-content-muted group-hover:text-cyan-400 transition-colors flex-shrink-0" />
+                </a>
+
+                <a
+                  href="https://github.com/Abdulazeez20012/sui-studio/releases/download/v1.0.0/Sui-Studio-1.0.0-Windows-Portable.zip"
+                  download
+                  className="flex items-center gap-3 px-6 py-4 hover:bg-white/5 dark:hover:bg-white/5 transition-all duration-200 group"
+                  onClick={() => setShowDownloadMenu(false)}
+                >
+                  <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center border border-blue-500/30 flex-shrink-0">
+                    <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 text-left">
+                    <div className="text-content font-semibold text-sm">Download for Windows</div>
+                    <div className="text-xs text-content-muted">Portable ZIP • v1.0.0</div>
+                  </div>
+                  <Download className="w-4 h-4 text-content-muted group-hover:text-blue-400 transition-colors flex-shrink-0" />
+                </a>
+              </div>
+            )}
+          </div>
         </motion.div>
 
         {/* Floating IDE Mockup */}
@@ -212,10 +262,10 @@ const InteractiveIDEMock = () => {
         </div>
         <div className="flex items-center gap-3">
           <div className={`flex items-center gap-1.5 text-[10px] font-medium transition-colors ${deployState === 'success' ? 'text-green-400' :
-              deployState === 'idle' ? 'text-slate-500' : 'text-sui-cyan'
+            deployState === 'idle' ? 'text-slate-500' : 'text-sui-cyan'
             }`}>
             <div className={`w-1.5 h-1.5 rounded-full ${deployState === 'success' ? 'bg-green-500' :
-                deployState === 'idle' ? 'bg-slate-600' : 'bg-sui-cyan animate-pulse'
+              deployState === 'idle' ? 'bg-slate-600' : 'bg-sui-cyan animate-pulse'
               }`} />
             {deployState === 'idle' ? 'Idle' :
               deployState === 'signing' ? 'Signing...' :
@@ -290,8 +340,8 @@ const InteractiveIDEMock = () => {
                 onClick={handleDeploy}
                 disabled={deployState !== 'idle'}
                 className={`w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 ${deployState === 'success' ? 'bg-green-500/20 text-green-400 border border-green-500/50' :
-                    deployState !== 'idle' ? 'bg-sui-cyan/10 text-sui-cyan border border-sui-cyan/30 cursor-wait' :
-                      'bg-sui-cyan text-black hover:bg-sui-blue transform hover:-translate-y-1 shadow-lg shadow-sui-cyan/20'
+                  deployState !== 'idle' ? 'bg-sui-cyan/10 text-sui-cyan border border-sui-cyan/30 cursor-wait' :
+                    'bg-sui-cyan text-black hover:bg-sui-blue transform hover:-translate-y-1 shadow-lg shadow-sui-cyan/20'
                   }`}
               >
                 {deployState === 'idle' && <><Play className="w-3 h-3 fill-current" /> Deploy Module</>}
