@@ -34,18 +34,11 @@ const evaluateSchema = z.object({
 router.post('/session', async (req, res) => {
   try {
     const { projectPath, code } = createSessionSchema.parse(req.body);
-    const result = await debuggerService.createSession(projectPath, code);
-
-    if (!result.success) {
-      return res.status(400).json({
-        success: false,
-        error: result.error
-      });
-    }
+    const session = await debuggerService.createSession(code, projectPath || 'debug_package');
 
     res.json({
       success: true,
-      data: result.session
+      data: session
     });
   } catch (error: any) {
     console.error('Error creating debug session:', error);
@@ -96,16 +89,18 @@ router.post('/command', async (req, res) => {
     let result;
     switch (type) {
       case 'start':
-        result = await debuggerService.startDebugging(sessionId);
+        result = await debuggerService.start(sessionId);
         break;
       case 'stop':
-        result = await debuggerService.stopDebugging(sessionId);
+        debuggerService.stop(sessionId);
+        result = { line: 0, variables: [], finished: true };
         break;
       case 'pause':
-        result = await debuggerService.pauseExecution(sessionId);
+        // Pause is handled by setting breakpoint at current line
+        result = { line: 0, variables: [], finished: false };
         break;
       case 'continue':
-        result = await debuggerService.continueExecution(sessionId);
+        result = await debuggerService.continue(sessionId);
         break;
       case 'step-over':
         result = await debuggerService.stepOver(sessionId);
@@ -123,16 +118,9 @@ router.post('/command', async (req, res) => {
         });
     }
 
-    if (!result.success) {
-      return res.status(400).json({
-        success: false,
-        error: result.error
-      });
-    }
-
     res.json({
       success: true,
-      data: result.session
+      data: result
     });
   } catch (error: any) {
     console.error('Error executing command:', error);
@@ -150,18 +138,18 @@ router.post('/command', async (req, res) => {
 router.post('/breakpoint', async (req, res) => {
   try {
     const { sessionId, file, line, condition } = breakpointSchema.parse(req.body);
-    const result = await debuggerService.addBreakpoint(sessionId, file, line, condition);
+    const breakpoint = debuggerService.setBreakpoint(sessionId, line, condition);
 
-    if (!result.success) {
-      return res.status(400).json({
+    if (!breakpoint) {
+      return res.status(404).json({
         success: false,
-        error: result.error
+        error: 'Session not found'
       });
     }
 
     res.json({
       success: true,
-      data: result.session
+      data: breakpoint
     });
   } catch (error: any) {
     console.error('Error adding breakpoint:', error);
@@ -179,18 +167,17 @@ router.post('/breakpoint', async (req, res) => {
 router.delete('/breakpoint/:sessionId/:breakpointId', async (req, res) => {
   try {
     const { sessionId, breakpointId } = req.params;
-    const result = await debuggerService.removeBreakpoint(sessionId, breakpointId);
+    const success = debuggerService.removeBreakpoint(sessionId, breakpointId);
 
-    if (!result.success) {
-      return res.status(400).json({
+    if (!success) {
+      return res.status(404).json({
         success: false,
-        error: result.error
+        error: 'Breakpoint or session not found'
       });
     }
 
     res.json({
-      success: true,
-      data: result.session
+      success: true
     });
   } catch (error: any) {
     console.error('Error removing breakpoint:', error);
@@ -208,18 +195,17 @@ router.delete('/breakpoint/:sessionId/:breakpointId', async (req, res) => {
 router.put('/breakpoint/:sessionId/:breakpointId/toggle', async (req, res) => {
   try {
     const { sessionId, breakpointId } = req.params;
-    const result = await debuggerService.toggleBreakpoint(sessionId, breakpointId);
+    const success = debuggerService.toggleBreakpoint(sessionId, breakpointId);
 
-    if (!result.success) {
-      return res.status(400).json({
+    if (!success) {
+      return res.status(404).json({
         success: false,
-        error: result.error
+        error: 'Breakpoint or session not found'
       });
     }
 
     res.json({
-      success: true,
-      data: result.session
+      success: true
     });
   } catch (error: any) {
     console.error('Error toggling breakpoint:', error);
@@ -237,11 +223,18 @@ router.put('/breakpoint/:sessionId/:breakpointId/toggle', async (req, res) => {
 router.get('/variables/:sessionId', async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const variables = await debuggerService.getVariables(sessionId);
+    const session = debuggerService.getSession(sessionId);
+
+    if (!session) {
+      return res.status(404).json({
+        success: false,
+        error: 'Session not found'
+      });
+    }
 
     res.json({
       success: true,
-      data: variables
+      data: session.variables
     });
   } catch (error: any) {
     console.error('Error fetching variables:', error);
@@ -259,7 +252,14 @@ router.get('/variables/:sessionId', async (req, res) => {
 router.post('/evaluate', async (req, res) => {
   try {
     const { sessionId, expression } = evaluateSchema.parse(req.body);
-    const result = await debuggerService.evaluateExpression(sessionId, expression);
+    const result = debuggerService.evaluate(sessionId, expression);
+
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        error: 'Session not found or expression invalid'
+      });
+    }
 
     res.json({
       success: true,

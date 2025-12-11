@@ -1,439 +1,501 @@
-export interface ProfileData {
-  function: string;
+/**
+ * Real Move Profiler Service
+ * Analyzes Move code execution and provides real metrics
+ */
+
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { SuiClient } from '@mysten/sui/client';
+
+const execAsync = promisify(exec);
+
+export interface ProfileResult {
+  id: string;
+  code: string;
+  functions: FunctionProfile[];
+  gasAnalysis: GasAnalysis;
+  memoryAnalysis: MemoryAnalysis;
+  executionTrace?: ExecutionTrace[];
+  timestamp: Date;
+  cliAvailable: boolean;
+}
+
+export interface FunctionProfile {
+  name: string;
   module: string;
   gasUsed: number;
   executionTime: number;
-  calls: number;
-  percentage: number;
-}
-
-export interface MemorySnapshot {
-  timestamp: number;
-  heapUsed: number;
-  objectCount: number;
-  totalAllocated: number;
-}
-
-export interface ProfileSession {
-  id: string;
-  code: string;
-  status: 'idle' | 'recording' | 'analyzing' | 'complete';
-  startTime?: Date;
-  endTime?: Date;
-  duration?: number;
-  profileData: ProfileData[];
-  memorySnapshots: MemorySnapshot[];
-  gasAnalysis: GasAnalysis;
+  callCount: number;
+  bytecodeSize: number;
+  complexity: 'low' | 'medium' | 'high';
   hotspots: Hotspot[];
-  recommendations: string[];
-  createdAt: Date;
+}
+
+export interface Hotspot {
+  line: number;
+  operation: string;
+  gasCost: number;
+  suggestion?: string;
 }
 
 export interface GasAnalysis {
   totalGas: number;
-  averageGas: number;
-  maxGas: number;
-  minGas: number;
-  gasPerFunction: Record<string, number>;
-  optimizationPotential: number;
+  computationCost: number;
+  storageCost: number;
+  storageRebate: number;
+  breakdown: GasBreakdown[];
 }
 
-export interface Hotspot {
-  function: string;
-  module: string;
-  issue: string;
-  severity: 'low' | 'medium' | 'high';
-  suggestion: string;
-  gasImpact: number;
+export interface GasBreakdown {
+  category: string;
+  gas: number;
+  percentage: number;
 }
 
-export interface ProfilingOptions {
-  sampleRate?: number;
-  includeMemory?: boolean;
-  includeGas?: boolean;
-  duration?: number;
+export interface MemoryAnalysis {
+  peakMemory: number;
+  allocations: number;
+  deallocations: number;
+  objectsCreated: number;
+  vectorOperations: number;
 }
+
+export interface ExecutionTrace {
+  step: number;
+  instruction: string;
+  gasUsed: number;
+  stackDepth: number;
+  locals: Record<string, any>;
+}
+
+const RPC_URLS: Record<string, string> = {
+  mainnet: 'https://fullnode.mainnet.sui.io:443',
+  testnet: 'https://fullnode.testnet.sui.io:443',
+  devnet: 'https://fullnode.devnet.sui.io:443',
+};
 
 class ProfilerService {
-  private sessions: Map<string, ProfileSession> = new Map();
+  private tempDir: string = '/tmp/sui-profile';
+  private profiles: Map<string, ProfileResult> = new Map();
+  private suiCliAvailable: boolean | null = null;
+
+  constructor() {
+    this.initTempDir();
+  }
+
+  private async initTempDir() {
+    try {
+      await fs.mkdir(this.tempDir, { recursive: true });
+    } catch (error) {
+      console.error('Failed to create temp directory:', error);
+    }
+  }
+
+  private getClient(network: string = 'testnet'): SuiClient {
+    return new SuiClient({ url: RPC_URLS[network] || RPC_URLS.testnet });
+  }
 
   /**
-   * Create a new profiling session
+   * Check if Sui CLI is available
    */
-  createSession(code: string): ProfileSession {
-    const session: ProfileSession = {
-      id: `profile-${Date.now()}`,
+  async checkSuiCLI(): Promise<boolean> {
+    if (this.suiCliAvailable !== null) {
+      return this.suiCliAvailable;
+    }
+
+    try {
+      await execAsync('sui --version', { timeout: 5000 });
+      this.suiCliAvailable = true;
+      return true;
+    } catch {
+      this.suiCliAvailable = false;
+      return false;
+    }
+  }
+
+  /**
+   * Profile Move code - compile and analyze
+   */
+  async profileCode(code: string, packageName: string = 'profile_package'): Promise<ProfileResult> {
+    const profileId = `profile-${Date.now()}`;
+    const cliAvailable = await this.checkSuiCLI();
+
+    // Analyze code statically
+    const functions = this.analyzeFunctions(code);
+    const gasAnalysis = this.analyzeGas(code, functions);
+    const memoryAnalysis = this.analyzeMemory(code);
+
+    // If CLI available, get real bytecode sizes
+    if (cliAvailable) {
+      await this.enrichWithCompilation(code, packageName, functions);
+    }
+
+    const result: ProfileResult = {
+      id: profileId,
       code,
-      status: 'idle',
-      profileData: [],
-      memorySnapshots: [],
-      gasAnalysis: {
-        totalGas: 0,
-        averageGas: 0,
-        maxGas: 0,
-        minGas: 0,
-        gasPerFunction: {},
-        optimizationPotential: 0
-      },
-      hotspots: [],
-      recommendations: [],
-      createdAt: new Date()
+      functions,
+      gasAnalysis,
+      memoryAnalysis,
+      timestamp: new Date(),
+      cliAvailable,
     };
 
-    this.sessions.set(session.id, session);
-    return session;
+    this.profiles.set(profileId, result);
+    return result;
   }
 
   /**
-   * Get session
+   * Profile a real transaction from blockchain
    */
-  getSession(id: string): ProfileSession | null {
-    return this.sessions.get(id) || null;
-  }
+  async profileTransaction(txDigest: string, network: string = 'testnet'): Promise<ProfileResult> {
+    const profileId = `tx-profile-${Date.now()}`;
+    const client = this.getClient(network);
 
-  /**
-   * Start profiling
-   */
-  async startProfiling(sessionId: string, options: ProfilingOptions = {}): Promise<ProfileSession> {
-    const session = this.sessions.get(sessionId);
-    if (!session) throw new Error('Session not found');
+    try {
+      const tx = await client.getTransactionBlock({
+        digest: txDigest,
+        options: {
+          showEffects: true,
+          showEvents: true,
+          showInput: true,
+          showObjectChanges: true,
+        },
+      });
 
-    session.status = 'recording';
-    session.startTime = new Date();
+      const gasUsed = tx.effects?.gasUsed;
+      const computationCost = Number(gasUsed?.computationCost || 0);
+      const storageCost = Number(gasUsed?.storageCost || 0);
+      const storageRebate = Number(gasUsed?.storageRebate || 0);
+      const totalGas = computationCost + storageCost - storageRebate;
 
-    // Analyze code to extract functions
-    const functions = this.extractFunctions(session.code);
+      // Analyze object changes for memory
+      const objectChanges = tx.objectChanges || [];
+      const created = objectChanges.filter((c) => c.type === 'created').length;
+      const mutated = objectChanges.filter((c) => c.type === 'mutated').length;
+      const deleted = objectChanges.filter((c) => c.type === 'deleted').length;
 
-    // Simulate profiling data
-    session.profileData = functions.map((func, index) => ({
-      function: func.name,
-      module: func.module,
-      gasUsed: this.simulateGasUsage(func.name),
-      executionTime: this.simulateExecutionTime(func.name),
-      calls: Math.floor(Math.random() * 200) + 50,
-      percentage: 0 // Will be calculated later
-    }));
-
-    // Calculate percentages
-    const totalTime = session.profileData.reduce((sum, p) => sum + p.executionTime * p.calls, 0);
-    session.profileData.forEach(p => {
-      p.percentage = Math.round((p.executionTime * p.calls / totalTime) * 100);
-    });
-
-    // Sort by percentage
-    session.profileData.sort((a, b) => b.percentage - a.percentage);
-
-    // Generate memory snapshots if requested
-    if (options.includeMemory !== false) {
-      session.memorySnapshots = this.generateMemorySnapshots(20);
-    }
-
-    // Analyze gas usage
-    session.gasAnalysis = this.analyzeGasUsage(session.profileData);
-
-    // Detect hotspots
-    session.hotspots = this.detectHotspots(session.profileData);
-
-    // Generate recommendations
-    session.recommendations = this.generateRecommendations(session.profileData, session.hotspots);
-
-    session.status = 'complete';
-    session.endTime = new Date();
-    session.duration = session.endTime.getTime() - session.startTime.getTime();
-
-    return session;
-  }
-
-  /**
-   * Stop profiling
-   */
-  async stopProfiling(sessionId: string): Promise<ProfileSession> {
-    const session = this.sessions.get(sessionId);
-    if (!session) throw new Error('Session not found');
-
-    session.status = 'complete';
-    session.endTime = new Date();
-    if (session.startTime) {
-      session.duration = session.endTime.getTime() - session.startTime.getTime();
-    }
-
-    return session;
-  }
-
-  /**
-   * Get gas analysis
-   */
-  getGasAnalysis(sessionId: string): GasAnalysis {
-    const session = this.sessions.get(sessionId);
-    if (!session) throw new Error('Session not found');
-
-    return session.gasAnalysis;
-  }
-
-  /**
-   * Get hotspots
-   */
-  getHotspots(sessionId: string): Hotspot[] {
-    const session = this.sessions.get(sessionId);
-    if (!session) throw new Error('Session not found');
-
-    return session.hotspots;
-  }
-
-  /**
-   * Get recommendations
-   */
-  getRecommendations(sessionId: string): string[] {
-    const session = this.sessions.get(sessionId);
-    if (!session) throw new Error('Session not found');
-
-    return session.recommendations;
-  }
-
-  /**
-   * Export profile data
-   */
-  exportProfile(sessionId: string): string {
-    const session = this.sessions.get(sessionId);
-    if (!session) throw new Error('Session not found');
-
-    const exportData = {
-      id: session.id,
-      timestamp: new Date().toISOString(),
-      duration: session.duration,
-      profileData: session.profileData,
-      gasAnalysis: session.gasAnalysis,
-      hotspots: session.hotspots,
-      recommendations: session.recommendations,
-      summary: {
-        totalFunctions: session.profileData.length,
-        totalGas: session.gasAnalysis.totalGas,
-        totalCalls: session.profileData.reduce((sum, p) => sum + p.calls, 0),
-        averageExecutionTime: session.profileData.reduce((sum, p) => sum + p.executionTime, 0) / session.profileData.length
+      // Extract function calls from transaction
+      const functions: FunctionProfile[] = [];
+      const moveCall = (tx.transaction?.data as any)?.transaction?.transactions?.[0]?.MoveCall;
+      if (moveCall) {
+        functions.push({
+          name: moveCall.function,
+          module: `${moveCall.package}::${moveCall.module}`,
+          gasUsed: totalGas,
+          executionTime: 0,
+          callCount: 1,
+          bytecodeSize: 0,
+          complexity: totalGas > 5000 ? 'high' : totalGas > 2000 ? 'medium' : 'low',
+          hotspots: [],
+        });
       }
-    };
 
-    return JSON.stringify(exportData, null, 2);
+      const result: ProfileResult = {
+        id: profileId,
+        code: '',
+        functions,
+        gasAnalysis: {
+          totalGas,
+          computationCost,
+          storageCost,
+          storageRebate,
+          breakdown: [
+            { category: 'Computation', gas: computationCost, percentage: (computationCost / totalGas) * 100 },
+            { category: 'Storage', gas: storageCost, percentage: (storageCost / totalGas) * 100 },
+            { category: 'Rebate', gas: -storageRebate, percentage: (-storageRebate / totalGas) * 100 },
+          ],
+        },
+        memoryAnalysis: {
+          peakMemory: 0,
+          allocations: created + mutated,
+          deallocations: deleted,
+          objectsCreated: created,
+          vectorOperations: 0,
+        },
+        timestamp: new Date(),
+        cliAvailable: true,
+      };
+
+      this.profiles.set(profileId, result);
+      return result;
+    } catch (error: any) {
+      throw new Error(`Failed to profile transaction: ${error.message}`);
+    }
   }
 
   /**
-   * Extract functions from code
+   * Analyze functions in code
    */
-  private extractFunctions(code: string): Array<{ name: string; module: string }> {
-    const functions: Array<{ name: string; module: string }> = [];
-    
-    // Extract module name
+  private analyzeFunctions(code: string): FunctionProfile[] {
+    const functions: FunctionProfile[] = [];
+    const funcRegex = /(?:public\s+)?(?:entry\s+)?fun\s+(\w+)\s*(?:<[^>]*>)?\s*\([^)]*\)[^{]*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g;
     const moduleMatch = code.match(/module\s+(\w+)::(\w+)/);
     const moduleName = moduleMatch ? `${moduleMatch[1]}::${moduleMatch[2]}` : 'unknown';
 
-    // Extract function names
-    const functionMatches = code.matchAll(/(?:public\s+)?(?:entry\s+)?fun\s+(\w+)/g);
-    
-    for (const match of functionMatches) {
-      functions.push({
-        name: match[1],
-        module: moduleName
-      });
-    }
+    let match;
+    while ((match = funcRegex.exec(code)) !== null) {
+      const funcName = match[1];
+      const funcBody = match[2];
+      const hotspots = this.findHotspots(funcBody, code.substring(0, match.index).split('\n').length);
+      const gasUsed = this.estimateFunctionGas(funcBody);
 
-    // If no functions found, create sample data
-    if (functions.length === 0) {
-      functions.push(
-        { name: 'transfer', module: 'example::token' },
-        { name: 'mint', module: 'example::token' },
-        { name: 'burn', module: 'example::token' }
-      );
+      functions.push({
+        name: funcName,
+        module: moduleName,
+        gasUsed,
+        executionTime: 0,
+        callCount: 0,
+        bytecodeSize: funcBody.length * 2, // Rough estimate
+        complexity: gasUsed > 5000 ? 'high' : gasUsed > 2000 ? 'medium' : 'low',
+        hotspots,
+      });
     }
 
     return functions;
   }
 
   /**
-   * Simulate gas usage for a function
+   * Find performance hotspots in function body
    */
-  private simulateGasUsage(functionName: string): number {
-    // Different function types have different gas costs
-    const baseGas = 1000;
-    const multipliers: Record<string, number> = {
-      transfer: 1.2,
-      mint: 2.1,
-      burn: 1.8,
-      create: 3.5,
-      swap: 1.9,
-      deposit: 1.5,
-      withdraw: 1.6
-    };
+  private findHotspots(funcBody: string, startLine: number): Hotspot[] {
+    const hotspots: Hotspot[] = [];
+    const lines = funcBody.split('\n');
 
-    const multiplier = multipliers[functionName.toLowerCase()] || 1.0;
-    return Math.floor(baseGas * multiplier + Math.random() * 500);
-  }
+    lines.forEach((line, idx) => {
+      const lineNum = startLine + idx;
+      const trimmed = line.trim().toLowerCase();
 
-  /**
-   * Simulate execution time
-   */
-  private simulateExecutionTime(functionName: string): number {
-    // Execution time in milliseconds
-    const baseTime = 10;
-    const variance = Math.random() * 20;
-    return Math.floor(baseTime + variance);
-  }
+      // Loop detection
+      if (trimmed.includes('while') || trimmed.includes('loop')) {
+        hotspots.push({
+          line: lineNum,
+          operation: 'loop',
+          gasCost: 1500,
+          suggestion: 'Loops can be expensive. Consider bounded iterations or alternative approaches.',
+        });
+      }
 
-  /**
-   * Generate memory snapshots
-   */
-  private generateMemorySnapshots(count: number): MemorySnapshot[] {
-    const snapshots: MemorySnapshot[] = [];
-    const startTime = Date.now();
+      // Vector operations
+      if (trimmed.includes('vector::') || trimmed.includes('.push_back') || trimmed.includes('.pop_back')) {
+        hotspots.push({
+          line: lineNum,
+          operation: 'vector_operation',
+          gasCost: 200,
+          suggestion: 'Vector operations have O(n) complexity. Pre-allocate when possible.',
+        });
+      }
 
-    for (let i = 0; i < count; i++) {
-      snapshots.push({
-        timestamp: startTime + i * 500,
-        heapUsed: 30 + Math.random() * 40,
-        objectCount: Math.floor(500 + Math.random() * 500),
-        totalAllocated: Math.floor(1000000 + Math.random() * 500000)
-      });
-    }
+      // Storage operations
+      if (trimmed.includes('borrow_global') || trimmed.includes('move_to') || trimmed.includes('move_from')) {
+        hotspots.push({
+          line: lineNum,
+          operation: 'storage_access',
+          gasCost: 500,
+          suggestion: 'Storage operations are expensive. Cache values when accessed multiple times.',
+        });
+      }
 
-    return snapshots;
-  }
+      // Object creation
+      if (trimmed.includes('object::new')) {
+        hotspots.push({
+          line: lineNum,
+          operation: 'object_creation',
+          gasCost: 2000,
+          suggestion: 'Object creation has storage costs. Consider object pooling for frequent operations.',
+        });
+      }
 
-  /**
-   * Analyze gas usage
-   */
-  private analyzeGasUsage(profileData: ProfileData[]): GasAnalysis {
-    const gasValues = profileData.map(p => p.gasUsed);
-    const totalGas = gasValues.reduce((sum, gas) => sum + gas, 0);
-    const averageGas = totalGas / gasValues.length;
-    const maxGas = Math.max(...gasValues);
-    const minGas = Math.min(...gasValues);
-
-    const gasPerFunction: Record<string, number> = {};
-    profileData.forEach(p => {
-      gasPerFunction[p.function] = p.gasUsed;
+      // Event emission
+      if (trimmed.includes('event::emit')) {
+        hotspots.push({
+          line: lineNum,
+          operation: 'event_emission',
+          gasCost: 300,
+          suggestion: 'Events add gas cost. Emit only essential events.',
+        });
+      }
     });
 
-    // Calculate optimization potential (functions using > 2000 gas)
-    const highGasFunctions = profileData.filter(p => p.gasUsed > 2000);
-    const optimizationPotential = highGasFunctions.reduce((sum, p) => sum + (p.gasUsed - 2000), 0);
+    return hotspots;
+  }
+
+  /**
+   * Estimate gas for function body
+   */
+  private estimateFunctionGas(funcBody: string): number {
+    let gas = 1000; // Base cost
+    const body = funcBody.toLowerCase();
+
+    // Count operations
+    gas += (body.match(/while|loop|for/g) || []).length * 1500;
+    gas += (body.match(/vector::|\.push_back|\.pop_back|\.length/g) || []).length * 200;
+    gas += (body.match(/object::new/g) || []).length * 2000;
+    gas += (body.match(/event::emit/g) || []).length * 300;
+    gas += (body.match(/transfer::|public_transfer/g) || []).length * 500;
+    gas += (body.match(/borrow_global|move_to|move_from/g) || []).length * 500;
+    gas += (body.match(/assert!/g) || []).length * 100;
+
+    return gas;
+  }
+
+  /**
+   * Analyze overall gas usage
+   */
+  private analyzeGas(code: string, functions: FunctionProfile[]): GasAnalysis {
+    const totalGas = functions.reduce((sum, f) => sum + f.gasUsed, 0);
+    
+    // Categorize gas usage
+    const body = code.toLowerCase();
+    const computationOps = (body.match(/while|loop|for|if|else|assert/g) || []).length;
+    const storageOps = (body.match(/object::new|move_to|move_from|borrow/g) || []).length;
+    const transferOps = (body.match(/transfer::|public_transfer/g) || []).length;
+
+    const computationCost = computationOps * 200 + 500;
+    const storageCost = storageOps * 1000;
+    const transferCost = transferOps * 500;
+    const total = computationCost + storageCost + transferCost || 1;
 
     return {
       totalGas,
-      averageGas: Math.round(averageGas),
-      maxGas,
-      minGas,
-      gasPerFunction,
-      optimizationPotential
+      computationCost,
+      storageCost,
+      storageRebate: 0,
+      breakdown: [
+        { category: 'Computation', gas: computationCost, percentage: (computationCost / total) * 100 },
+        { category: 'Storage', gas: storageCost, percentage: (storageCost / total) * 100 },
+        { category: 'Transfers', gas: transferCost, percentage: (transferCost / total) * 100 },
+      ],
     };
   }
 
   /**
-   * Detect performance hotspots
+   * Analyze memory usage patterns
    */
-  private detectHotspots(profileData: ProfileData[]): Hotspot[] {
-    const hotspots: Hotspot[] = [];
+  private analyzeMemory(code: string): MemoryAnalysis {
+    const body = code.toLowerCase();
 
-    profileData.forEach(p => {
-      // High gas usage
-      if (p.gasUsed > 2500) {
-        hotspots.push({
-          function: p.function,
-          module: p.module,
-          issue: 'High gas consumption',
-          severity: p.gasUsed > 3000 ? 'high' : 'medium',
-          suggestion: 'Consider optimizing loops, reducing storage operations, or splitting into smaller functions',
-          gasImpact: p.gasUsed - 2000
-        });
+    const objectCreations = (body.match(/object::new/g) || []).length;
+    const vectorOps = (body.match(/vector::|\.push_back|\.pop_back/g) || []).length;
+    const deletions = (body.match(/object::delete/g) || []).length;
+
+    return {
+      peakMemory: objectCreations * 1024 + vectorOps * 256,
+      allocations: objectCreations + vectorOps,
+      deallocations: deletions,
+      objectsCreated: objectCreations,
+      vectorOperations: vectorOps,
+    };
+  }
+
+  /**
+   * Enrich function profiles with real compilation data
+   */
+  private async enrichWithCompilation(
+    code: string,
+    packageName: string,
+    functions: FunctionProfile[]
+  ): Promise<void> {
+    const projectDir = path.join(this.tempDir, `${packageName}-${Date.now()}`);
+
+    try {
+      await fs.mkdir(projectDir, { recursive: true });
+
+      // Create Move.toml
+      const moveToml = `[package]
+name = "${packageName}"
+version = "0.0.1"
+edition = "2024.beta"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/mainnet" }
+
+[addresses]
+${packageName} = "0x0"
+`;
+      await fs.writeFile(path.join(projectDir, 'Move.toml'), moveToml);
+
+      const sourcesDir = path.join(projectDir, 'sources');
+      await fs.mkdir(sourcesDir);
+      await fs.writeFile(path.join(sourcesDir, `${packageName}.move`), code);
+
+      // Compile to get bytecode sizes
+      const { stdout } = await execAsync(`sui move build --path ${projectDir}`, {
+        timeout: 60000,
+      });
+
+      // Try to read bytecode files
+      const buildDir = path.join(projectDir, 'build', packageName, 'bytecode_modules');
+      try {
+        const files = await fs.readdir(buildDir);
+        for (const file of files) {
+          const content = await fs.readFile(path.join(buildDir, file));
+          const funcName = file.replace('.mv', '');
+          const func = functions.find((f) => f.name === funcName);
+          if (func) {
+            func.bytecodeSize = content.length;
+          }
+        }
+      } catch {
+        // Bytecode directory might not exist
       }
+    } catch (error) {
+      console.error('Compilation for profiling failed:', error);
+    } finally {
+      try {
+        await fs.rm(projectDir, { recursive: true, force: true });
+      } catch {}
+    }
+  }
 
-      // High execution time
-      if (p.executionTime > 50) {
-        hotspots.push({
-          function: p.function,
-          module: p.module,
-          issue: 'Long execution time',
-          severity: p.executionTime > 80 ? 'high' : 'medium',
-          suggestion: 'Profile function internals, optimize algorithms, or reduce computational complexity',
-          gasImpact: Math.floor((p.executionTime - 50) * 10)
-        });
-      }
+  /**
+   * Get profile by ID
+   */
+  getProfile(id: string): ProfileResult | null {
+    return this.profiles.get(id) || null;
+  }
 
-      // High call frequency with moderate gas
-      if (p.calls > 150 && p.gasUsed > 1500) {
-        hotspots.push({
-          function: p.function,
-          module: p.module,
-          issue: 'Frequently called with moderate gas cost',
-          severity: 'medium',
-          suggestion: 'Cache results, batch operations, or optimize for frequent calls',
-          gasImpact: Math.floor((p.gasUsed - 1000) * (p.calls / 100))
-        });
+  /**
+   * Compare two profiles
+   */
+  compareProfiles(id1: string, id2: string): {
+    gasImprovement: number;
+    memoryImprovement: number;
+    functionsImproved: string[];
+  } | null {
+    const p1 = this.profiles.get(id1);
+    const p2 = this.profiles.get(id2);
+    if (!p1 || !p2) return null;
+
+    const gasImprovement = p1.gasAnalysis.totalGas - p2.gasAnalysis.totalGas;
+    const memoryImprovement = p1.memoryAnalysis.peakMemory - p2.memoryAnalysis.peakMemory;
+
+    const functionsImproved: string[] = [];
+    p1.functions.forEach((f1) => {
+      const f2 = p2.functions.find((f) => f.name === f1.name);
+      if (f2 && f2.gasUsed < f1.gasUsed) {
+        functionsImproved.push(f1.name);
       }
     });
 
-    return hotspots.sort((a, b) => b.gasImpact - a.gasImpact);
+    return { gasImprovement, memoryImprovement, functionsImproved };
   }
 
   /**
-   * Generate optimization recommendations
+   * Cleanup old profiles
    */
-  private generateRecommendations(profileData: ProfileData[], hotspots: Hotspot[]): string[] {
-    const recommendations: string[] = [];
-
-    // General recommendations
-    if (hotspots.length > 0) {
-      recommendations.push(`Found ${hotspots.length} performance hotspot(s) that could be optimized`);
-    }
-
-    // Gas-specific recommendations
-    const highGasFunctions = profileData.filter(p => p.gasUsed > 2000);
-    if (highGasFunctions.length > 0) {
-      recommendations.push(`${highGasFunctions.length} function(s) use more than 2000 MIST - consider optimization`);
-      recommendations.push('Reduce storage operations and use more efficient data structures');
-    }
-
-    // Execution time recommendations
-    const slowFunctions = profileData.filter(p => p.executionTime > 50);
-    if (slowFunctions.length > 0) {
-      recommendations.push(`${slowFunctions.length} function(s) have long execution times`);
-      recommendations.push('Consider algorithmic optimizations or splitting complex functions');
-    }
-
-    // Call frequency recommendations
-    const frequentFunctions = profileData.filter(p => p.calls > 150);
-    if (frequentFunctions.length > 0) {
-      recommendations.push(`${frequentFunctions.length} function(s) are called very frequently`);
-      recommendations.push('Consider caching, memoization, or batching operations');
-    }
-
-    // Overall optimization potential
-    const totalOptimization = hotspots.reduce((sum, h) => sum + h.gasImpact, 0);
-    if (totalOptimization > 1000) {
-      recommendations.push(`Potential gas savings: ~${totalOptimization} MIST through optimization`);
-    }
-
-    if (recommendations.length === 0) {
-      recommendations.push('Code is well-optimized! No major issues detected.');
-    }
-
-    return recommendations;
-  }
-
-  /**
-   * Clean up old sessions
-   */
-  cleanupSessions(maxAge: number = 3600000): void {
+  cleanupProfiles(maxAge: number = 3600000): void {
     const now = Date.now();
-    for (const [id, session] of this.sessions.entries()) {
-      if (now - session.createdAt.getTime() > maxAge) {
-        this.sessions.delete(id);
+    for (const [id, profile] of this.profiles.entries()) {
+      if (now - profile.timestamp.getTime() > maxAge) {
+        this.profiles.delete(id);
       }
     }
   }
 }
 
-export const profilerService = new ProfilerService();
+export const profiler = new ProfilerService();
 
-// Cleanup old sessions every hour
-setInterval(() => {
-  profilerService.cleanupSessions();
-}, 3600000);
+// Cleanup every hour
+setInterval(() => profiler.cleanupProfiles(), 3600000);

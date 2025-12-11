@@ -1,11 +1,17 @@
+/**
+ * Real Deployment Service
+ * Handles contract deployment to Sui blockchain via wallet signing
+ */
+
 import { Transaction } from '@mysten/sui/transactions';
 import { SuiClient } from '@mysten/sui/client';
+import { apiService } from './apiService';
 
 export interface DeploymentOptions {
   code: string;
   packageName: string;
   network: 'testnet' | 'devnet' | 'mainnet';
-  dependencies?: string[];
+  projectId?: string;
 }
 
 export interface DeploymentResult {
@@ -14,110 +20,127 @@ export interface DeploymentResult {
   transactionDigest?: string;
   gasUsed?: number;
   error?: string;
+  explorerUrl?: string;
+  packageExplorerUrl?: string;
 }
 
+export interface GasEstimate {
+  estimatedGas: number;
+  bytecodeSize: number;
+  recommendedBudget: number;
+  breakdown: {
+    base: number;
+    bytecode: number;
+    dryRun?: number;
+  };
+}
+
+const RPC_URLS: Record<string, string> = {
+  mainnet: 'https://fullnode.mainnet.sui.io:443',
+  testnet: 'https://fullnode.testnet.sui.io:443',
+  devnet: 'https://fullnode.devnet.sui.io:443',
+};
+
 class DeploymentService {
-  private getRpcUrl(network: string): string {
-    const urls = {
-      mainnet: 'https://fullnode.mainnet.sui.io:443',
-      testnet: 'https://fullnode.testnet.sui.io:443',
-      devnet: 'https://fullnode.devnet.sui.io:443',
-    };
-    return urls[network as keyof typeof urls] || urls.testnet;
+  private getClient(network: string): SuiClient {
+    return new SuiClient({ url: RPC_URLS[network] || RPC_URLS.testnet });
   }
 
   /**
-   * Publish a Move package to Sui network using connected wallet
-   * This uses the wallet to sign and execute a real publish transaction
+   * Deploy a Move package using wallet signing
+   * This is the main deployment method that:
+   * 1. Sends code to backend for compilation
+   * 2. Gets transaction bytes back
+   * 3. Signs with wallet
+   * 4. Submits to blockchain
+   * 5. Confirms deployment
    */
-  async publishPackage(
+  async deployPackage(
     options: DeploymentOptions,
-    signAndExecute: (transaction: any) => Promise<any>
+    senderAddress: string,
+    signAndExecute: (params: { transaction: Transaction }) => Promise<{ digest: string }>
   ): Promise<DeploymentResult> {
     try {
-      const client = new SuiClient({ url: this.getRpcUrl(options.network) });
-
-      // Step 1: Compile the Move code to bytecode via backend
-      const compileResponse = await fetch('/api/compile', {
+      // Step 1: Prepare deployment (compile on backend)
+      const prepareResponse = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/deploy/prepare`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+        },
         body: JSON.stringify({
           code: options.code,
           packageName: options.packageName,
+          network: options.network,
+          sender: senderAddress,
+          projectId: options.projectId,
         }),
       });
 
-      if (!compileResponse.ok) {
-        throw new Error('Compilation failed');
-      }
+      const prepareResult = await prepareResponse.json();
 
-      const compileResult = await compileResponse.json();
-      
-      if (!compileResult.success) {
-        // Create detailed error message with all compilation errors
-        const errorDetails = compileResult.errors?.map((err: any) => 
-          `${err.message}${err.file ? ` (${err.file}:${err.line}:${err.column})` : ''}`
-        ).join('\n') || 'Compilation failed';
-        
-        const error: any = new Error('Compilation failed');
-        error.compilationErrors = compileResult.errors;
-        error.fullOutput = compileResult.fullOutput;
-        error.details = errorDetails;
-        throw error;
-      }
-
-      // Step 2: Get compiled modules (bytecode)
-      const compiledModules = compileResult.modules || [];
-      const dependencies = compileResult.dependencies || [];
-
-      if (compiledModules.length === 0) {
-        throw new Error('No compiled modules found');
-      }
-
-      // Step 3: Create publish transaction
-      const tx = new Transaction();
-
-      // Add publish command with compiled bytecode
-      const [upgradeCap] = tx.publish({
-        modules: compiledModules,
-        dependencies: dependencies,
-      });
-
-      // Transfer upgrade capability to sender
-      tx.transferObjects([upgradeCap], tx.pure.address(await this.getSenderAddress(signAndExecute)));
-
-      // Set gas budget
-      const gasEstimate = await this.estimateGas(options.code);
-      tx.setGasBudget(gasEstimate.gasBudget);
-
-      // Step 4: Sign and execute transaction with wallet
-      const result = await signAndExecute({
-        transaction: tx,
-      });
-
-      // Step 5: Get transaction details
-      if (result.digest) {
-        const txDetails = await client.getTransactionBlock({
-          digest: result.digest,
-          options: {
-            showEffects: true,
-            showObjectChanges: true,
-          },
-        });
-
-        // Extract package ID and gas used
-        const packageId = this.extractPackageId(txDetails);
-        const gasUsed = this.extractGasUsed(txDetails);
-
+      if (!prepareResult.success) {
         return {
-          success: true,
-          packageId,
-          transactionDigest: result.digest,
-          gasUsed,
+          success: false,
+          error: prepareResult.error || 'Compilation failed',
         };
       }
 
-      throw new Error('Transaction failed');
+      // Step 2: Deserialize transaction and sign with wallet
+      const client = this.getClient(options.network);
+      const txBytes = Uint8Array.from(Buffer.from(prepareResult.transactionBytes, 'base64'));
+      
+      // Create transaction from bytes
+      const tx = Transaction.from(txBytes);
+
+      // Step 3: Sign and execute with wallet
+      const result = await signAndExecute({ transaction: tx });
+
+      if (!result.digest) {
+        return {
+          success: false,
+          error: 'Transaction failed - no digest returned',
+        };
+      }
+
+      // Step 4: Wait for transaction to be confirmed
+      await client.waitForTransaction({
+        digest: result.digest,
+        options: { showEffects: true },
+      });
+
+      // Step 5: Confirm deployment with backend
+      const confirmResponse = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/deploy/confirm`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+        },
+        body: JSON.stringify({
+          deploymentId: prepareResult.deploymentId,
+          transactionDigest: result.digest,
+          network: options.network,
+        }),
+      });
+
+      const confirmResult = await confirmResponse.json();
+
+      if (!confirmResult.success) {
+        return {
+          success: false,
+          error: confirmResult.error || 'Deployment confirmation failed',
+          transactionDigest: result.digest,
+        };
+      }
+
+      return {
+        success: true,
+        packageId: confirmResult.packageId,
+        transactionDigest: result.digest,
+        gasUsed: confirmResult.gasUsed,
+        explorerUrl: confirmResult.explorerUrl,
+        packageExplorerUrl: confirmResult.packageExplorerUrl,
+      };
     } catch (error: any) {
       console.error('Deployment error:', error);
       return {
@@ -128,110 +151,131 @@ class DeploymentService {
   }
 
   /**
-   * Get sender address from wallet
-   */
-  private async getSenderAddress(signAndExecute: any): Promise<string> {
-    // This will be provided by the wallet context
-    // For now, return a placeholder that will be replaced
-    return '0x0';
-  }
-
-  /**
-   * Simulate deployment for testing (when real compilation isn't available)
-   */
-  async simulateDeployment(options: DeploymentOptions): Promise<DeploymentResult> {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Generate mock IDs
-    const mockPackageId = '0x' + this.generateRandomHex(64);
-    const mockTxDigest = this.generateRandomHex(64);
-
-    // Simulate gas calculation
-    const gasEstimate = await this.estimateGas(options.code);
-
-    return {
-      success: true,
-      packageId: mockPackageId,
-      transactionDigest: mockTxDigest,
-      gasUsed: gasEstimate.gasUsed,
-    };
-  }
-
-  /**
    * Estimate gas for deployment
    */
-  private async estimateGas(code: string): Promise<{ gasUsed: number; gasBudget: number }> {
-    // Basic heuristic-based estimation
-    const baseGas = 500000; // Base gas for publishing
-    const codeLength = code.length;
-    const gasPerChar = 100;
+  async estimateGas(
+    code: string,
+    packageName: string,
+    network: string,
+    senderAddress?: string
+  ): Promise<GasEstimate> {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/deploy/estimate-gas`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+        },
+        body: JSON.stringify({
+          code,
+          packageName,
+          network,
+          sender: senderAddress,
+        }),
+      });
 
-    const estimatedGas = baseGas + (codeLength * gasPerChar);
-    const gasBudget = Math.ceil(estimatedGas * 1.5); // 50% buffer
+      const result = await response.json();
 
-    return {
-      gasUsed: estimatedGas,
-      gasBudget,
-    };
-  }
+      if (!result.success) {
+        throw new Error(result.error || 'Gas estimation failed');
+      }
 
-  /**
-   * Generate Move.toml content
-   */
-  private generateMoveToml(packageName: string, dependencies?: string[]): string {
-    const deps = dependencies || ['Sui'];
-    
-    return `[package]
-name = "${packageName}"
-version = "0.0.1"
+      return {
+        estimatedGas: result.estimatedGas,
+        bytecodeSize: result.bytecodeSize,
+        recommendedBudget: result.recommendedBudget,
+        breakdown: result.breakdown,
+      };
+    } catch (error: any) {
+      // Fallback estimation
+      const codeLength = code.length;
+      const baseGas = 10000000;
+      const estimatedGas = baseGas + codeLength * 100;
 
-[dependencies]
-${deps.map(dep => {
-  if (dep === 'Sui') {
-    return 'Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/mainnet" }';
-  }
-  return `${dep} = { local = "../${dep}" }`;
-}).join('\n')}
-
-[addresses]
-${packageName} = "0x0"
-`;
-  }
-
-  /**
-   * Extract package ID from transaction result
-   */
-  private extractPackageId(txDetails: any): string | undefined {
-    const objectChanges = txDetails.objectChanges || [];
-    const publishedPackage = objectChanges.find(
-      (change: any) => change.type === 'published'
-    );
-    return publishedPackage?.packageId;
-  }
-
-  /**
-   * Extract gas used from transaction result
-   */
-  private extractGasUsed(txDetails: any): number {
-    const effects = txDetails.effects;
-    if (effects?.gasUsed) {
-      const { computationCost, storageCost, storageRebate } = effects.gasUsed;
-      return Number(computationCost) + Number(storageCost) - Number(storageRebate);
+      return {
+        estimatedGas,
+        bytecodeSize: codeLength,
+        recommendedBudget: Math.ceil(estimatedGas * 1.5),
+        breakdown: {
+          base: baseGas,
+          bytecode: codeLength * 100,
+        },
+      };
     }
-    return 0;
   }
 
   /**
-   * Generate random hex string
+   * Verify a deployed package
    */
-  private generateRandomHex(length: number): string {
-    let result = '';
-    const characters = '0123456789abcdef';
-    for (let i = 0; i < length; i++) {
-      result += characters.charAt(Math.floor(Math.random() * characters.length));
+  async verifyPackage(
+    packageId: string,
+    network: string
+  ): Promise<{
+    success: boolean;
+    modules?: string[];
+    error?: string;
+  }> {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || ''}/api/deploy/verify/${packageId}?network=${network}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (!result.success) {
+        return { success: false, error: result.error };
+      }
+
+      return {
+        success: true,
+        modules: result.modules,
+      };
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
-    return result;
+  }
+
+  /**
+   * Get deployment history
+   */
+  async getDeploymentHistory(): Promise<any[]> {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/deploy/history/all`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+        },
+      });
+
+      const result = await response.json();
+      return result.deployments || [];
+    } catch (error) {
+      console.error('Failed to fetch deployment history:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get deployment by ID
+   */
+  async getDeployment(deploymentId: string): Promise<any | null> {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/deploy/${deploymentId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+        },
+      });
+
+      const result = await response.json();
+      return result.deployment || null;
+    } catch (error) {
+      console.error('Failed to fetch deployment:', error);
+      return null;
+    }
   }
 
   /**
@@ -246,6 +290,34 @@ ${packageName} = "0x0"
    */
   getPackageExplorerUrl(network: string, packageId: string): string {
     return `https://suiexplorer.com/object/${packageId}?network=${network}`;
+  }
+
+  /**
+   * Check if package exists on chain
+   */
+  async packageExists(packageId: string, network: string): Promise<boolean> {
+    try {
+      const client = this.getClient(network);
+      const obj = await client.getObject({ id: packageId });
+      return !!obj.data;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Get package modules
+   */
+  async getPackageModules(packageId: string, network: string): Promise<string[]> {
+    try {
+      const client = this.getClient(network);
+      const modules = await client.getNormalizedMoveModulesByPackage({
+        package: packageId,
+      });
+      return Object.keys(modules);
+    } catch {
+      return [];
+    }
   }
 }
 

@@ -89,6 +89,41 @@ class APIService {
     return response.json();
   }
 
+  // Generic HTTP methods
+  async get<T = any>(endpoint: string): Promise<T> {
+    const response = await fetch(`${API_URL}/api${endpoint}`, {
+      method: 'GET',
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async post<T = any>(endpoint: string, data?: any): Promise<T> {
+    const response = await fetch(`${API_URL}/api${endpoint}`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    return this.handleResponse(response);
+  }
+
+  async put<T = any>(endpoint: string, data?: any): Promise<T> {
+    const response = await fetch(`${API_URL}/api${endpoint}`, {
+      method: 'PUT',
+      headers: this.getHeaders(),
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    return this.handleResponse(response);
+  }
+
+  async delete<T = any>(endpoint: string): Promise<T> {
+    const response = await fetch(`${API_URL}/api${endpoint}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
   // Auth endpoints
   async googleAuth(userData: any) {
     const response = await fetch(`${API_URL}/api/auth/google`, {

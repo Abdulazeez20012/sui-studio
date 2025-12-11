@@ -1,3 +1,8 @@
+/**
+ * Real Move Package Manager Service
+ * Manages Move dependencies using Sui CLI and Git
+ */
+
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs/promises';
@@ -5,210 +10,293 @@ import * as path from 'path';
 
 const execAsync = promisify(exec);
 
-export interface SuiPackage {
+export interface Package {
   name: string;
   version: string;
-  description: string;
-  author: string;
-  repository?: string;
-  dependencies: Record<string, string>;
+  source: PackageSource;
+  description?: string;
+  dependencies?: string[];
   installed: boolean;
-  verified: boolean;
-  category?: string;
-  downloads?: number;
-  lastUpdated?: string;
+  path?: string;
+}
+
+export interface PackageSource {
+  type: 'git' | 'local' | 'registry';
+  url?: string;
+  rev?: string;
+  subdir?: string;
+  path?: string;
 }
 
 export interface PackageSearchResult {
-  packages: SuiPackage[];
-  total: number;
+  name: string;
+  description: string;
+  version: string;
+  source: string;
+  stars?: number;
+  downloads?: number;
 }
 
 export interface InstallResult {
   success: boolean;
   package: string;
   version: string;
+  message: string;
   dependencies?: string[];
-  error?: string;
 }
 
+// Known Sui ecosystem packages
+const KNOWN_PACKAGES: Record<string, Package> = {
+  'Sui': {
+    name: 'Sui',
+    version: 'framework/mainnet',
+    source: {
+      type: 'git',
+      url: 'https://github.com/MystenLabs/sui.git',
+      subdir: 'crates/sui-framework/packages/sui-framework',
+      rev: 'framework/mainnet',
+    },
+    description: 'Sui Framework - Core Move library for Sui blockchain',
+    installed: false,
+  },
+  'SuiSystem': {
+    name: 'SuiSystem',
+    version: 'framework/mainnet',
+    source: {
+      type: 'git',
+      url: 'https://github.com/MystenLabs/sui.git',
+      subdir: 'crates/sui-framework/packages/sui-system',
+      rev: 'framework/mainnet',
+    },
+    description: 'Sui System - System-level contracts',
+    installed: false,
+  },
+  'MoveStdlib': {
+    name: 'MoveStdlib',
+    version: 'framework/mainnet',
+    source: {
+      type: 'git',
+      url: 'https://github.com/MystenLabs/sui.git',
+      subdir: 'crates/sui-framework/packages/move-stdlib',
+      rev: 'framework/mainnet',
+    },
+    description: 'Move Standard Library',
+    installed: false,
+  },
+  'DeepBook': {
+    name: 'DeepBook',
+    version: 'main',
+    source: {
+      type: 'git',
+      url: 'https://github.com/MystenLabs/deepbook.git',
+      subdir: 'packages/deepbook',
+      rev: 'main',
+    },
+    description: 'DeepBook - Decentralized order book for Sui',
+    installed: false,
+  },
+  'Pyth': {
+    name: 'Pyth',
+    version: 'main',
+    source: {
+      type: 'git',
+      url: 'https://github.com/pyth-network/pyth-crosschain.git',
+      subdir: 'target_chains/sui/contracts',
+      rev: 'main',
+    },
+    description: 'Pyth Network - Oracle price feeds',
+    installed: false,
+  },
+  'Wormhole': {
+    name: 'Wormhole',
+    version: 'main',
+    source: {
+      type: 'git',
+      url: 'https://github.com/wormhole-foundation/wormhole.git',
+      subdir: 'sui/wormhole',
+      rev: 'main',
+    },
+    description: 'Wormhole - Cross-chain messaging',
+    installed: false,
+  },
+};
+
 class PackageManagerService {
-  private packagesCache: SuiPackage[] | null = null;
-  private cacheExpiry: number = 0;
-  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  private tempDir: string = '/tmp/sui-packages';
+  private suiCliAvailable: boolean | null = null;
+  private gitAvailable: boolean | null = null;
+
+  constructor() {
+    this.initTempDir();
+  }
+
+  private async initTempDir() {
+    try {
+      await fs.mkdir(this.tempDir, { recursive: true });
+    } catch (error) {
+      console.error('Failed to create temp directory:', error);
+    }
+  }
 
   /**
-   * Get curated list of Sui packages
+   * Check if Sui CLI is available
    */
-  async getPackages(): Promise<SuiPackage[]> {
-    // Return cached data if still valid
-    if (this.packagesCache && Date.now() < this.cacheExpiry) {
-      return this.packagesCache;
+  async checkSuiCLI(): Promise<boolean> {
+    if (this.suiCliAvailable !== null) {
+      return this.suiCliAvailable;
     }
 
-    // Curated list of official Sui packages
-    const packages: SuiPackage[] = [
-      {
-        name: 'Sui',
-        version: '1.0.0',
-        description: 'Core Sui framework with fundamental types and functions',
-        author: 'Mysten Labs',
-        repository: 'https://github.com/MystenLabs/sui',
-        dependencies: {},
-        installed: true,
-        verified: true,
-        category: 'Framework',
-        downloads: 100000,
-        lastUpdated: '2024-12-01'
-      },
-      {
-        name: 'DeepBook',
-        version: '2.1.0',
-        description: 'Decentralized exchange protocol with CLOB (Central Limit Order Book)',
-        author: 'Mysten Labs',
-        repository: 'https://github.com/MystenLabs/sui',
-        dependencies: { 'Sui': '1.0.0' },
-        installed: false,
-        verified: true,
-        category: 'DeFi',
-        downloads: 5000,
-        lastUpdated: '2024-11-28'
-      },
-      {
-        name: 'Kiosk',
-        version: '1.2.0',
-        description: 'NFT marketplace primitives and trading infrastructure',
-        author: 'Mysten Labs',
-        repository: 'https://github.com/MystenLabs/sui',
-        dependencies: { 'Sui': '1.0.0' },
-        installed: false,
-        verified: true,
-        category: 'NFT',
-        downloads: 3500,
-        lastUpdated: '2024-11-25'
-      },
-      {
-        name: 'SuiNS',
-        version: '1.0.0',
-        description: 'Sui Name Service for human-readable addresses',
-        author: 'Mysten Labs',
-        repository: 'https://github.com/MystenLabs/suins-contracts',
-        dependencies: { 'Sui': '1.0.0' },
-        installed: false,
-        verified: true,
-        category: 'Identity',
-        downloads: 2800,
-        lastUpdated: '2024-11-20'
-      },
-      {
-        name: 'Pyth',
-        version: '1.1.0',
-        description: 'Pyth Network oracle for real-time price feeds',
-        author: 'Pyth Network',
-        repository: 'https://github.com/pyth-network/pyth-crosschain',
-        dependencies: { 'Sui': '1.0.0' },
-        installed: false,
-        verified: true,
-        category: 'Oracle',
-        downloads: 4200,
-        lastUpdated: '2024-11-30'
-      },
-      {
-        name: 'Cetus',
-        version: '1.3.0',
-        description: 'Concentrated liquidity protocol for efficient trading',
-        author: 'Cetus Protocol',
-        repository: 'https://github.com/CetusProtocol/cetus-clmm-sui',
-        dependencies: { 'Sui': '1.0.0' },
-        installed: false,
-        verified: true,
-        category: 'DeFi',
-        downloads: 3100,
-        lastUpdated: '2024-11-27'
-      },
-      {
-        name: 'Walrus',
-        version: '0.9.0',
-        description: 'Decentralized storage protocol built on Sui',
-        author: 'Mysten Labs',
-        repository: 'https://github.com/MystenLabs/walrus-docs',
-        dependencies: { 'Sui': '1.0.0' },
-        installed: false,
-        verified: true,
-        category: 'Storage',
-        downloads: 1500,
-        lastUpdated: '2024-12-05'
-      },
-      {
-        name: 'Aftermath',
-        version: '1.0.0',
-        description: 'Multi-asset liquidity protocol',
-        author: 'Aftermath Finance',
-        repository: 'https://github.com/AftermathFinance/aftermath-ts-sdk',
-        dependencies: { 'Sui': '1.0.0' },
-        installed: false,
-        verified: true,
-        category: 'DeFi',
-        downloads: 1200,
-        lastUpdated: '2024-11-22'
+    try {
+      await execAsync('sui --version', { timeout: 5000 });
+      this.suiCliAvailable = true;
+      return true;
+    } catch {
+      this.suiCliAvailable = false;
+      return false;
+    }
+  }
+
+  /**
+   * Check if Git is available
+   */
+  async checkGit(): Promise<boolean> {
+    if (this.gitAvailable !== null) {
+      return this.gitAvailable;
+    }
+
+    try {
+      await execAsync('git --version', { timeout: 5000 });
+      this.gitAvailable = true;
+      return true;
+    } catch {
+      this.gitAvailable = false;
+      return false;
+    }
+  }
+
+  /**
+   * Search for packages
+   */
+  async searchPackages(query: string): Promise<PackageSearchResult[]> {
+    const results: PackageSearchResult[] = [];
+    const queryLower = query.toLowerCase();
+
+    // Search known packages
+    for (const [name, pkg] of Object.entries(KNOWN_PACKAGES)) {
+      if (
+        name.toLowerCase().includes(queryLower) ||
+        pkg.description?.toLowerCase().includes(queryLower)
+      ) {
+        results.push({
+          name: pkg.name,
+          description: pkg.description || '',
+          version: pkg.version,
+          source: pkg.source.url || 'local',
+        });
       }
-    ];
-
-    this.packagesCache = packages;
-    this.cacheExpiry = Date.now() + this.CACHE_DURATION;
-
-    return packages;
-  }
-
-  /**
-   * Search packages by query
-   */
-  async searchPackages(query: string, category?: string): Promise<PackageSearchResult> {
-    const allPackages = await this.getPackages();
-    const lowerQuery = query.toLowerCase();
-
-    let filtered = allPackages.filter(pkg =>
-      pkg.name.toLowerCase().includes(lowerQuery) ||
-      pkg.description.toLowerCase().includes(lowerQuery) ||
-      pkg.author.toLowerCase().includes(lowerQuery)
-    );
-
-    if (category && category !== 'all') {
-      filtered = filtered.filter(pkg => pkg.category === category);
     }
 
-    return {
-      packages: filtered,
-      total: filtered.length
-    };
+    // Search GitHub for Move packages
+    if (await this.checkGit()) {
+      try {
+        const githubResults = await this.searchGitHub(query);
+        results.push(...githubResults);
+      } catch (error) {
+        console.error('GitHub search failed:', error);
+      }
+    }
+
+    return results;
   }
 
   /**
-   * Get package details
+   * Search GitHub for Move packages
    */
-  async getPackageDetails(packageName: string): Promise<SuiPackage | null> {
-    const packages = await this.getPackages();
-    return packages.find(pkg => pkg.name === packageName) || null;
+  private async searchGitHub(query: string): Promise<PackageSearchResult[]> {
+    try {
+      // Use GitHub API to search for Move packages
+      const response = await fetch(
+        `https://api.github.com/search/repositories?q=${encodeURIComponent(query + ' language:move')}&sort=stars&per_page=10`,
+        {
+          headers: {
+            Accept: 'application/vnd.github.v3+json',
+            'User-Agent': 'Sui-Studio-IDE',
+          },
+        }
+      );
+
+      if (!response.ok) return [];
+
+      const data = await response.json() as any;
+      return ((data.items as any[]) || []).map((repo: any) => ({
+        name: repo.name,
+        description: repo.description || '',
+        version: repo.default_branch || 'main',
+        source: repo.html_url,
+        stars: repo.stargazers_count,
+      }));
+    } catch {
+      return [];
+    }
   }
 
   /**
-   * Install package (add to Move.toml)
+   * Get package info
+   */
+  async getPackageInfo(packageName: string): Promise<Package | null> {
+    // Check known packages
+    if (KNOWN_PACKAGES[packageName]) {
+      return { ...KNOWN_PACKAGES[packageName] };
+    }
+
+    // Try to fetch from GitHub
+    try {
+      const response = await fetch(`https://api.github.com/repos/${packageName}`, {
+        headers: {
+          Accept: 'application/vnd.github.v3+json',
+          'User-Agent': 'Sui-Studio-IDE',
+        },
+      });
+
+      if (!response.ok) return null;
+
+      const repo = await response.json() as any;
+      return {
+        name: repo.name as string,
+        version: (repo.default_branch as string) || 'main',
+        source: {
+          type: 'git' as const,
+          url: repo.clone_url as string,
+          rev: (repo.default_branch as string) || 'main',
+        },
+        description: repo.description as string,
+        installed: false,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Install a package to a project
    */
   async installPackage(
     packageName: string,
-    projectPath: string
+    projectPath: string,
+    options: { version?: string; subdir?: string } = {}
   ): Promise<InstallResult> {
-    try {
-      const pkg = await this.getPackageDetails(packageName);
-      if (!pkg) {
-        return {
-          success: false,
-          package: packageName,
-          version: '',
-          error: 'Package not found'
-        };
-      }
+    const pkg = KNOWN_PACKAGES[packageName] || (await this.getPackageInfo(packageName));
 
+    if (!pkg) {
+      return {
+        success: false,
+        package: packageName,
+        version: '',
+        message: `Package '${packageName}' not found`,
+      };
+    }
+
+    try {
       // Read existing Move.toml
       const moveTomlPath = path.join(projectPath, 'Move.toml');
       let moveToml: string;
@@ -216,209 +304,271 @@ class PackageManagerService {
       try {
         moveToml = await fs.readFile(moveTomlPath, 'utf-8');
       } catch {
-        // Create new Move.toml if it doesn't exist
-        moveToml = this.generateBasicMoveToml(path.basename(projectPath));
+        return {
+          success: false,
+          package: packageName,
+          version: pkg.version,
+          message: 'Move.toml not found in project',
+        };
       }
 
-      // Add dependency
-      const updatedToml = this.addDependencyToToml(moveToml, pkg);
-      await fs.writeFile(moveTomlPath, updatedToml);
+      // Check if package already installed
+      if (moveToml.includes(`${packageName} =`)) {
+        return {
+          success: true,
+          package: packageName,
+          version: pkg.version,
+          message: `Package '${packageName}' is already installed`,
+        };
+      }
 
-      // Get list of all dependencies (including transitive)
-      const allDeps = this.getAllDependencies(pkg);
+      // Generate dependency line
+      const depLine = this.generateDependencyLine(pkg, options);
+
+      // Add to Move.toml
+      if (moveToml.includes('[dependencies]')) {
+        moveToml = moveToml.replace('[dependencies]', `[dependencies]\n${depLine}`);
+      } else {
+        moveToml += `\n[dependencies]\n${depLine}\n`;
+      }
+
+      await fs.writeFile(moveTomlPath, moveToml);
+
+      // Verify installation by building
+      if (await this.checkSuiCLI()) {
+        try {
+          await execAsync(`sui move build --path ${projectPath}`, { timeout: 120000 });
+        } catch (error: any) {
+          // Revert changes if build fails
+          const originalToml = moveToml.replace(`\n${depLine}`, '').replace(depLine + '\n', '');
+          await fs.writeFile(moveTomlPath, originalToml);
+
+          return {
+            success: false,
+            package: packageName,
+            version: pkg.version,
+            message: `Installation failed: ${error.message}`,
+          };
+        }
+      }
 
       return {
         success: true,
         package: packageName,
+        version: options.version || pkg.version,
+        message: `Successfully installed ${packageName}@${options.version || pkg.version}`,
+        dependencies: pkg.dependencies,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        package: packageName,
         version: pkg.version,
-        dependencies: allDeps
+        message: `Installation failed: ${error.message}`,
+      };
+    }
+  }
+
+  /**
+   * Generate dependency line for Move.toml
+   */
+  private generateDependencyLine(pkg: Package, options: { version?: string; subdir?: string }): string {
+    const source = pkg.source;
+    const version = options.version || source.rev || pkg.version;
+    const subdir = options.subdir || source.subdir;
+
+    if (source.type === 'git') {
+      let line = `${pkg.name} = { git = "${source.url}", rev = "${version}"`;
+      if (subdir) {
+        line += `, subdir = "${subdir}"`;
+      }
+      line += ' }';
+      return line;
+    } else if (source.type === 'local') {
+      return `${pkg.name} = { local = "${source.path}" }`;
+    }
+
+    return `${pkg.name} = "${version}"`;
+  }
+
+  /**
+   * Uninstall a package from a project
+   */
+  async uninstallPackage(packageName: string, projectPath: string): Promise<InstallResult> {
+    try {
+      const moveTomlPath = path.join(projectPath, 'Move.toml');
+      let moveToml = await fs.readFile(moveTomlPath, 'utf-8');
+
+      // Find and remove the package line
+      const lines = moveToml.split('\n');
+      const filteredLines = lines.filter((line) => !line.trim().startsWith(`${packageName} =`));
+
+      if (lines.length === filteredLines.length) {
+        return {
+          success: false,
+          package: packageName,
+          version: '',
+          message: `Package '${packageName}' is not installed`,
+        };
+      }
+
+      await fs.writeFile(moveTomlPath, filteredLines.join('\n'));
+
+      return {
+        success: true,
+        package: packageName,
+        version: '',
+        message: `Successfully uninstalled ${packageName}`,
       };
     } catch (error: any) {
       return {
         success: false,
         package: packageName,
         version: '',
-        error: error.message
+        message: `Uninstall failed: ${error.message}`,
       };
     }
   }
 
   /**
-   * Uninstall package (remove from Move.toml)
+   * List installed packages in a project
    */
-  async uninstallPackage(
-    packageName: string,
-    projectPath: string
-  ): Promise<InstallResult> {
+  async listInstalledPackages(projectPath: string): Promise<Package[]> {
     try {
       const moveTomlPath = path.join(projectPath, 'Move.toml');
       const moveToml = await fs.readFile(moveTomlPath, 'utf-8');
 
-      const updatedToml = this.removeDependencyFromToml(moveToml, packageName);
-      await fs.writeFile(moveTomlPath, updatedToml);
+      const packages: Package[] = [];
+      const depSection = moveToml.match(/\[dependencies\]([\s\S]*?)(?=\[|$)/);
 
-      return {
-        success: true,
-        package: packageName,
-        version: ''
-      };
-    } catch (error: any) {
+      if (!depSection) return packages;
+
+      const lines = depSection[1].split('\n');
+      for (const line of lines) {
+        const match = line.match(/^(\w+)\s*=\s*(.+)/);
+        if (match) {
+          const name = match[1];
+          const value = match[2].trim();
+
+          let pkg: Package = {
+            name,
+            version: 'unknown',
+            source: { type: 'local' },
+            installed: true,
+          };
+
+          // Parse git dependency
+          const gitMatch = value.match(/git\s*=\s*"([^"]+)"/);
+          const revMatch = value.match(/rev\s*=\s*"([^"]+)"/);
+          const subdirMatch = value.match(/subdir\s*=\s*"([^"]+)"/);
+
+          if (gitMatch) {
+            pkg.source = {
+              type: 'git',
+              url: gitMatch[1],
+              rev: revMatch?.[1],
+              subdir: subdirMatch?.[1],
+            };
+            pkg.version = revMatch?.[1] || 'main';
+          }
+
+          // Parse local dependency
+          const localMatch = value.match(/local\s*=\s*"([^"]+)"/);
+          if (localMatch) {
+            pkg.source = { type: 'local', path: localMatch[1] };
+          }
+
+          // Add description from known packages
+          if (KNOWN_PACKAGES[name]) {
+            pkg.description = KNOWN_PACKAGES[name].description;
+          }
+
+          packages.push(pkg);
+        }
+      }
+
+      return packages;
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Update a package to latest version
+   */
+  async updatePackage(packageName: string, projectPath: string): Promise<InstallResult> {
+    // Get latest version info
+    const pkg = await this.getPackageInfo(packageName);
+    if (!pkg) {
       return {
         success: false,
         package: packageName,
         version: '',
-        error: error.message
+        message: `Package '${packageName}' not found`,
       };
     }
+
+    // Uninstall and reinstall with latest version
+    await this.uninstallPackage(packageName, projectPath);
+    return this.installPackage(packageName, projectPath);
   }
 
   /**
-   * Generate Move.toml with dependencies
+   * Get available versions for a package
    */
-  generateMoveToml(
-    projectName: string,
-    packages: SuiPackage[]
-  ): string {
-    let toml = `[package]
-name = "${projectName}"
-version = "0.0.1"
-edition = "2024.beta"
+  async getPackageVersions(packageName: string): Promise<string[]> {
+    const pkg = KNOWN_PACKAGES[packageName];
+    if (pkg?.source.type === 'git' && pkg.source.url) {
+      try {
+        // Get tags from GitHub
+        const repoPath = pkg.source.url.replace('https://github.com/', '').replace('.git', '');
+        const response = await fetch(`https://api.github.com/repos/${repoPath}/tags?per_page=20`, {
+          headers: {
+            Accept: 'application/vnd.github.v3+json',
+            'User-Agent': 'Sui-Studio-IDE',
+          },
+        });
 
-[dependencies]
-`;
+        if (!response.ok) return [pkg.version];
 
-    packages.forEach(pkg => {
-      const depConfig = this.getDependencyConfig(pkg);
-      toml += `${pkg.name} = ${depConfig}\n`;
-    });
-
-    toml += `
-[addresses]
-${projectName} = "0x0"
-`;
-
-    return toml;
-  }
-
-  /**
-   * Get dependency configuration string
-   */
-  private getDependencyConfig(pkg: SuiPackage): string {
-    if (pkg.name === 'Sui') {
-      return '{ git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/mainnet" }';
-    }
-
-    // Map package names to their git locations
-    const packagePaths: Record<string, string> = {
-      'DeepBook': 'crates/sui-framework/packages/deepbook',
-      'Kiosk': 'crates/sui-framework/packages/kiosk',
-      'SuiNS': 'packages/suins',
-      'Walrus': 'contracts/walrus'
-    };
-
-    const subdir = packagePaths[pkg.name];
-    if (subdir) {
-      return `{ git = "${pkg.repository}", subdir = "${subdir}", rev = "main" }`;
-    }
-
-    // Default configuration
-    return `{ git = "${pkg.repository}", rev = "main" }`;
-  }
-
-  /**
-   * Add dependency to existing Move.toml
-   */
-  private addDependencyToToml(toml: string, pkg: SuiPackage): string {
-    const depConfig = this.getDependencyConfig(pkg);
-    const depLine = `${pkg.name} = ${depConfig}`;
-
-    // Find [dependencies] section
-    const depsMatch = toml.match(/\[dependencies\]([\s\S]*?)(?=\n\[|$)/);
-    if (depsMatch) {
-      const depsSection = depsMatch[1];
-      // Check if package already exists
-      if (depsSection.includes(`${pkg.name} =`)) {
-        // Replace existing
-        return toml.replace(
-          new RegExp(`${pkg.name} = .*`),
-          depLine
-        );
-      } else {
-        // Add new
-        return toml.replace(
-          /\[dependencies\]/,
-          `[dependencies]\n${depLine}`
-        );
+        const tags = await response.json() as any[];
+        return tags.map((tag: any) => tag.name as string);
+      } catch {
+        return [pkg.version];
       }
     }
 
-    // No [dependencies] section, add it
-    return toml + `\n[dependencies]\n${depLine}\n`;
+    return [pkg?.version || 'main'];
   }
 
   /**
-   * Remove dependency from Move.toml
+   * Verify all dependencies are valid
    */
-  private removeDependencyFromToml(toml: string, packageName: string): string {
-    // Remove the dependency line
-    return toml.replace(new RegExp(`${packageName} = .*\n`, 'g'), '');
+  async verifyDependencies(projectPath: string): Promise<{ valid: boolean; errors: string[] }> {
+    if (!(await this.checkSuiCLI())) {
+      return { valid: true, errors: ['Sui CLI not available for verification'] };
+    }
+
+    try {
+      await execAsync(`sui move build --path ${projectPath}`, { timeout: 120000 });
+      return { valid: true, errors: [] };
+    } catch (error: any) {
+      const errors = this.parseErrors(error.stderr || error.message);
+      return { valid: false, errors };
+    }
   }
 
-  /**
-   * Generate basic Move.toml
-   */
-  private generateBasicMoveToml(projectName: string): string {
-    return `[package]
-name = "${projectName}"
-version = "0.0.1"
-edition = "2024.beta"
+  private parseErrors(output: string): string[] {
+    const errors: string[] = [];
+    const lines = output.split('\n');
 
-[dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/mainnet" }
+    for (const line of lines) {
+      if (line.includes('error') || line.includes('Error')) {
+        errors.push(line.trim());
+      }
+    }
 
-[addresses]
-${projectName} = "0x0"
-`;
-  }
-
-  /**
-   * Get all dependencies including transitive ones
-   */
-  private getAllDependencies(pkg: SuiPackage): string[] {
-    const deps: string[] = [];
-    const visited = new Set<string>();
-
-    const collectDeps = (p: SuiPackage) => {
-      if (visited.has(p.name)) return;
-      visited.add(p.name);
-
-      Object.keys(p.dependencies).forEach(depName => {
-        if (!visited.has(depName)) {
-          deps.push(depName);
-          // In a real implementation, we'd recursively fetch dependencies
-        }
-      });
-    };
-
-    collectDeps(pkg);
-    return deps;
-  }
-
-  /**
-   * Get package categories
-   */
-  async getCategories(): Promise<string[]> {
-    const packages = await this.getPackages();
-    const categories = new Set(packages.map(p => p.category).filter(Boolean));
-    return Array.from(categories) as string[];
-  }
-
-  /**
-   * Verify package integrity
-   */
-  async verifyPackage(packageName: string): Promise<boolean> {
-    const pkg = await this.getPackageDetails(packageName);
-    return pkg?.verified || false;
+    return errors.length > 0 ? errors : [output.trim()];
   }
 }
 

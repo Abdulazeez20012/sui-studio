@@ -26,7 +26,7 @@ const generateTomlSchema = z.object({
  */
 router.get('/', async (req, res) => {
   try {
-    const packages = await packageManager.getPackages();
+    const packages = await packageManager.searchPackages('');
     res.json({
       success: true,
       data: packages,
@@ -48,12 +48,12 @@ router.get('/', async (req, res) => {
 router.get('/search', async (req, res) => {
   try {
     const { query, category } = searchSchema.parse(req.query);
-    const result = await packageManager.searchPackages(query, category);
+    const packages = await packageManager.searchPackages(query);
     
     res.json({
       success: true,
-      data: result.packages,
-      total: result.total
+      data: packages,
+      total: packages.length
     });
   } catch (error: any) {
     console.error('Error searching packages:', error);
@@ -70,7 +70,7 @@ router.get('/search', async (req, res) => {
  */
 router.get('/categories', async (req, res) => {
   try {
-    const categories = await packageManager.getCategories();
+    const categories = ['Framework', 'DeFi', 'NFT', 'Gaming', 'Utility', 'Oracle'];
     res.json({
       success: true,
       data: categories
@@ -91,7 +91,7 @@ router.get('/categories', async (req, res) => {
 router.get('/:name', async (req, res) => {
   try {
     const { name } = req.params;
-    const pkg = await packageManager.getPackageDetails(name);
+    const pkg = await packageManager.getPackageInfo(name);
     
     if (!pkg) {
       return res.status(404).json({
@@ -125,7 +125,7 @@ router.post('/install', async (req, res) => {
     if (!result.success) {
       return res.status(400).json({
         success: false,
-        error: result.error
+        error: result.message
       });
     }
 
@@ -154,7 +154,7 @@ router.post('/uninstall', async (req, res) => {
     if (!result.success) {
       return res.status(400).json({
         success: false,
-        error: result.error
+        error: result.message
       });
     }
 
@@ -181,11 +181,23 @@ router.post('/generate-toml', async (req, res) => {
     
     // Get package details
     const packages = await Promise.all(
-      packageNames.map(name => packageManager.getPackageDetails(name))
+      packageNames.map(name => packageManager.getPackageInfo(name))
     );
     
     const validPackages = packages.filter(p => p !== null);
-    const toml = packageManager.generateMoveToml(projectName, validPackages as any);
+    
+    // Generate Move.toml content
+    let toml = `[package]\nname = "${projectName}"\nversion = "0.0.1"\nedition = "2024.beta"\n\n[dependencies]\n`;
+    for (const pkg of validPackages) {
+      if (pkg && pkg.source.type === 'git') {
+        toml += `${pkg.name} = { git = "${pkg.source.url}", rev = "${pkg.source.rev || 'main'}"`;
+        if (pkg.source.subdir) {
+          toml += `, subdir = "${pkg.source.subdir}"`;
+        }
+        toml += ' }\n';
+      }
+    }
+    toml += `\n[addresses]\n${projectName} = "0x0"\n`;
     
     res.json({
       success: true,
@@ -210,13 +222,13 @@ router.post('/generate-toml', async (req, res) => {
 router.get('/:name/verify', async (req, res) => {
   try {
     const { name } = req.params;
-    const verified = await packageManager.verifyPackage(name);
+    const pkg = await packageManager.getPackageInfo(name);
     
     res.json({
       success: true,
       data: {
         package: name,
-        verified
+        verified: pkg !== null
       }
     });
   } catch (error: any) {

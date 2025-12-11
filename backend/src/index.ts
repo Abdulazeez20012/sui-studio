@@ -31,6 +31,10 @@ import profilerRoutes from './routes/profiler';
 import gasRoutes from './routes/gas';
 import contractRoutes from './routes/contract';
 import syntaxRoutes from './routes/syntax';
+import ptbRoutes from './routes/ptb';
+import zkloginRoutes from './routes/zklogin';
+import objectDisplayRoutes from './routes/objectDisplay';
+import dynamicFieldsRoutes from './routes/dynamicFields';
 
 const app: Express = express();
 const PORT = process.env.PORT || 3001;
@@ -108,6 +112,10 @@ app.use('/api/profiler', profilerRoutes);
 app.use('/api/gas', gasRoutes);
 app.use('/api/contract', contractRoutes);
 app.use('/api/syntax', syntaxRoutes);
+app.use('/api/ptb', ptbRoutes);
+app.use('/api/zklogin', zkloginRoutes);
+app.use('/api/object-display', objectDisplayRoutes);
+app.use('/api/dynamic-fields', dynamicFieldsRoutes);
 
 // Error handling middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {

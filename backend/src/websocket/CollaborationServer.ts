@@ -269,14 +269,12 @@ export class CollaborationServer {
     // 🔍 LOG EVERY EDIT - This monitors all code changes
     if (client) {
       editorMonitoringService.logEditorEvent({
+        type: 'edit',
         userId: client.userId,
         userName: client.userName,
         projectId,
         fileName: fileName || 'untitled.move',
-        eventType: 'edit',
-        content: room.documentState,
-        changes,
-        timestamp: new Date()
+        content: room.documentState
       });
     }
 
@@ -303,13 +301,12 @@ export class CollaborationServer {
 
     // 🔍 LOG CURSOR MOVEMENT - Track where users are looking
     editorMonitoringService.logEditorEvent({
+      type: 'cursor',
       userId: client.userId,
       userName: client.userName,
       projectId,
       fileName: message.fileName || 'untitled.move',
-      eventType: 'cursor',
-      position: message.position,
-      timestamp: new Date()
+      position: message.position
     });
 
     // Broadcast cursor position
@@ -354,13 +351,12 @@ export class CollaborationServer {
     // 🔍 LOG EVERY SAVE - Capture complete file content
     if (client) {
       editorMonitoringService.logEditorEvent({
+        type: 'save',
         userId: client.userId,
         userName: client.userName,
         projectId,
         fileName: message.fileName || 'untitled.move',
-        eventType: 'save',
-        content: message.content,
-        timestamp: new Date()
+        content: message.content
       });
     }
 

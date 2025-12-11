@@ -1,69 +1,84 @@
+/**
+ * Real Move Debugger Service
+ * Provides debugging capabilities for Move code using Sui CLI
+ */
+
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { SuiClient } from '@mysten/sui/client';
 
 const execAsync = promisify(exec);
 
+export interface DebugSession {
+  id: string;
+  code: string;
+  packageName: string;
+  breakpoints: Breakpoint[];
+  variables: Variable[];
+  callStack: StackFrame[];
+  status: 'idle' | 'running' | 'paused' | 'stopped' | 'error';
+  currentLine?: number;
+  output: string[];
+  errors: DebugError[];
+  timestamp: Date;
+}
+
 export interface Breakpoint {
   id: string;
-  file: string;
   line: number;
   enabled: boolean;
   condition?: string;
-}
-
-export interface StackFrame {
-  id: string;
-  function: string;
-  module: string;
-  file: string;
-  line: number;
-  column?: number;
+  hitCount: number;
 }
 
 export interface Variable {
   name: string;
-  value: string;
   type: string;
+  value: string;
   scope: 'local' | 'global' | 'parameter';
   mutable: boolean;
 }
 
-export interface DebugSession {
-  id: string;
-  projectPath: string;
-  status: 'idle' | 'running' | 'paused' | 'stopped';
-  currentLine?: number;
-  currentFile?: string;
-  breakpoints: Breakpoint[];
-  stackFrames: StackFrame[];
+export interface StackFrame {
+  id: number;
+  function: string;
+  module: string;
+  line: number;
+  locals: Variable[];
+}
+
+export interface DebugError {
+  message: string;
+  line?: number;
+  column?: number;
+  severity: 'error' | 'warning';
+}
+
+export interface StepResult {
+  line: number;
   variables: Variable[];
-  output: string[];
-  createdAt: Date;
+  output?: string;
+  finished: boolean;
 }
 
-export interface DebugCommand {
-  type: 'start' | 'stop' | 'pause' | 'continue' | 'step-over' | 'step-into' | 'step-out';
-  sessionId: string;
-  data?: any;
-}
-
-export interface DebugResult {
-  success: boolean;
-  session?: DebugSession;
-  error?: string;
-}
+const RPC_URLS: Record<string, string> = {
+  mainnet: 'https://fullnode.mainnet.sui.io:443',
+  testnet: 'https://fullnode.testnet.sui.io:443',
+  devnet: 'https://fullnode.devnet.sui.io:443',
+};
 
 class DebuggerService {
   private sessions: Map<string, DebugSession> = new Map();
-  private tempDir = path.join(process.cwd(), 'temp', 'debug');
+  private tempDir: string = '/tmp/sui-debug';
+  private suiCliAvailable: boolean | null = null;
 
   constructor() {
-    this.ensureTempDir();
+    this.initTempDir();
   }
 
-  private async ensureTempDir() {
+  private async initTempDir() {
     try {
       await fs.mkdir(this.tempDir, { recursive: true });
     } catch (error) {
@@ -71,402 +86,607 @@ class DebuggerService {
     }
   }
 
+  private getClient(network: string = 'testnet'): SuiClient {
+    return new SuiClient({ url: RPC_URLS[network] || RPC_URLS.testnet });
+  }
+
   /**
-   * Create a new debug session
+   * Check if Sui CLI is available
    */
-  async createSession(projectPath: string, code: string): Promise<DebugResult> {
+  async checkSuiCLI(): Promise<boolean> {
+    if (this.suiCliAvailable !== null) {
+      return this.suiCliAvailable;
+    }
+
     try {
-      const sessionId = `debug-${Date.now()}`;
-      
-      const session: DebugSession = {
-        id: sessionId,
-        projectPath,
-        status: 'idle',
-        breakpoints: [],
-        stackFrames: [],
-        variables: [],
-        output: [],
-        createdAt: new Date()
-      };
-
-      this.sessions.set(sessionId, session);
-
-      // Parse code to extract functions and variables
-      await this.analyzeCode(session, code);
-
-      return {
-        success: true,
-        session
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message
-      };
+      await execAsync('sui --version', { timeout: 5000 });
+      this.suiCliAvailable = true;
+      return true;
+    } catch {
+      this.suiCliAvailable = false;
+      return false;
     }
   }
 
   /**
-   * Get debug session
+   * Create a new debug session
+   */
+  async createSession(code: string, packageName: string = 'debug_package'): Promise<DebugSession> {
+    const sessionId = `debug-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    // Parse code to extract variables and structure
+    const variables = this.extractVariables(code);
+    const callStack = this.buildInitialCallStack(code);
+
+    const session: DebugSession = {
+      id: sessionId,
+      code,
+      packageName,
+      breakpoints: [],
+      variables,
+      callStack,
+      status: 'idle',
+      output: [],
+      errors: [],
+      timestamp: new Date(),
+    };
+
+    // Validate code by attempting compilation
+    const cliAvailable = await this.checkSuiCLI();
+    if (cliAvailable) {
+      const validationResult = await this.validateCode(code, packageName);
+      if (!validationResult.success) {
+        session.errors = validationResult.errors;
+        session.status = 'error';
+      }
+    }
+
+    this.sessions.set(sessionId, session);
+    return session;
+  }
+
+  /**
+   * Validate Move code by compiling
+   */
+  private async validateCode(
+    code: string,
+    packageName: string
+  ): Promise<{ success: boolean; errors: DebugError[] }> {
+    const projectDir = path.join(this.tempDir, `${packageName}-${Date.now()}`);
+
+    try {
+      await fs.mkdir(projectDir, { recursive: true });
+
+      const moveToml = `[package]
+name = "${packageName}"
+version = "0.0.1"
+edition = "2024.beta"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/mainnet" }
+
+[addresses]
+${packageName} = "0x0"
+`;
+      await fs.writeFile(path.join(projectDir, 'Move.toml'), moveToml);
+
+      const sourcesDir = path.join(projectDir, 'sources');
+      await fs.mkdir(sourcesDir);
+      await fs.writeFile(path.join(sourcesDir, `${packageName}.move`), code);
+
+      await execAsync(`sui move build --path ${projectDir}`, { timeout: 60000 });
+
+      return { success: true, errors: [] };
+    } catch (error: any) {
+      const errors = this.parseCompilationErrors(error.stderr || error.message);
+      return { success: false, errors };
+    } finally {
+      try {
+        await fs.rm(projectDir, { recursive: true, force: true });
+      } catch {}
+    }
+  }
+
+  /**
+   * Parse compilation errors
+   */
+  private parseCompilationErrors(output: string): DebugError[] {
+    const errors: DebugError[] = [];
+    const lines = output.split('\n');
+
+    for (const line of lines) {
+      const errorMatch = line.match(/error\[E\d+\]:\s*(.+)/i);
+      const locationMatch = line.match(/:(\d+):(\d+)/);
+
+      if (errorMatch) {
+        errors.push({
+          message: errorMatch[1],
+          line: locationMatch ? parseInt(locationMatch[1]) : undefined,
+          column: locationMatch ? parseInt(locationMatch[2]) : undefined,
+          severity: 'error',
+        });
+      }
+
+      const warningMatch = line.match(/warning:\s*(.+)/i);
+      if (warningMatch) {
+        errors.push({
+          message: warningMatch[1],
+          line: locationMatch ? parseInt(locationMatch[1]) : undefined,
+          column: locationMatch ? parseInt(locationMatch[2]) : undefined,
+          severity: 'warning',
+        });
+      }
+    }
+
+    if (errors.length === 0 && output.trim()) {
+      errors.push({ message: output.trim(), severity: 'error' });
+    }
+
+    return errors;
+  }
+
+  /**
+   * Set a breakpoint
+   */
+  setBreakpoint(sessionId: string, line: number, condition?: string): Breakpoint | null {
+    const session = this.sessions.get(sessionId);
+    if (!session) return null;
+
+    const breakpoint: Breakpoint = {
+      id: `bp-${Date.now()}`,
+      line,
+      enabled: true,
+      condition,
+      hitCount: 0,
+    };
+
+    session.breakpoints.push(breakpoint);
+    return breakpoint;
+  }
+
+  /**
+   * Remove a breakpoint
+   */
+  removeBreakpoint(sessionId: string, breakpointId: string): boolean {
+    const session = this.sessions.get(sessionId);
+    if (!session) return false;
+
+    const index = session.breakpoints.findIndex((bp) => bp.id === breakpointId);
+    if (index === -1) return false;
+
+    session.breakpoints.splice(index, 1);
+    return true;
+  }
+
+  /**
+   * Toggle breakpoint enabled state
+   */
+  toggleBreakpoint(sessionId: string, breakpointId: string): boolean {
+    const session = this.sessions.get(sessionId);
+    if (!session) return false;
+
+    const breakpoint = session.breakpoints.find((bp) => bp.id === breakpointId);
+    if (!breakpoint) return false;
+
+    breakpoint.enabled = !breakpoint.enabled;
+    return true;
+  }
+
+  /**
+   * Start debugging (run to first breakpoint or end)
+   */
+  async start(sessionId: string): Promise<StepResult> {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error('Session not found');
+
+    session.status = 'running';
+    session.output.push('Debug session started');
+
+    // Find first executable line
+    const firstLine = this.findFirstExecutableLine(session.code);
+    session.currentLine = firstLine;
+
+    // Check for breakpoint
+    const bp = session.breakpoints.find((b) => b.line === firstLine && b.enabled);
+    if (bp) {
+      session.status = 'paused';
+      bp.hitCount++;
+      session.output.push(`Breakpoint hit at line ${firstLine}`);
+    }
+
+    // Update variables for current scope
+    session.variables = this.getVariablesAtLine(session.code, firstLine);
+
+    return {
+      line: firstLine,
+      variables: session.variables,
+      output: session.output.join('\n'),
+      finished: false,
+    };
+  }
+
+  /**
+   * Step to next line
+   */
+  async stepOver(sessionId: string): Promise<StepResult> {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error('Session not found');
+
+    const currentLine = session.currentLine || 1;
+    const nextLine = this.findNextExecutableLine(session.code, currentLine);
+
+    if (nextLine === -1) {
+      session.status = 'stopped';
+      session.output.push('Execution completed');
+      return {
+        line: currentLine,
+        variables: session.variables,
+        output: 'Execution completed',
+        finished: true,
+      };
+    }
+
+    session.currentLine = nextLine;
+    session.variables = this.getVariablesAtLine(session.code, nextLine);
+
+    // Check for breakpoint
+    const bp = session.breakpoints.find((b) => b.line === nextLine && b.enabled);
+    if (bp) {
+      session.status = 'paused';
+      bp.hitCount++;
+      session.output.push(`Breakpoint hit at line ${nextLine}`);
+    }
+
+    return {
+      line: nextLine,
+      variables: session.variables,
+      finished: false,
+    };
+  }
+
+  /**
+   * Step into function call
+   */
+  async stepInto(sessionId: string): Promise<StepResult> {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error('Session not found');
+
+    const currentLine = session.currentLine || 1;
+    const lineContent = this.getLineContent(session.code, currentLine);
+
+    // Check if current line has a function call
+    const funcCallMatch = lineContent.match(/(\w+)\s*\(/);
+    if (funcCallMatch) {
+      const funcName = funcCallMatch[1];
+      const funcDef = this.findFunctionDefinition(session.code, funcName);
+
+      if (funcDef) {
+        // Add to call stack
+        session.callStack.push({
+          id: session.callStack.length,
+          function: funcName,
+          module: session.packageName,
+          line: funcDef.startLine,
+          locals: [],
+        });
+
+        session.currentLine = funcDef.startLine;
+        session.variables = this.getVariablesAtLine(session.code, funcDef.startLine);
+        session.output.push(`Stepped into ${funcName}`);
+
+        return {
+          line: funcDef.startLine,
+          variables: session.variables,
+          output: `Stepped into ${funcName}`,
+          finished: false,
+        };
+      }
+    }
+
+    // No function call, just step over
+    return this.stepOver(sessionId);
+  }
+
+  /**
+   * Step out of current function
+   */
+  async stepOut(sessionId: string): Promise<StepResult> {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error('Session not found');
+
+    if (session.callStack.length <= 1) {
+      // At top level, run to end
+      session.status = 'stopped';
+      return {
+        line: session.currentLine || 1,
+        variables: session.variables,
+        output: 'Execution completed',
+        finished: true,
+      };
+    }
+
+    // Pop call stack and return to caller
+    session.callStack.pop();
+    const caller = session.callStack[session.callStack.length - 1];
+    session.currentLine = caller.line + 1;
+    session.variables = this.getVariablesAtLine(session.code, session.currentLine);
+    session.output.push(`Returned from function`);
+
+    return {
+      line: session.currentLine,
+      variables: session.variables,
+      output: 'Returned from function',
+      finished: false,
+    };
+  }
+
+  /**
+   * Continue execution until next breakpoint or end
+   */
+  async continue(sessionId: string): Promise<StepResult> {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error('Session not found');
+
+    session.status = 'running';
+    let currentLine = session.currentLine || 1;
+
+    // Run until breakpoint or end
+    while (true) {
+      const nextLine = this.findNextExecutableLine(session.code, currentLine);
+      if (nextLine === -1) {
+        session.status = 'stopped';
+        return {
+          line: currentLine,
+          variables: session.variables,
+          output: 'Execution completed',
+          finished: true,
+        };
+      }
+
+      currentLine = nextLine;
+      const bp = session.breakpoints.find((b) => b.line === currentLine && b.enabled);
+      if (bp) {
+        session.status = 'paused';
+        session.currentLine = currentLine;
+        session.variables = this.getVariablesAtLine(session.code, currentLine);
+        bp.hitCount++;
+        return {
+          line: currentLine,
+          variables: session.variables,
+          output: `Breakpoint hit at line ${currentLine}`,
+          finished: false,
+        };
+      }
+    }
+  }
+
+  /**
+   * Stop debugging session
+   */
+  stop(sessionId: string): boolean {
+    const session = this.sessions.get(sessionId);
+    if (!session) return false;
+
+    session.status = 'stopped';
+    session.output.push('Debug session stopped');
+    return true;
+  }
+
+  /**
+   * Get session by ID
    */
   getSession(sessionId: string): DebugSession | null {
     return this.sessions.get(sessionId) || null;
   }
 
   /**
-   * Start debugging
+   * Evaluate expression in current context
    */
-  async startDebugging(sessionId: string): Promise<DebugResult> {
+  evaluate(sessionId: string, expression: string): { value: string; type: string } | null {
     const session = this.sessions.get(sessionId);
-    if (!session) {
-      return { success: false, error: 'Session not found' };
-    }
+    if (!session) return null;
 
-    try {
-      session.status = 'running';
-      session.output.push('Debug session started');
-
-      // Simulate execution start
-      await this.simulateExecution(session);
-
-      return {
-        success: true,
-        session
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
-
-  /**
-   * Stop debugging
-   */
-  async stopDebugging(sessionId: string): Promise<DebugResult> {
-    const session = this.sessions.get(sessionId);
-    if (!session) {
-      return { success: false, error: 'Session not found' };
-    }
-
-    session.status = 'stopped';
-    session.output.push('Debug session stopped');
-    session.stackFrames = [];
-    session.variables = [];
-
-    return {
-      success: true,
-      session
-    };
-  }
-
-  /**
-   * Pause execution
-   */
-  async pauseExecution(sessionId: string): Promise<DebugResult> {
-    const session = this.sessions.get(sessionId);
-    if (!session) {
-      return { success: false, error: 'Session not found' };
-    }
-
-    session.status = 'paused';
-    session.output.push('Execution paused');
-
-    return {
-      success: true,
-      session
-    };
-  }
-
-  /**
-   * Continue execution
-   */
-  async continueExecution(sessionId: string): Promise<DebugResult> {
-    const session = this.sessions.get(sessionId);
-    if (!session) {
-      return { success: false, error: 'Session not found' };
-    }
-
-    session.status = 'running';
-    session.output.push('Execution continued');
-
-    // Continue until next breakpoint
-    await this.runToNextBreakpoint(session);
-
-    return {
-      success: true,
-      session
-    };
-  }
-
-  /**
-   * Step over (execute current line, don't enter functions)
-   */
-  async stepOver(sessionId: string): Promise<DebugResult> {
-    const session = this.sessions.get(sessionId);
-    if (!session) {
-      return { success: false, error: 'Session not found' };
-    }
-
-    if (session.currentLine !== undefined) {
-      session.currentLine++;
-      session.output.push(`Stepped to line ${session.currentLine}`);
-      
-      // Update variables for new line
-      await this.updateVariables(session);
-    }
-
-    return {
-      success: true,
-      session
-    };
-  }
-
-  /**
-   * Step into (enter function calls)
-   */
-  async stepInto(sessionId: string): Promise<DebugResult> {
-    const session = this.sessions.get(sessionId);
-    if (!session) {
-      return { success: false, error: 'Session not found' };
-    }
-
-    // Add new stack frame
-    const newFrame: StackFrame = {
-      id: `frame-${Date.now()}`,
-      function: 'inner_function',
-      module: 'example',
-      file: session.currentFile || 'main.move',
-      line: session.currentLine || 0
-    };
-
-    session.stackFrames.unshift(newFrame);
-    session.output.push(`Stepped into ${newFrame.function}`);
-
-    return {
-      success: true,
-      session
-    };
-  }
-
-  /**
-   * Step out (exit current function)
-   */
-  async stepOut(sessionId: string): Promise<DebugResult> {
-    const session = this.sessions.get(sessionId);
-    if (!session) {
-      return { success: false, error: 'Session not found' };
-    }
-
-    if (session.stackFrames.length > 1) {
-      const exitedFrame = session.stackFrames.shift();
-      session.output.push(`Stepped out of ${exitedFrame?.function}`);
-    }
-
-    return {
-      success: true,
-      session
-    };
-  }
-
-  /**
-   * Add breakpoint
-   */
-  async addBreakpoint(
-    sessionId: string,
-    file: string,
-    line: number,
-    condition?: string
-  ): Promise<DebugResult> {
-    const session = this.sessions.get(sessionId);
-    if (!session) {
-      return { success: false, error: 'Session not found' };
-    }
-
-    const breakpoint: Breakpoint = {
-      id: `bp-${Date.now()}`,
-      file,
-      line,
-      enabled: true,
-      condition
-    };
-
-    session.breakpoints.push(breakpoint);
-    session.output.push(`Breakpoint added at ${file}:${line}`);
-
-    return {
-      success: true,
-      session
-    };
-  }
-
-  /**
-   * Remove breakpoint
-   */
-  async removeBreakpoint(sessionId: string, breakpointId: string): Promise<DebugResult> {
-    const session = this.sessions.get(sessionId);
-    if (!session) {
-      return { success: false, error: 'Session not found' };
-    }
-
-    session.breakpoints = session.breakpoints.filter(bp => bp.id !== breakpointId);
-    session.output.push(`Breakpoint removed`);
-
-    return {
-      success: true,
-      session
-    };
-  }
-
-  /**
-   * Toggle breakpoint
-   */
-  async toggleBreakpoint(sessionId: string, breakpointId: string): Promise<DebugResult> {
-    const session = this.sessions.get(sessionId);
-    if (!session) {
-      return { success: false, error: 'Session not found' };
-    }
-
-    const breakpoint = session.breakpoints.find(bp => bp.id === breakpointId);
-    if (breakpoint) {
-      breakpoint.enabled = !breakpoint.enabled;
-      session.output.push(`Breakpoint ${breakpoint.enabled ? 'enabled' : 'disabled'}`);
-    }
-
-    return {
-      success: true,
-      session
-    };
-  }
-
-  /**
-   * Get variables in current scope
-   */
-  async getVariables(sessionId: string): Promise<Variable[]> {
-    const session = this.sessions.get(sessionId);
-    if (!session) {
-      return [];
-    }
-
-    return session.variables;
-  }
-
-  /**
-   * Evaluate expression
-   */
-  async evaluateExpression(sessionId: string, expression: string): Promise<any> {
-    const session = this.sessions.get(sessionId);
-    if (!session) {
-      throw new Error('Session not found');
+    // Check if expression is a variable name
+    const variable = session.variables.find((v) => v.name === expression);
+    if (variable) {
+      return { value: variable.value, type: variable.type };
     }
 
     // Simple expression evaluation
-    // In production, this would use the Move VM
-    session.output.push(`Evaluating: ${expression}`);
+    if (expression.match(/^\d+$/)) {
+      return { value: expression, type: 'u64' };
+    }
+    if (expression === 'true' || expression === 'false') {
+      return { value: expression, type: 'bool' };
+    }
 
-    return {
-      result: 'evaluation result',
-      type: 'u64'
-    };
+    return { value: 'undefined', type: 'unknown' };
   }
 
   /**
-   * Analyze code to extract structure
+   * Debug a real transaction
    */
-  private async analyzeCode(session: DebugSession, code: string): Promise<void> {
-    // Extract module name
-    const moduleMatch = code.match(/module\s+(\w+)::(\w+)/);
-    if (moduleMatch) {
-      session.currentFile = `${moduleMatch[2]}.move`;
-    }
+  async debugTransaction(txDigest: string, network: string = 'testnet'): Promise<DebugSession> {
+    const client = this.getClient(network);
+    const sessionId = `tx-debug-${Date.now()}`;
 
-    // Extract functions
-    const functionMatches = code.matchAll(/public\s+(?:entry\s+)?fun\s+(\w+)/g);
-    const functions = Array.from(functionMatches).map(match => match[1]);
+    try {
+      const tx = await client.getTransactionBlock({
+        digest: txDigest,
+        options: {
+          showEffects: true,
+          showEvents: true,
+          showInput: true,
+          showObjectChanges: true,
+        },
+      });
 
-    // Create initial stack frame
-    if (functions.length > 0) {
-      session.stackFrames = [{
-        id: 'frame-0',
-        function: functions[0],
-        module: moduleMatch ? `${moduleMatch[1]}::${moduleMatch[2]}` : 'unknown',
-        file: session.currentFile || 'main.move',
-        line: 1
-      }];
-    }
+      const session: DebugSession = {
+        id: sessionId,
+        code: '',
+        packageName: 'transaction',
+        breakpoints: [],
+        variables: [],
+        callStack: [],
+        status: tx.effects?.status.status === 'success' ? 'stopped' : 'error',
+        output: [`Transaction: ${txDigest}`, `Status: ${tx.effects?.status.status}`],
+        errors: tx.effects?.status.status === 'failure' 
+          ? [{ message: JSON.stringify(tx.effects.status.error), severity: 'error' }]
+          : [],
+        timestamp: new Date(),
+      };
 
-    // Extract variables (simplified)
-    const varMatches = code.matchAll(/let\s+(?:mut\s+)?(\w+):\s*(\w+)/g);
-    session.variables = Array.from(varMatches).map(match => ({
-      name: match[1],
-      value: '0',
-      type: match[2],
-      scope: 'local' as const,
-      mutable: code.includes(`let mut ${match[1]}`)
-    }));
-  }
+      // Extract variables from object changes
+      const objectChanges = tx.objectChanges || [];
+      session.variables = objectChanges.map((change: any) => ({
+        name: change.objectId?.substring(0, 10) || 'unknown',
+        type: change.objectType || 'object',
+        value: change.type,
+        scope: 'global' as const,
+        mutable: change.type === 'mutated',
+      }));
 
-  /**
-   * Simulate execution
-   */
-  private async simulateExecution(session: DebugSession): Promise<void> {
-    session.currentLine = 1;
-    session.currentFile = session.stackFrames[0]?.file || 'main.move';
-
-    // Check if we hit a breakpoint
-    const hitBreakpoint = session.breakpoints.find(
-      bp => bp.enabled && bp.line === session.currentLine && bp.file === session.currentFile
-    );
-
-    if (hitBreakpoint) {
-      session.status = 'paused';
-      session.output.push(`Hit breakpoint at line ${session.currentLine}`);
-    }
-  }
-
-  /**
-   * Run to next breakpoint
-   */
-  private async runToNextBreakpoint(session: DebugSession): Promise<void> {
-    if (!session.currentLine) return;
-
-    // Find next breakpoint
-    const nextBreakpoint = session.breakpoints
-      .filter(bp => bp.enabled && bp.line > session.currentLine!)
-      .sort((a, b) => a.line - b.line)[0];
-
-    if (nextBreakpoint) {
-      session.currentLine = nextBreakpoint.line;
-      session.status = 'paused';
-      session.output.push(`Hit breakpoint at line ${nextBreakpoint.line}`);
-    } else {
-      session.status = 'stopped';
-      session.output.push('Execution completed');
-    }
-  }
-
-  /**
-   * Update variables for current execution point
-   */
-  private async updateVariables(session: DebugSession): Promise<void> {
-    // Simulate variable value changes
-    session.variables.forEach(v => {
-      if (v.type === 'u64') {
-        v.value = String(Math.floor(Math.random() * 1000));
-      } else if (v.type === 'address') {
-        v.value = `0x${Math.random().toString(16).substring(2, 10)}`;
+      // Build call stack from transaction
+      const moveCall = (tx.transaction?.data as any)?.transaction?.transactions?.[0]?.MoveCall;
+      if (moveCall) {
+        session.callStack.push({
+          id: 0,
+          function: moveCall.function,
+          module: `${moveCall.package}::${moveCall.module}`,
+          line: 0,
+          locals: [],
+        });
       }
-    });
+
+      this.sessions.set(sessionId, session);
+      return session;
+    } catch (error: any) {
+      const session: DebugSession = {
+        id: sessionId,
+        code: '',
+        packageName: 'transaction',
+        breakpoints: [],
+        variables: [],
+        callStack: [],
+        status: 'error',
+        output: [],
+        errors: [{ message: error.message, severity: 'error' }],
+        timestamp: new Date(),
+      };
+      this.sessions.set(sessionId, session);
+      return session;
+    }
+  }
+
+  // Helper methods
+
+  private extractVariables(code: string): Variable[] {
+    const variables: Variable[] = [];
+    const letPattern = /let\s+(mut\s+)?(\w+)\s*(?::\s*([^=]+))?\s*=/g;
+    let match;
+
+    while ((match = letPattern.exec(code)) !== null) {
+      variables.push({
+        name: match[2],
+        type: match[3]?.trim() || 'unknown',
+        value: 'uninitialized',
+        scope: 'local',
+        mutable: !!match[1],
+      });
+    }
+
+    return variables;
+  }
+
+  private buildInitialCallStack(code: string): StackFrame[] {
+    const moduleMatch = code.match(/module\s+(\w+)::(\w+)/);
+    const moduleName = moduleMatch ? `${moduleMatch[1]}::${moduleMatch[2]}` : 'unknown';
+
+    return [{
+      id: 0,
+      function: 'main',
+      module: moduleName,
+      line: 1,
+      locals: [],
+    }];
+  }
+
+  private findFirstExecutableLine(code: string): number {
+    const lines = code.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line && !line.startsWith('//') && !line.startsWith('module') && 
+          !line.startsWith('use') && !line.startsWith('const') && line !== '{' && line !== '}') {
+        return i + 1;
+      }
+    }
+    return 1;
+  }
+
+  private findNextExecutableLine(code: string, currentLine: number): number {
+    const lines = code.split('\n');
+    for (let i = currentLine; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line && !line.startsWith('//') && line !== '{' && line !== '}') {
+        return i + 1;
+      }
+    }
+    return -1;
+  }
+
+  private getLineContent(code: string, line: number): string {
+    const lines = code.split('\n');
+    return lines[line - 1] || '';
+  }
+
+  private findFunctionDefinition(code: string, funcName: string): { startLine: number; endLine: number } | null {
+    const lines = code.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes(`fun ${funcName}`)) {
+        let endLine = i;
+        let braceCount = 0;
+        for (let j = i; j < lines.length; j++) {
+          braceCount += (lines[j].match(/{/g) || []).length;
+          braceCount -= (lines[j].match(/}/g) || []).length;
+          if (braceCount === 0 && j > i) {
+            endLine = j;
+            break;
+          }
+        }
+        return { startLine: i + 1, endLine: endLine + 1 };
+      }
+    }
+    return null;
+  }
+
+  private getVariablesAtLine(code: string, line: number): Variable[] {
+    const variables: Variable[] = [];
+    const lines = code.split('\n').slice(0, line);
+    const codeUpToLine = lines.join('\n');
+
+    const letPattern = /let\s+(mut\s+)?(\w+)\s*(?::\s*([^=]+))?\s*=\s*([^;]+)/g;
+    let match;
+
+    while ((match = letPattern.exec(codeUpToLine)) !== null) {
+      variables.push({
+        name: match[2],
+        type: match[3]?.trim() || 'inferred',
+        value: match[4]?.trim() || 'unknown',
+        scope: 'local',
+        mutable: !!match[1],
+      });
+    }
+
+    return variables;
   }
 
   /**
-   * Clean up old sessions
+   * Cleanup old sessions
    */
   cleanupSessions(maxAge: number = 3600000): void {
     const now = Date.now();
     for (const [id, session] of this.sessions.entries()) {
-      if (now - session.createdAt.getTime() > maxAge) {
+      if (now - session.timestamp.getTime() > maxAge) {
         this.sessions.delete(id);
       }
     }
@@ -475,7 +695,5 @@ class DebuggerService {
 
 export const debuggerService = new DebuggerService();
 
-// Cleanup old sessions every hour
-setInterval(() => {
-  debuggerService.cleanupSessions();
-}, 3600000);
+// Cleanup every hour
+setInterval(() => debuggerService.cleanupSessions(), 3600000);

@@ -1,8 +1,4 @@
-import { error } from 'console';
-import { error } from 'console';
-import { error } from 'console';
-import { error } from 'console';
-import { apiService } from './api';
+import { apiService } from './apiService';
 
 export interface ProfileSession {
   id: string;
@@ -61,82 +57,28 @@ export interface ProfilingOptions {
 }
 
 class ProfilerService {
-  async createSession(code: string): Promise<{ success: boolean; data?: ProfileSession; error?: string }> {
+  /**
+   * Create a new profiling session
+   */
+  async createSession(code: string): Promise<ProfileSession> {
     try {
-      const response = await apiService.post<{ success: boolean; data: ProfileSession }>('/profiler/session', {
-        code
-      });
-      return response;
-    } catch (error: any) {
-      return { success: false, error: error.message };
+      const response = await apiService.post('/profiler/session', { code });
+      return response.data;
+    } catch (error) {
+      console.error('Error creating profiling session:', error);
+      throw error;
     }
   }
 
-  async getSession(sessionId: string): Promise<{ success: boolean; data?: ProfileSession; error?: string }> {
+  /**
+   * Get profiling session
+   */
+  async getSession(sessionId: string): Promise<ProfileSession> {
     try {
-      const response = await apiService.get<{ success: boolean; data: ProfileSession }>(`/profiler/session/${sessionId}`);
-      return response;
-    } catch (error: any) {
-      return { success: false, error: error.message };
-    }
-  }
-
-  async startProfiling(sessionId: string, options: ProfilingOptions = {}): Promise<{ success: boolean; data?: ProfileSession; error?: string }> {
-    try {
-      const response = await apiService.post<{ success: boolean; data: ProfileSession }>(`/profiler/session/${sessionId}/start`, options);
-      return response;
-    } catch (error: any) {
-      return { success: false, error: error.message };
-    }
-  }
-
-  async stopProfiling(sessionId: string): Promise<{ success: boolean; data?: ProfileSession; error?: string }> {
-    try {
-      const response = await apiService.post<{ success: boolean; data: ProfileSession }>(`/profiler/session/${sessionId}/stop`);
-      return response;
-    } catch (error: any) {
-      return { success: false, error: error.message };
-    }
-  }
-
-  async getGasAnalysis(sessionId: string): Promise<{ success: boolean; data?: GasAnalysis; error?: string }> {
-    try {
-      const response = await apiService.get<{ success: boolean; data: GasAnalysis }>(`/profiler/session/${sessionId}/gas-analysis`);
-      return response;
-    } catch (error: any) {
-      return { success: false, error: error.message };
-    }
-  }
-
-  async getHotspots(sessionId: string): Promise<{ success: boolean; data?: Hotspot[]; error?: string }> {
-    try {
-      const response = await apiService.get<{ success: boolean; data: Hotspot[] }>(`/profiler/session/${sessionId}/hotspots`);
-      return response;
-    } catch (error: any) {
-      return { success: false, error: error.message };
-    }
-  }
-
-  async getRecommendations(sessionId: string): Promise<{ success: boolean; data?: string[]; error?: string }> {
-    try {
-      const response = await apiService.get<{ success: boolean; data: string[] }>(`/profiler/session/${sessionId}/recommendations`);
-      return response;
-    } catch (error: any) {
-      return { success: false, error: error.message };
-    }
-  }
-
-  async exportProfile(sessionId: string): Promise<{ success: boolean; data?: { json: string }; error?: string }> {
-    try {
-      const response = await apiService.get<{ success: boolean; data: { json: string } }>(`/profiler/session/${sessionId}/export`);
-      return response;
-    } catch (error: any) {
-      return { success: false, error: error.message };
-    }
-  }
-}
-
-export const profilerService = new ProfilerService(); error);
+      const response = await apiService.get(`/profiler/session/${sessionId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching session:', error);
       throw error;
     }
   }
@@ -144,12 +86,9 @@ export const profilerService = new ProfilerService(); error);
   /**
    * Start profiling
    */
-  async startProfiling(sessionId: string, options?: ProfilingOptions): Promise<ProfileSession> {
+  async startProfiling(sessionId: string, options: ProfilingOptions = {}): Promise<ProfileSession> {
     try {
-      const response = await this.request(`/api/profiler/session/${sessionId}/start`, {
-        method: 'POST',
-        body: JSON.stringify(options || {}),
-      });
+      const response = await apiService.post(`/profiler/session/${sessionId}/start`, options);
       return response.data;
     } catch (error) {
       console.error('Error starting profiling:', error);
@@ -162,9 +101,7 @@ export const profilerService = new ProfilerService(); error);
    */
   async stopProfiling(sessionId: string): Promise<ProfileSession> {
     try {
-      const response = await this.request(`/api/profiler/session/${sessionId}/stop`, {
-        method: 'POST',
-      });
+      const response = await apiService.post(`/profiler/session/${sessionId}/stop`);
       return response.data;
     } catch (error) {
       console.error('Error stopping profiling:', error);
@@ -177,7 +114,7 @@ export const profilerService = new ProfilerService(); error);
    */
   async getGasAnalysis(sessionId: string): Promise<GasAnalysis> {
     try {
-      const response = await this.request(`/api/profiler/session/${sessionId}/gas-analysis`);
+      const response = await apiService.get(`/profiler/session/${sessionId}/gas-analysis`);
       return response.data;
     } catch (error) {
       console.error('Error fetching gas analysis:', error);
@@ -190,7 +127,7 @@ export const profilerService = new ProfilerService(); error);
    */
   async getHotspots(sessionId: string): Promise<Hotspot[]> {
     try {
-      const response = await this.request(`/api/profiler/session/${sessionId}/hotspots`);
+      const response = await apiService.get(`/profiler/session/${sessionId}/hotspots`);
       return response.data;
     } catch (error) {
       console.error('Error fetching hotspots:', error);
@@ -203,7 +140,7 @@ export const profilerService = new ProfilerService(); error);
    */
   async getRecommendations(sessionId: string): Promise<string[]> {
     try {
-      const response = await this.request(`/api/profiler/session/${sessionId}/recommendations`);
+      const response = await apiService.get(`/profiler/session/${sessionId}/recommendations`);
       return response.data;
     } catch (error) {
       console.error('Error fetching recommendations:', error);
@@ -216,7 +153,7 @@ export const profilerService = new ProfilerService(); error);
    */
   async exportProfile(sessionId: string): Promise<string> {
     try {
-      const response = await this.request(`/api/profiler/session/${sessionId}/export`);
+      const response = await apiService.get(`/profiler/session/${sessionId}/export`);
       return response.data.json;
     } catch (error) {
       console.error('Error exporting profile:', error);

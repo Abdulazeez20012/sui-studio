@@ -1,7 +1,10 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
+/**
+ * Real Contract Interaction Service
+ * Queries actual Sui blockchain for contract data
+ */
 
-const execAsync = promisify(exec);
+import { SuiClient, SuiObjectResponse } from '@mysten/sui/client';
+import { Transaction } from '@mysten/sui/transactions';
 
 export interface ContractFunction {
   name: string;
@@ -25,6 +28,7 @@ export interface ContractObject {
   fields: Record<string, any>;
   owner?: string;
   version: number;
+  digest?: string;
 }
 
 export interface TransactionResult {
@@ -53,10 +57,7 @@ export interface ContractInfo {
 
 export interface ContractStruct {
   name: string;
-  fields: Array<{
-    name: string;
-    type: string;
-  }>;
+  fields: Array<{ name: string; type: string }>;
   abilities: string[];
 }
 
@@ -70,24 +71,98 @@ export interface CallContractParams {
   sender?: string;
 }
 
+const RPC_URLS: Record<string, string> = {
+  mainnet: 'https://fullnode.mainnet.sui.io:443',
+  testnet: 'https://fullnode.testnet.sui.io:443',
+  devnet: 'https://fullnode.devnet.sui.io:443',
+};
+
 class ContractInteractionService {
+  private clients: Map<string, SuiClient> = new Map();
   private contractCache: Map<string, ContractInfo> = new Map();
-  private objectCache: Map<string, ContractObject> = new Map();
+
+  private getClient(network: string = 'testnet'): SuiClient {
+    if (!this.clients.has(network)) {
+      this.clients.set(network, new SuiClient({ url: RPC_URLS[network] || RPC_URLS.testnet }));
+    }
+    return this.clients.get(network)!;
+  }
 
   /**
-   * Get contract information
+   * Get real contract/package information from blockchain
    */
-  async getContractInfo(packageId: string): Promise<ContractInfo | null> {
-    // Check cache first
-    if (this.contractCache.has(packageId)) {
-      return this.contractCache.get(packageId)!;
+  async getContractInfo(packageId: string, network: string = 'testnet'): Promise<ContractInfo | null> {
+    const cacheKey = `${network}:${packageId}`;
+    if (this.contractCache.has(cacheKey)) {
+      return this.contractCache.get(cacheKey)!;
     }
 
     try {
-      // In a real implementation, this would query the Sui network
-      // For now, return mock data based on common patterns
-      const contractInfo = this.generateMockContractInfo(packageId);
-      this.contractCache.set(packageId, contractInfo);
+      const client = this.getClient(network);
+      
+      // Get package object
+      const packageObj = await client.getObject({
+        id: packageId,
+        options: {
+          showContent: true,
+          showType: true,
+          showOwner: true,
+        },
+      });
+
+      if (!packageObj.data) {
+        return null;
+      }
+
+      // Get normalized module info
+      const normalizedModules = await client.getNormalizedMoveModulesByPackage({
+        package: packageId,
+      });
+
+      const modules = Object.entries(normalizedModules);
+      if (modules.length === 0) return null;
+
+      // Parse first module (or could return all)
+      const [moduleName, moduleData] = modules[0];
+      
+      // Extract functions
+      const functions: ContractFunction[] = Object.entries(moduleData.exposedFunctions || {}).map(
+        ([funcName, funcData]: [string, any]) => ({
+          name: funcName,
+          parameters: (funcData.parameters || []).map((param: any, idx: number) => ({
+            name: `arg${idx}`,
+            type: this.formatType(param),
+            required: true,
+          })),
+          returnType: funcData.return?.length > 0 ? this.formatType(funcData.return[0]) : undefined,
+          visibility: funcData.visibility?.toLowerCase() || 'private',
+          isEntry: funcData.isEntry || false,
+          gasEstimate: this.estimateFunctionGas(funcData),
+        })
+      );
+
+      // Extract structs
+      const structs: ContractStruct[] = Object.entries(moduleData.structs || {}).map(
+        ([structName, structData]: [string, any]) => ({
+          name: structName,
+          fields: (structData.fields || []).map((field: any) => ({
+            name: field.name,
+            type: this.formatType(field.type),
+          })),
+          abilities: structData.abilities?.abilities || [],
+        })
+      );
+
+      const contractInfo: ContractInfo = {
+        packageId,
+        moduleName,
+        functions,
+        structs,
+        address: packageId,
+        version: '1.0.0',
+      };
+
+      this.contractCache.set(cacheKey, contractInfo);
       return contractInfo;
     } catch (error) {
       console.error('Error fetching contract info:', error);
@@ -96,49 +171,63 @@ class ContractInteractionService {
   }
 
   /**
-   * Call a contract function
+   * Format Move type for display
    */
-  async callContract(params: CallContractParams): Promise<TransactionResult> {
-    try {
-      // Validate parameters
-      const contractInfo = await this.getContractInfo(params.packageId);
-      if (!contractInfo) {
-        throw new Error('Contract not found');
-      }
-
-      const func = contractInfo.functions.find(f => f.name === params.functionName);
-      if (!func) {
-        throw new Error('Function not found');
-      }
-
-      // Simulate transaction execution
-      const result = await this.simulateTransaction(params, func);
-      return result;
-    } catch (error: any) {
-      return {
-        digest: '',
-        status: 'failure',
-        gasUsed: 0,
-        effects: {},
-        error: error.message
-      };
+  private formatType(typeData: any): string {
+    if (typeof typeData === 'string') return typeData;
+    if (typeData.Vector) return `vector<${this.formatType(typeData.Vector)}>`;
+    if (typeData.Struct) {
+      const s = typeData.Struct;
+      return `${s.address}::${s.module}::${s.name}`;
     }
+    if (typeData.TypeParameter) return `T${typeData.TypeParameter}`;
+    if (typeData.Reference) return `&${this.formatType(typeData.Reference)}`;
+    if (typeData.MutableReference) return `&mut ${this.formatType(typeData.MutableReference)}`;
+    return JSON.stringify(typeData);
   }
 
   /**
-   * Get object by ID
+   * Estimate gas for function based on complexity
    */
-  async getObject(objectId: string): Promise<ContractObject | null> {
-    // Check cache first
-    if (this.objectCache.has(objectId)) {
-      return this.objectCache.get(objectId)!;
-    }
+  private estimateFunctionGas(funcData: any): number {
+    let gas = 1000; // Base
+    gas += (funcData.parameters?.length || 0) * 200;
+    if (funcData.isEntry) gas += 500;
+    return gas;
+  }
 
+  /**
+   * Get real object from blockchain
+   */
+  async getObject(objectId: string, network: string = 'testnet'): Promise<ContractObject | null> {
     try {
-      // In a real implementation, this would query the Sui network
-      const obj = this.generateMockObject(objectId);
-      this.objectCache.set(objectId, obj);
-      return obj;
+      const client = this.getClient(network);
+      const response = await client.getObject({
+        id: objectId,
+        options: {
+          showContent: true,
+          showType: true,
+          showOwner: true,
+        },
+      });
+
+      if (!response.data) return null;
+
+      const owner = response.data.owner;
+      let ownerAddress: string | undefined;
+      if (owner && typeof owner === 'object') {
+        if ('AddressOwner' in owner) ownerAddress = owner.AddressOwner;
+        else if ('ObjectOwner' in owner) ownerAddress = owner.ObjectOwner;
+      }
+
+      return {
+        id: response.data.objectId,
+        type: response.data.type || 'unknown',
+        fields: (response.data.content as any)?.fields || {},
+        owner: ownerAddress,
+        version: Number(response.data.version),
+        digest: response.data.digest,
+      };
     } catch (error) {
       console.error('Error fetching object:', error);
       return null;
@@ -146,12 +235,34 @@ class ContractInteractionService {
   }
 
   /**
-   * Get objects owned by address
+   * Get objects owned by address from blockchain
    */
-  async getOwnedObjects(address: string, objectType?: string): Promise<ContractObject[]> {
+  async getOwnedObjects(
+    address: string,
+    network: string = 'testnet',
+    objectType?: string
+  ): Promise<ContractObject[]> {
     try {
-      // In a real implementation, this would query the Sui network
-      return this.generateMockOwnedObjects(address, objectType);
+      const client = this.getClient(network);
+      const response = await client.getOwnedObjects({
+        owner: address,
+        filter: objectType ? { StructType: objectType } : undefined,
+        options: {
+          showContent: true,
+          showType: true,
+        },
+      });
+
+      return response.data
+        .filter((obj) => obj.data)
+        .map((obj) => ({
+          id: obj.data!.objectId,
+          type: obj.data!.type || 'unknown',
+          fields: (obj.data!.content as any)?.fields || {},
+          owner: address,
+          version: Number(obj.data!.version),
+          digest: obj.data!.digest,
+        }));
     } catch (error) {
       console.error('Error fetching owned objects:', error);
       return [];
@@ -159,40 +270,125 @@ class ContractInteractionService {
   }
 
   /**
-   * Estimate gas for function call
+   * Build transaction for contract call (to be signed by wallet)
    */
-  async estimateGas(params: CallContractParams): Promise<number> {
-    const contractInfo = await this.getContractInfo(params.packageId);
-    if (!contractInfo) {
-      return 10000; // Default estimate
+  buildTransaction(params: CallContractParams): Transaction {
+    const tx = new Transaction();
+
+    tx.moveCall({
+      target: `${params.packageId}::${params.moduleName}::${params.functionName}`,
+      arguments: params.arguments.map((arg) => {
+        if (typeof arg === 'string' && arg.startsWith('0x')) {
+          return tx.object(arg);
+        }
+        if (typeof arg === 'number' || typeof arg === 'bigint') {
+          return tx.pure.u64(arg);
+        }
+        if (typeof arg === 'boolean') {
+          return tx.pure.bool(arg);
+        }
+        if (typeof arg === 'string') {
+          return tx.pure.string(arg);
+        }
+        return tx.pure.u64(0);
+      }),
+      typeArguments: params.typeArguments,
+    });
+
+    if (params.gasBudget) {
+      tx.setGasBudget(params.gasBudget);
     }
 
-    const func = contractInfo.functions.find(f => f.name === params.functionName);
-    if (!func) {
-      return 10000;
-    }
-
-    // Base gas + parameter complexity + function complexity
-    let gasEstimate = func.gasEstimate;
-    
-    // Add gas for each argument
-    gasEstimate += params.arguments.length * 100;
-    
-    // Add gas for type arguments
-    if (params.typeArguments) {
-      gasEstimate += params.typeArguments.length * 50;
-    }
-
-    return gasEstimate;
+    return tx;
   }
 
   /**
-   * Get transaction history for address
+   * Dry run transaction to estimate gas
    */
-  async getTransactionHistory(address: string, limit: number = 20): Promise<TransactionResult[]> {
+  async dryRunTransaction(
+    tx: Transaction,
+    sender: string,
+    network: string = 'testnet'
+  ): Promise<{ gasUsed: number; effects: any; error?: string }> {
     try {
-      // In a real implementation, this would query the Sui network
-      return this.generateMockTransactionHistory(address, limit);
+      const client = this.getClient(network);
+      tx.setSender(sender);
+      const bytes = await tx.build({ client });
+      
+      const result = await client.dryRunTransactionBlock({
+        transactionBlock: bytes,
+      });
+
+      const gasUsed = result.effects.gasUsed;
+      const totalGas =
+        Number(gasUsed.computationCost) +
+        Number(gasUsed.storageCost) -
+        Number(gasUsed.storageRebate);
+
+      return {
+        gasUsed: totalGas,
+        effects: result.effects,
+        error: result.effects.status.status === 'failure' 
+          ? JSON.stringify(result.effects.status.error) 
+          : undefined,
+      };
+    } catch (error: any) {
+      return { gasUsed: 0, effects: {}, error: error.message };
+    }
+  }
+
+  /**
+   * Get real transaction history for address
+   */
+  async getTransactionHistory(
+    address: string,
+    network: string = 'testnet',
+    limit: number = 20
+  ): Promise<TransactionResult[]> {
+    try {
+      const client = this.getClient(network);
+      const response = await client.queryTransactionBlocks({
+        filter: { FromAddress: address },
+        options: {
+          showEffects: true,
+          showEvents: true,
+          showObjectChanges: true,
+        },
+        limit,
+        order: 'descending',
+      });
+
+      return response.data.map((tx) => {
+        const gasUsed = tx.effects?.gasUsed;
+        const totalGas = gasUsed
+          ? Number(gasUsed.computationCost) + Number(gasUsed.storageCost) - Number(gasUsed.storageRebate)
+          : 0;
+
+        return {
+          digest: tx.digest,
+          status: tx.effects?.status.status === 'success' ? 'success' : 'failure',
+          gasUsed: totalGas,
+          effects: {
+            created: tx.objectChanges?.filter((c) => c.type === 'created').map((c: any) => ({
+              id: c.objectId,
+              type: c.objectType,
+              fields: {},
+              version: Number(c.version),
+            })) || [],
+            mutated: tx.objectChanges?.filter((c) => c.type === 'mutated').map((c: any) => ({
+              id: c.objectId,
+              type: c.objectType,
+              fields: {},
+              version: Number(c.version),
+            })) || [],
+            deleted: tx.objectChanges?.filter((c) => c.type === 'deleted').map((c: any) => c.objectId) || [],
+            events: tx.events || [],
+          },
+          error: tx.effects?.status.status === 'failure' 
+            ? JSON.stringify(tx.effects.status.error) 
+            : undefined,
+        };
+      });
     } catch (error) {
       console.error('Error fetching transaction history:', error);
       return [];
@@ -200,241 +396,38 @@ class ContractInteractionService {
   }
 
   /**
-   * Dry run transaction
+   * Get coin balance for address
    */
-  async dryRunTransaction(params: CallContractParams): Promise<{
-    gasUsed: number;
-    effects: any;
-    error?: string;
-  }> {
+  async getBalance(address: string, coinType: string = '0x2::sui::SUI', network: string = 'testnet'): Promise<bigint> {
     try {
-      const gasUsed = await this.estimateGas(params);
-      
-      return {
-        gasUsed,
-        effects: {
-          status: 'success',
-          gasUsed,
-          created: [],
-          mutated: [],
-          deleted: []
-        }
-      };
-    } catch (error: any) {
-      return {
-        gasUsed: 0,
-        effects: {},
-        error: error.message
-      };
+      const client = this.getClient(network);
+      const balance = await client.getBalance({ owner: address, coinType });
+      return BigInt(balance.totalBalance);
+    } catch (error) {
+      console.error('Error fetching balance:', error);
+      return BigInt(0);
     }
   }
 
   /**
-   * Generate mock contract info
+   * Get all coin balances for address
    */
-  private generateMockContractInfo(packageId: string): ContractInfo {
-    const mockFunctions: ContractFunction[] = [
-      {
-        name: 'mint',
-        parameters: [
-          { name: 'recipient', type: 'address', required: true, description: 'Address to receive the minted token' },
-          { name: 'amount', type: 'u64', required: true, description: 'Amount to mint' }
-        ],
-        returnType: 'Coin<T>',
-        visibility: 'public',
-        isEntry: true,
-        gasEstimate: 2500
-      },
-      {
-        name: 'transfer',
-        parameters: [
-          { name: 'coin', type: 'Coin<T>', required: true, description: 'Coin to transfer' },
-          { name: 'recipient', type: 'address', required: true, description: 'Recipient address' }
-        ],
-        visibility: 'public',
-        isEntry: true,
-        gasEstimate: 1500
-      },
-      {
-        name: 'burn',
-        parameters: [
-          { name: 'coin', type: 'Coin<T>', required: true, description: 'Coin to burn' }
-        ],
-        returnType: 'u64',
-        visibility: 'public',
-        isEntry: true,
-        gasEstimate: 2000
-      },
-      {
-        name: 'balance',
-        parameters: [
-          { name: 'coin', type: '&Coin<T>', required: true, description: 'Coin to check balance' }
-        ],
-        returnType: 'u64',
-        visibility: 'public',
-        isEntry: false,
-        gasEstimate: 500
-      }
-    ];
-
-    const mockStructs: ContractStruct[] = [
-      {
-        name: 'Coin',
-        fields: [
-          { name: 'id', type: 'UID' },
-          { name: 'balance', type: 'Balance<T>' }
-        ],
-        abilities: ['key']
-      },
-      {
-        name: 'TreasuryCap',
-        fields: [
-          { name: 'id', type: 'UID' },
-          { name: 'total_supply', type: 'Supply<T>' }
-        ],
-        abilities: ['key']
-      }
-    ];
-
-    return {
-      packageId,
-      moduleName: 'coin',
-      functions: mockFunctions,
-      structs: mockStructs,
-      address: packageId,
-      version: '1.0.0',
-      publisher: '0x1234567890abcdef',
-      publishedAt: new Date()
-    };
-  }
-
-  /**
-   * Generate mock object
-   */
-  private generateMockObject(objectId: string): ContractObject {
-    return {
-      id: objectId,
-      type: '0x2::coin::Coin<0x2::sui::SUI>',
-      fields: {
-        id: { id: objectId },
-        balance: Math.floor(Math.random() * 1000000)
-      },
-      owner: '0x' + Math.random().toString(16).substring(2, 42),
-      version: 1
-    };
-  }
-
-  /**
-   * Generate mock owned objects
-   */
-  private generateMockOwnedObjects(address: string, objectType?: string): ContractObject[] {
-    const objects: ContractObject[] = [];
-    const count = Math.floor(Math.random() * 10) + 1;
-
-    for (let i = 0; i < count; i++) {
-      const objectId = '0x' + Math.random().toString(16).substring(2, 42);
-      objects.push({
-        id: objectId,
-        type: objectType || '0x2::coin::Coin<0x2::sui::SUI>',
-        fields: {
-          id: { id: objectId },
-          balance: Math.floor(Math.random() * 1000000)
-        },
-        owner: address,
-        version: 1
-      });
+  async getAllBalances(address: string, network: string = 'testnet'): Promise<Array<{ coinType: string; balance: bigint }>> {
+    try {
+      const client = this.getClient(network);
+      const balances = await client.getAllBalances({ owner: address });
+      return balances.map((b) => ({
+        coinType: b.coinType,
+        balance: BigInt(b.totalBalance),
+      }));
+    } catch (error) {
+      console.error('Error fetching all balances:', error);
+      return [];
     }
-
-    return objects;
   }
 
-  /**
-   * Simulate transaction execution
-   */
-  private async simulateTransaction(params: CallContractParams, func: ContractFunction): Promise<TransactionResult> {
-    const gasUsed = await this.estimateGas(params);
-    const digest = '0x' + Math.random().toString(16).substring(2, 66);
-
-    // Simulate different outcomes based on function
-    const effects: any = {
-      created: [],
-      mutated: [],
-      deleted: [],
-      events: []
-    };
-
-    if (func.name === 'mint') {
-      // Create new coin object
-      const newCoinId = '0x' + Math.random().toString(16).substring(2, 42);
-      effects.created.push({
-        id: newCoinId,
-        type: '0x2::coin::Coin<T>',
-        fields: {
-          id: { id: newCoinId },
-          balance: params.arguments[1] || 1000
-        },
-        owner: params.arguments[0] || params.sender,
-        version: 1
-      });
-    } else if (func.name === 'transfer') {
-      // Mutate existing coin object
-      const coinId = params.arguments[0];
-      effects.mutated.push({
-        id: coinId,
-        type: '0x2::coin::Coin<T>',
-        fields: {
-          id: { id: coinId },
-          balance: Math.floor(Math.random() * 1000000)
-        },
-        owner: params.arguments[1],
-        version: 2
-      });
-    } else if (func.name === 'burn') {
-      // Delete coin object
-      effects.deleted.push(params.arguments[0]);
-    }
-
-    // Add event
-    effects.events.push({
-      type: `${params.packageId}::${params.moduleName}::${func.name}Event`,
-      fields: {
-        sender: params.sender || '0x1234567890abcdef',
-        timestamp: Date.now()
-      }
-    });
-
-    return {
-      digest,
-      status: 'success',
-      gasUsed,
-      effects
-    };
-  }
-
-  /**
-   * Generate mock transaction history
-   */
-  private generateMockTransactionHistory(address: string, limit: number): TransactionResult[] {
-    const transactions: TransactionResult[] = [];
-
-    for (let i = 0; i < limit; i++) {
-      const digest = '0x' + Math.random().toString(16).substring(2, 66);
-      const gasUsed = Math.floor(Math.random() * 5000) + 1000;
-
-      transactions.push({
-        digest,
-        status: Math.random() > 0.1 ? 'success' : 'failure',
-        gasUsed,
-        effects: {
-          created: [],
-          mutated: [],
-          deleted: [],
-          events: []
-        }
-      });
-    }
-
-    return transactions;
+  clearCache(): void {
+    this.contractCache.clear();
   }
 }
 

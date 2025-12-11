@@ -1,4 +1,4 @@
-import { apiService } from './api';
+import { apiService } from './apiService';
 
 export interface SuiPackage {
   name: string;
@@ -29,88 +29,132 @@ export interface InstallResult {
 }
 
 class PackageService {
-  async getPackages(): Promise<{ success: boolean; data?: SuiPackage[]; total?: number; error?: string }> {
+  /**
+   * Get all available packages
+   */
+  async getPackages(): Promise<SuiPackage[]> {
     try {
-      const response = await apiService.get<{ success: boolean; data: SuiPackage[]; total: number }>('/packages');
-      return response;
-    } catch (error: any) {
-      return { success: false, error: error.message };
+      const response = await apiService.get('/packages');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching packages:', error);
+      return [];
     }
   }
 
-  async searchPackages(query?: string, category?: string): Promise<{ success: boolean; data?: SuiPackage[]; total?: number; error?: string }> {
+  /**
+   * Search packages
+   */
+  async searchPackages(query?: string, category?: string): Promise<PackageSearchResult> {
     try {
       const params = new URLSearchParams();
       if (query) params.append('query', query);
       if (category) params.append('category', category);
       
-      const response = await apiService.get<{ success: boolean; data: SuiPackage[]; total: number }>(`/packages/search?${params}`);
-      return response;
-    } catch (error: any) {
-      return { success: false, error: error.message };
+      const response = await apiService.get(`/packages/search?${params}`);
+      return {
+        packages: response.data,
+        total: response.total,
+        categories: []
+      };
+    } catch (error) {
+      console.error('Error searching packages:', error);
+      return { packages: [], total: 0, categories: [] };
     }
   }
 
-  async getCategories(): Promise<{ success: boolean; data?: string[]; error?: string }> {
+  /**
+   * Get all package categories
+   */
+  async getCategories(): Promise<string[]> {
     try {
-      const response = await apiService.get<{ success: boolean; data: string[] }>('/packages/categories');
-      return response;
-    } catch (error: any) {
-      return { success: false, error: error.message };
+      const response = await apiService.get('/packages/categories');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      return [];
     }
   }
 
-  async getPackageDetails(packageName: string): Promise<{ success: boolean; data?: SuiPackage; error?: string }> {
+  /**
+   * Get package details
+   */
+  async getPackageDetails(packageName: string): Promise<SuiPackage | null> {
     try {
-      const response = await apiService.get<{ success: boolean; data: SuiPackage }>(`/packages/${packageName}`);
-      return response;
-    } catch (error: any) {
-      return { success: false, error: error.message };
+      const response = await apiService.get(`/packages/${packageName}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching package details:', error);
+      return null;
     }
   }
 
+  /**
+   * Install a package
+   */
   async installPackage(packageName: string, projectPath?: string): Promise<InstallResult> {
     try {
-      const response = await apiService.post<InstallResult>('/packages/install', {
+      const response = await apiService.post('/packages/install', {
         packageName,
         projectPath
       });
-      return response;
+      return response.data;
     } catch (error: any) {
-      return { success: false, package: packageName, version: '', error: error.message };
+      return { 
+        success: false, 
+        package: packageName, 
+        version: '', 
+        error: error.message 
+      };
     }
   }
 
+  /**
+   * Uninstall a package
+   */
   async uninstallPackage(packageName: string, projectPath?: string): Promise<InstallResult> {
     try {
-      const response = await apiService.post<InstallResult>('/packages/uninstall', {
+      const response = await apiService.post('/packages/uninstall', {
         packageName,
         projectPath
       });
-      return response;
+      return response.data;
     } catch (error: any) {
-      return { success: false, package: packageName, version: '', error: error.message };
+      return { 
+        success: false, 
+        package: packageName, 
+        version: '', 
+        error: error.message 
+      };
     }
   }
 
-  async generateMoveToml(projectName: string, packages: string[]): Promise<{ success: boolean; data?: { toml: string; packages: SuiPackage[] }; error?: string }> {
+  /**
+   * Generate Move.toml with selected packages
+   */
+  async generateMoveToml(projectName: string, packages: string[]): Promise<{ toml: string; packages: SuiPackage[] }> {
     try {
-      const response = await apiService.post<{ success: boolean; data: { toml: string; packages: SuiPackage[] } }>('/packages/generate-toml', {
+      const response = await apiService.post('/packages/generate-toml', {
         projectName,
         packages
       });
-      return response;
-    } catch (error: any) {
-      return { success: false, error: error.message };
+      return response.data;
+    } catch (error) {
+      console.error('Error generating Move.toml:', error);
+      throw error;
     }
   }
 
-  async verifyPackage(packageName: string): Promise<{ success: boolean; data?: { package: string; verified: boolean }; error?: string }> {
+  /**
+   * Verify package integrity
+   */
+  async verifyPackage(packageName: string): Promise<boolean> {
     try {
-      const response = await apiService.get<{ success: boolean; data: { package: string; verified: boolean } }>(`/packages/${packageName}/verify`);
-      return response;
-    } catch (error: any) {
-      return { success: false, error: error.message };
+      const response = await apiService.get(`/packages/${packageName}/verify`);
+      return response.data.verified;
+    } catch (error) {
+      console.error('Error verifying package:', error);
+      return false;
     }
   }
 }
