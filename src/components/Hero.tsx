@@ -1,8 +1,11 @@
 
-import React from 'react';
-import { ArrowRight, Play } from 'lucide-react';
+
+import React, { useState } from 'react';
+import { ArrowRight, Play, Download, ChevronDown } from 'lucide-react';
 
 const Hero: React.FC = () => {
+    const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+
     return (
         <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
             {/* Content Container */}
@@ -32,10 +35,59 @@ const Hero: React.FC = () => {
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </button>
 
-                    <button className="w-full sm:w-auto px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 group">
-                        <Play className="w-4 h-4 fill-white" />
-                        View demo
-                    </button>
+                    {/* Download Button with Dropdown */}
+                    <div className="relative w-full sm:w-auto">
+                        <button
+                            onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                            onBlur={() => setTimeout(() => setShowDownloadMenu(false), 200)}
+                            className="w-full sm:w-auto px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 group"
+                        >
+                            <Download className="w-4 h-4" />
+                            Download
+                            <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showDownloadMenu ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {/* Dropdown Menu */}
+                        {showDownloadMenu && (
+                            <div className="absolute top-full left-0 right-0 mt-2 bg-[#0A0A0A] border border-white/10 rounded-xl shadow-2xl overflow-hidden backdrop-blur-xl z-50 animate-fade-in min-w-[280px]">
+                                <a
+                                    href="https://github.com/Abdulazeez20012/sui-studio/releases/download/v1.0.0/Sui-Studio-Linux-1.0.0.AppImage"
+                                    download
+                                    className="flex items-center gap-3 px-6 py-4 hover:bg-white/5 transition-all duration-200 border-b border-white/5 group"
+                                    onClick={() => setShowDownloadMenu(false)}
+                                >
+                                    <div className="w-10 h-10 bg-cyan-500/10 rounded-lg flex items-center justify-center border border-cyan-500/30 flex-shrink-0">
+                                        <svg className="w-5 h-5 text-cyan-400" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
+                                        </svg>
+                                    </div>
+                                    <div className="flex-1 text-left">
+                                        <div className="text-white font-semibold text-sm">Download for Linux</div>
+                                        <div className="text-xs text-gray-400">AppImage • v1.0.0</div>
+                                    </div>
+                                    <Download className="w-4 h-4 text-gray-400 group-hover:text-cyan-400 transition-colors flex-shrink-0" />
+                                </a>
+
+                                <a
+                                    href="https://github.com/Abdulazeez20012/sui-studio/releases/download/v1.0.0/Sui-Studio-1.0.0-Windows-Portable.zip"
+                                    download
+                                    className="flex items-center gap-3 px-6 py-4 hover:bg-white/5 transition-all duration-200 group"
+                                    onClick={() => setShowDownloadMenu(false)}
+                                >
+                                    <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center border border-blue-500/30 flex-shrink-0">
+                                        <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801" />
+                                        </svg>
+                                    </div>
+                                    <div className="flex-1 text-left">
+                                        <div className="text-white font-semibold text-sm">Download for Windows</div>
+                                        <div className="text-xs text-gray-400">Portable ZIP • v1.0.0</div>
+                                    </div>
+                                    <Download className="w-4 h-4 text-gray-400 group-hover:text-blue-400 transition-colors flex-shrink-0" />
+                                </a>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Optional: Floating Code Snippet / Visual based on design */}

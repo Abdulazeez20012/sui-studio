@@ -287,7 +287,7 @@ class ContractService {
     try {
       const client = this.getClient(network);
       const response = await client.queryEvents({
-        query: { Package: packageId },
+        query: { MoveModule: { package: packageId, module: '' } },
         limit,
         order: 'descending',
       });

@@ -15,7 +15,7 @@ export const FolderContextMenu: React.FC<FolderContextMenuProps> = ({
   position,
   onClose,
 }) => {
-  const { addFile, addFolder } = useIDEStore();
+  const { openFile, files, setFiles } = useIDEStore();
   const [showModuleDialog, setShowModuleDialog] = useState(false);
   const [moduleName, setModuleName] = useState('');
 

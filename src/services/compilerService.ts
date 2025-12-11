@@ -1,5 +1,5 @@
 import { apiService } from './apiService';
-import { logger } from '@/utils/logger';
+import { logger } from '../utils/logger';
 
 export interface CompilationResult {
   success: boolean;
@@ -136,7 +136,7 @@ class CompilerService {
     testPassed: boolean;
   }> {
     try {
-      const response = await fetch(`${apiService.getBaseURL()}/api/compile/health`);
+      const response = await fetch(`${apiService['baseURL']}/api/compile/health`);
       return await response.json();
     } catch (error: any) {
       logger.error('Health check error', error);

@@ -88,7 +88,7 @@ export const PackageManager: React.FC = () => {
     try {
       const installed = packages.filter(p => p.installed).map(p => p.name);
       const toml = await packageService.generateMoveToml('my_project', installed);
-      navigator.clipboard.writeText(toml);
+      navigator.clipboard.writeText(toml.toml);
       alert('Move.toml copied to clipboard!');
     } catch (error) {
       console.error('Generate error:', error);
