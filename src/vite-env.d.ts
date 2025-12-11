@@ -9,6 +9,7 @@ interface ImportMetaEnv {
   readonly VITE_SUBSCRIPTION_TREASURY_ID: string;
   readonly VITE_SUBSCRIPTION_PRICING_ID: string;
   readonly VITE_SUBSCRIPTION_CLOCK_ID: string;
+  readonly VITE_SUI_NETWORK: string;
 }
 
 interface ImportMeta {
