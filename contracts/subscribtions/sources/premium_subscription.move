@@ -1,19 +1,15 @@
-
 /// Premium Subscription System for Sui Studio
-
-/// NFT-based subscription management with tiered pricin
-
+/// NFT-based subscription management with tiered pricing
+#[allow(lint(public_entry, custom_state_change))]
 module subscribtions::premium_subscription {
-    use sui::object::{Self, UID, ID};
-    use sui::transfer;
-    use sui::tx_context::{Self, TxContext};
+    // Sui Move 2024: Only import what's NOT auto-imported
     use sui::coin::{Self, Coin};
     use sui::sui::SUI;
     use sui::balance::{Self, Balance};
-    use sui::clock::{Self, Clock}
+    use sui::clock::{Self, Clock};
     use sui::event;
 
-    
+    // === Constants ===
     const TIER_PRO: u8 = 1;
     const TIER_TEAM: u8 = 2;
     const TIER_ENTERPRISE: u8 = 3;
@@ -23,22 +19,18 @@ module subscribtions::premium_subscription {
     
     const SECONDS_PER_MONTH: u64 = 2592000; // 30 days
 
- 
-    
+    // === Errors ===
     const EInvalidTier: u64 = 0;
     const EInvalidDuration: u64 = 1;
     const EInsufficientPayment: u64 = 2;
     const ENotOwner: u64 = 3;
-    const ENotAuthorized: u64 = 4;
 
-
-
+    // === Structs ===
     public struct AdminCap has key, store {
         id: UID,
     }
 
     /// Subscription NFT representing premium access
-
     public struct SubscriptionNFT has key, store {
         id: UID,
         tier: u8,
@@ -48,7 +40,6 @@ module subscribtions::premium_subscription {
         auto_renew: bool,
     }
 
-
     public struct Treasury has key {
         id: UID,
         balance: Balance<SUI>,
@@ -56,7 +47,6 @@ module subscribtions::premium_subscription {
         total_revenue: u64,
         total_subscriptions: u64,
     }
-
 
     public struct PricingConfig has key {
         id: UID,
@@ -68,7 +58,7 @@ module subscribtions::premium_subscription {
         enterprise_yearly: u64,
     }
 
-
+    // === Events ===
     public struct SubscriptionPurchased has copy, drop {
         nft_id: ID,
         buyer: address,
@@ -109,19 +99,17 @@ module subscribtions::premium_subscription {
         timestamp: u64,
     }
 
-
+    // === Init ===
     fun init(ctx: &mut TxContext) {
-        // Create admin capability
         let admin_cap = AdminCap {
             id: object::new(ctx),
         };
-        transfer::transfer(admin_cap, tx_context::sender(ctx));
+        transfer::transfer(admin_cap, ctx.sender());
 
-        // Create treasury
         let treasury = Treasury {
             id: object::new(ctx),
             balance: balance::zero(),
-            owner: tx_context::sender(ctx),
+            owner: ctx.sender(),
             total_revenue: 0,
             total_subscriptions: 0,
         };
@@ -129,19 +117,19 @@ module subscribtions::premium_subscription {
 
         let pricing = PricingConfig {
             id: object::new(ctx),
-            pro_monthly: 10_000_000_000,        // 10 SUI/month
-            pro_yearly: 100_000_000_000,        // 100 SUI/year (2 months free)
-            team_monthly: 50_000_000_000,       // 50 SUI/month
-            team_yearly: 500_000_000_000,       // 500 SUI/year
-            enterprise_monthly: 200_000_000_000, // 200 SUI/month
-            enterprise_yearly: 2_000_000_000_000, // 2000 SUI/year
+            pro_monthly: 10_000_000_000,
+            pro_yearly: 100_000_000_000,
+            team_monthly: 50_000_000_000,
+            team_yearly: 500_000_000_000,
+            enterprise_monthly: 200_000_000_000,
+            enterprise_yearly: 2_000_000_000_000,
         };
         transfer::share_object(pricing);
     }
 
-
+    // === Entry Functions ===
+    
     /// Purchase a new subscription
-
     public entry fun purchase_subscription(
         payment: Coin<SUI>,
         tier: u8,
@@ -151,48 +139,36 @@ module subscribtions::premium_subscription {
         clock: &Clock,
         ctx: &mut TxContext
     ) {
-        // Validate inputs
-
         assert!(tier >= TIER_PRO && tier <= TIER_ENTERPRISE, EInvalidTier);
         assert!(duration_months == DURATION_MONTHLY || duration_months == DURATION_YEARLY, EInvalidDuration);
-
-        // Calculate required payment
 
         let required_amount = get_price(pricing, tier, duration_months);
         let paid_amount = coin::value(&payment);
         assert!(paid_amount >= required_amount, EInsufficientPayment);
-
-        // Add payment to treasury
 
         let payment_balance = coin::into_balance(payment);
         balance::join(&mut treasury.balance, payment_balance);
         treasury.total_revenue = treasury.total_revenue + paid_amount;
         treasury.total_subscriptions = treasury.total_subscriptions + 1;
 
-        // Calculate expiry timestamp
-
         let current_time = clock::timestamp_ms(clock) / 1000;
         let duration_seconds = (duration_months as u64) * SECONDS_PER_MONTH;
         let expires_at = current_time + duration_seconds;
-
-        // Create subscription NFT
 
         let nft = SubscriptionNFT {
             id: object::new(ctx),
             tier,
             expires_at,
-            user_address: tx_context::sender(ctx),
+            user_address: ctx.sender(),
             issued_at: current_time,
             auto_renew: false,
         };
 
         let nft_id = object::id(&nft);
 
-        // Emit purchase event
-
         event::emit(SubscriptionPurchased {
             nft_id,
-            buyer: tx_context::sender(ctx),
+            buyer: ctx.sender(),
             tier,
             duration_months,
             amount_paid: paid_amount,
@@ -200,13 +176,10 @@ module subscribtions::premium_subscription {
             timestamp: current_time,
         });
 
-        // Transfer NFT to buyer
-
-        transfer::transfer(nft, tx_context::sender(ctx));
+        transfer::transfer(nft, ctx.sender());
     }
 
     /// Renew an existing subscription
-
     public entry fun renew_subscription(
         nft: &mut SubscriptionNFT,
         payment: Coin<SUI>,
@@ -216,40 +189,29 @@ module subscribtions::premium_subscription {
         clock: &Clock,
         ctx: &mut TxContext
     ) {
-        // Verify ownership
-
-        assert!(nft.user_address == tx_context::sender(ctx), ENotOwner);
+        assert!(nft.user_address == ctx.sender(), ENotOwner);
         assert!(duration_months == DURATION_MONTHLY || duration_months == DURATION_YEARLY, EInvalidDuration);
-
-        // Calculate payment
 
         let required_amount = get_price(pricing, nft.tier, duration_months);
         let paid_amount = coin::value(&payment);
         assert!(paid_amount >= required_amount, EInsufficientPayment);
 
-        // Add payment to treasury
-
         let payment_balance = coin::into_balance(payment);
         balance::join(&mut treasury.balance, payment_balance);
         treasury.total_revenue = treasury.total_revenue + paid_amount;
 
-        // Extend expiry
-
         let current_time = clock::timestamp_ms(clock) / 1000;
         let duration_seconds = (duration_months as u64) * SECONDS_PER_MONTH;
         
-        // If expired, start from now; otherwise extend from current expiry
         if (nft.expires_at < current_time) {
             nft.expires_at = current_time + duration_seconds;
         } else {
             nft.expires_at = nft.expires_at + duration_seconds;
         };
 
-        // Emit renewal event
-
         event::emit(SubscriptionRenewed {
             nft_id: object::id(nft),
-            owner: tx_context::sender(ctx),
+            owner: ctx.sender(),
             tier: nft.tier,
             new_expiry: nft.expires_at,
             amount_paid: paid_amount,
@@ -258,43 +220,37 @@ module subscribtions::premium_subscription {
     }
 
     /// Toggle auto-renewal setting
-
     public entry fun set_auto_renew(
         nft: &mut SubscriptionNFT,
         auto_renew: bool,
         ctx: &mut TxContext
     ) {
-        assert!(nft.user_address == tx_context::sender(ctx), ENotOwner);
+        assert!(nft.user_address == ctx.sender(), ENotOwner);
         nft.auto_renew = auto_renew;
     }
 
     /// Cancel subscription (burns NFT)
-
     public entry fun cancel_subscription(
         nft: SubscriptionNFT,
         clock: &Clock,
         ctx: &mut TxContext
     ) {
-        assert!(nft.user_address == tx_context::sender(ctx), ENotOwner);
+        assert!(nft.user_address == ctx.sender(), ENotOwner);
         
         let current_time = clock::timestamp_ms(clock) / 1000;
         let nft_id = object::id(&nft);
         let tier = nft.tier;
         
-        // Emit cancellation event
         event::emit(SubscriptionCancelled {
             nft_id,
-            owner: tx_context::sender(ctx),
+            owner: ctx.sender(),
             tier,
             timestamp: current_time,
         });
 
-        // Destroy the NFT
-        
         let SubscriptionNFT { id, tier: _, expires_at: _, user_address: _, issued_at: _, auto_renew: _ } = nft;
         object::delete(id);
     }
-
 
     /// Withdraw funds from treasury (admin only)
     public entry fun withdraw_funds(
@@ -367,7 +323,8 @@ module subscribtions::premium_subscription {
         transfer::transfer(admin_cap, new_admin);
     }
 
-
+    // === View Functions ===
+    
     /// Check if subscription is currently active
     public fun is_active(nft: &SubscriptionNFT, clock: &Clock): bool {
         let current_time = clock::timestamp_ms(clock) / 1000;
@@ -395,7 +352,7 @@ module subscribtions::premium_subscription {
         if (nft.expires_at <= current_time) {
             0
         } else {
-            (nft.expires_at - current_time) / 86400 // Convert seconds to days
+            (nft.expires_at - current_time) / 86400
         }
     }
 
@@ -438,7 +395,6 @@ module subscribtions::premium_subscription {
             pricing.enterprise_yearly
         )
     }
-
 
     #[test_only]
     public fun init_for_testing(ctx: &mut TxContext) {
