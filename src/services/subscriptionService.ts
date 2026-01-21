@@ -11,7 +11,7 @@ const PACKAGE_ID = import.meta.env.VITE_SUBSCRIPTION_PACKAGE_ID;
 const TREASURY_ID = import.meta.env.VITE_SUBSCRIPTION_TREASURY_ID;
 const PRICING_ID = import.meta.env.VITE_SUBSCRIPTION_PRICING_ID;
 const CLOCK_ID = import.meta.env.VITE_SUBSCRIPTION_CLOCK_ID || '0x6';
-const RPC_URL = import.meta.env.VITE_SUI_RPC_URL || 'https://fullnode.testnet.sui.io:443';
+const RPC_URL = import.meta.env.VITE_SUI_RPC_URL || 'https://fullnode.mainet.sui.io:443';
 
 // Subscription tiers
 export enum SubscriptionTier {
@@ -125,8 +125,8 @@ class SubscriptionService {
   /**
    * Create a transaction to cancel a subscription
    */
-  createCancellationTransaction(nftId: string): TransactionBlock {
-    const tx = new TransactionBlock();
+  createCancellationTransaction(nftId: string): Transaction {
+    const tx = new Transaction();
 
     tx.moveCall({
       target: `${PACKAGE_ID}::premium_subscription::cancel_subscription`,

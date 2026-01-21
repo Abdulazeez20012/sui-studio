@@ -25,9 +25,9 @@ const SearchPanel: React.FC = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [fileResults, setFileResults] = useState<FileResults[]>([]);
   const [totalMatches, setTotalMatches] = useState(0);
-  
-  const { files, addTab, setActiveTab, tabs } = useIDEStore();
-  const { readFile, isElectron } = useElectronFileSystem();
+
+  const { files, addTab, setActiveTab, tabs, updateTabContent } = useIDEStore();
+  const { readFile, writeFile, isElectron } = useElectronFileSystem();
 
   // Perform search when query changes
   useEffect(() => {
@@ -44,12 +44,14 @@ const SearchPanel: React.FC = () => {
 
     setIsSearching(true);
     const results: FileResults[] = [];
-    let totalCount = 0;
 
     try {
       // Search through all files
       await searchInFiles(files, results);
-      
+
+      // Calculate total matches
+      const totalCount = results.reduce((sum, fr) => sum + fr.results.length, 0);
+
       setFileResults(results);
       setTotalMatches(totalCount);
     } catch (error) {
@@ -78,11 +80,11 @@ const SearchPanel: React.FC = () => {
 
   const searchInFile = async (fileNode: any): Promise<SearchResult[]> => {
     const results: SearchResult[] = [];
-    
+
     try {
       // Get file content
       let content = fileNode.content || '';
-      
+
       // If in Electron and no content, try to read from disk
       if (isElectron && !content && fileNode.path) {
         const fileContent = await readFile(fileNode.path);
@@ -92,7 +94,7 @@ const SearchPanel: React.FC = () => {
       if (!content) return results;
 
       const lines = content.split('\n');
-      
+
       // Create search pattern
       let searchPattern: RegExp;
       try {
@@ -174,15 +176,87 @@ const SearchPanel: React.FC = () => {
   };
 
   const toggleFileExpanded = (index: number) => {
-    setFileResults(prev => prev.map((fr, i) => 
+    setFileResults(prev => prev.map((fr, i) =>
       i === index ? { ...fr, expanded: !fr.expanded } : fr
     ));
   };
 
-  const handleReplaceAll = () => {
+  const handleReplaceAll = async () => {
     if (!replaceQuery && replaceQuery !== '') return;
-    // TODO: Implement replace all functionality
-    alert('Replace all functionality coming soon!');
+    if (fileResults.length === 0) return;
+
+    const confirmMessage = `Replace all ${totalMatches} occurrences in ${fileResults.length} files?`;
+    if (!confirm(confirmMessage)) return;
+
+    setIsSearching(true);
+
+    try {
+      // Process each file with matches
+      for (const fileResult of fileResults) {
+        const findFile = (nodes: any[]): any => {
+          for (const node of nodes) {
+            if (node.type === 'file' && node.path === fileResult.filePath) {
+              return node;
+            }
+            if (node.type === 'folder' && node.children) {
+              const found = findFile(node.children);
+              if (found) return found;
+            }
+          }
+          return null;
+        };
+
+        const fileNode = findFile(files);
+        if (!fileNode) continue;
+
+        // Get file content
+        let content = fileNode.content || '';
+        if (isElectron && !content) {
+          const fileContent = await readFile(fileResult.filePath);
+          content = fileContent || '';
+        }
+
+        // Perform replacement
+        let newContent: string;
+        if (useRegex) {
+          try {
+            const pattern = new RegExp(searchQuery, caseSensitive ? 'g' : 'gi');
+            newContent = content.replace(pattern, replaceQuery);
+          } catch (e) {
+            // Invalid regex, skip this file
+            continue;
+          }
+        } else {
+          const pattern = new RegExp(
+            searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+            caseSensitive ? 'g' : 'gi'
+          );
+          newContent = content.replace(pattern, replaceQuery);
+        }
+
+        // Update tab if file is open
+        const openTab = tabs.find(t => t.path === fileResult.filePath);
+        if (openTab) {
+          updateTabContent(openTab.id, newContent);
+        }
+
+        // Save to disk if in Electron
+        if (isElectron && fileNode.path) {
+          await writeFile(fileNode.path, newContent);
+        }
+      }
+
+      // Clear search results and show success message
+      alert(`Successfully replaced ${totalMatches} occurrences in ${fileResults.length} files`);
+
+      // Re-run search to show updated results
+      performSearch();
+    } catch (error: any) {
+      console.error('Replace all error:', error);
+      alert(`Error during replace: ${error.message}`);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   return (
@@ -192,7 +266,7 @@ const SearchPanel: React.FC = () => {
         <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">
           Search
         </h3>
-        
+
         {/* Search Input */}
         <div className="space-y-2">
           <div className="relative">
@@ -239,22 +313,20 @@ const SearchPanel: React.FC = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setCaseSensitive(!caseSensitive)}
-              className={`p-1.5 rounded transition-colors ${
-                caseSensitive 
-                  ? 'bg-walrus-cyan/20 text-walrus-cyan' 
-                  : 'bg-white/5 text-gray-500 hover:text-white'
-              }`}
+              className={`p-1.5 rounded transition-colors ${caseSensitive
+                ? 'bg-walrus-cyan/20 text-walrus-cyan'
+                : 'bg-white/5 text-gray-500 hover:text-white'
+                }`}
               title="Case Sensitive"
             >
               <CaseSensitive size={14} />
             </button>
             <button
               onClick={() => setUseRegex(!useRegex)}
-              className={`p-1.5 rounded transition-colors ${
-                useRegex 
-                  ? 'bg-walrus-cyan/20 text-walrus-cyan' 
-                  : 'bg-white/5 text-gray-500 hover:text-white'
-              }`}
+              className={`p-1.5 rounded transition-colors ${useRegex
+                ? 'bg-walrus-cyan/20 text-walrus-cyan'
+                : 'bg-white/5 text-gray-500 hover:text-white'
+                }`}
               title="Use Regular Expression"
             >
               <Regex size={14} />

@@ -8,14 +8,17 @@ import { registerMoveLanguage } from '../../utils/moveLanguage';
 import { collaborationService } from '../../services/collaborationService';
 import { useYjsCollaboration } from '../../hooks/useYjsCollaboration';
 import { CollaborationIndicator } from './CollaborationIndicator';
+import { useElectronFileSystem } from '../../hooks/useElectronFileSystem';
 import './CodeEditor.css';
 
 const CodeEditor: React.FC = () => {
-  const { tabs, activeTab, updateTabContent, files } = useIDEStore();
+  const { tabs, activeTab, updateTabContent, files, markTabAsSaved } = useIDEStore();
   const { fontSize, tabSize, wordWrap, minimap, lineNumbers } = useSettingsStore();
+  const { writeFile, isElectron, currentFolder } = useElectronFileSystem();
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<any>(null);
   const [enableYjs, setEnableYjs] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   const currentTab = tabs.find(t => t.id === activeTab);
 
@@ -26,12 +29,51 @@ const CodeEditor: React.FC = () => {
   // Track remote cursors decorations and widgets
   const remoteCursorsRef = useRef<Map<string, { decorationIds: string[], widgetId: string | null }>>(new Map());
 
+  // Save file function
+  const handleSave = async () => {
+    if (!currentTab) return;
+
+    setSaveStatus('saving');
+
+    try {
+      if (isElectron && currentFolder && currentTab.path) {
+        // Electron: Save to disk
+        await writeFile(currentTab.path, currentTab.content);
+        setSaveStatus('saved');
+
+        // Mark tab as not dirty
+        markTabAsSaved(activeTab!);
+
+        // Show success message briefly
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      } else {
+        // Web: Save to localStorage as fallback
+        const savedFiles = localStorage.getItem('ide_files') || '{}';
+        const files = JSON.parse(savedFiles);
+        files[currentTab.path || currentTab.name] = currentTab.content;
+        localStorage.setItem('ide_files', JSON.stringify(files));
+
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      }
+    } catch (error: any) {
+      console.error('Failed to save file:', error);
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    }
+  };
+
   const handleEditorDidMount = (editor: any, monaco: any) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
 
     // Register Sui Move language
     registerMoveLanguage(monaco);
+
+    // Add Ctrl+S / Cmd+S keyboard shortcut for saving
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+      handleSave();
+    });
 
     // --- Real-time Collaboration Logic ---
     const updateRemoteCursor = (userId: string, position: { line: number, column: number }, userName: string, color: string) => {
@@ -174,7 +216,7 @@ const CodeEditor: React.FC = () => {
   const handleEditorChange = (value: string | undefined) => {
     if (activeTab && value !== undefined) {
       updateTabContent(activeTab, value);
-      
+
       // Update Yjs document if enabled
       if (enableYjs && yjs.connected) {
         yjs.updateContent(value);
@@ -234,19 +276,30 @@ const CodeEditor: React.FC = () => {
 
       {/* Collaboration Controls */}
       <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+        {/* Save Status Indicator */}
+        {saveStatus !== 'idle' && (
+          <div className={`px-3 py-1 rounded text-xs font-medium transition-all ${saveStatus === 'saving' ? 'bg-yellow-500/20 text-yellow-400' :
+            saveStatus === 'saved' ? 'bg-green-500/20 text-green-400' :
+              'bg-red-500/20 text-red-400'
+            }`}>
+            {saveStatus === 'saving' ? '💾 Saving...' :
+              saveStatus === 'saved' ? '✓ Saved' :
+                '✗ Save Failed'}
+          </div>
+        )}
+
         {/* Collaboration Toggle */}
         <button
           onClick={() => setEnableYjs(!enableYjs)}
-          className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-            enableYjs 
-              ? 'bg-sui-cyan text-black' 
-              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-          }`}
+          className={`px-3 py-1 rounded text-xs font-medium transition-colors ${enableYjs
+            ? 'bg-sui-cyan text-black'
+            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
           title="Toggle real-time collaboration"
         >
           {enableYjs ? 'Collab ON' : 'Collab OFF'}
         </button>
-        
+
         {/* Collaboration Indicator */}
         {enableYjs && (
           <CollaborationIndicator connected={yjs.connected} users={yjs.users} />

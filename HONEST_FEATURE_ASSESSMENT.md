@@ -295,13 +295,13 @@ Your landing page makes several promises. Here's the honest breakdown of what's 
 ### What's Partially Ready (Needs Work):
 1. ⚠️ Compilation - **7/10** (needs Sui CLI)
 2. ⚠️ Gas Optimization - **5/10** (UI only)
-3. ⚠️ Video Calls - **6/10** (untested)
+3. ⚠️ voice Calls - **6/10** (untested)
 4. ⚠️ Collaboration - **6/10** (needs testing)
 5. ⚠️ Deployment - **8/10** (conditional on Sui CLI)
 
 ### What's Not Ready (Needs Significant Work):
 1. ❌ Advanced Gas Analysis - **3/10**
-2. ❌ Production Video/Voice - **4/10**
+2. ❌ Production Voice - **4/10**
 3. ❌ Operational Transform - **2/10**
 
 ---

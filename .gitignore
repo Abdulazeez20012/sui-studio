@@ -23,11 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 .env
-.env.local
-.env.production
 backend/.env
-backend/.env.local
-backend/.env.production
 
 
 # Desktop build files
@@ -39,4 +35,4 @@ release/
 *.deb
 *.rpm
 *.zip
-
+contracts/subscribtions/MAINNET_DEPLOYMENT.md
