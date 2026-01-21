@@ -23,7 +23,7 @@ const PLANS: Plan[] = [
       'All IDE features',
       'NEXI AI Assistant',
       'Unlimited projects',
-      'Gas optimization',
+      'Gas estimation',
       'Code compilation',
     ],
   },
@@ -34,10 +34,10 @@ const PLANS: Plan[] = [
     priceSui: 50,
     features: [
       'Everything in Pro',
-      'Real-time collaboration',
+      'Real-time collaboration (Beta)',
       'Team management',
       'Shared workspaces',
-      'Video/voice chat',
+      'Video/voice chat (Beta)',
     ],
   },
   {

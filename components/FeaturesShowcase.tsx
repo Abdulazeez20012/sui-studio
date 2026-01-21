@@ -25,14 +25,14 @@ const FeaturesShowcase: React.FC = () => {
         },
         {
           icon: FileCheck,
-          title: 'Advanced Diagnostic',
-          description: 'Detailed compilation errors with context, file locations, and quick fixes.',
-          badge: 'New',
+          title: 'Advanced Diagnostics',
+          description: 'Detailed compilation errors with context, file locations, and quick fixes. Requires Sui CLI on backend.',
+          badge: 'Sui CLI',
         },
         {
           icon: Rocket,
-          title: 'Gas Optimization',
-          description: 'Real-time gas analysis and optimization suggestions to reduce transaction costs.',
+          title: 'Gas Estimation',
+          description: 'Real-time gas budget management and estimation to control transaction costs.',
         },
       ],
     },
@@ -49,16 +49,19 @@ const FeaturesShowcase: React.FC = () => {
           icon: Users,
           title: 'Live Cursors',
           description: 'Real-time cursor tracking, code sharing, and collaborative editing with your team.',
+          badge: 'Beta',
         },
         {
           icon: Monitor,
           title: 'Screen Sharing',
           description: 'Share your screen during video calls for better collaboration and code reviews.',
+          badge: 'Beta',
         },
         {
           icon: Mic,
           title: 'Voice Chat',
           description: 'Low-latency voice communication with echo cancellation and noise suppression.',
+          badge: 'Beta',
         },
       ],
     },
@@ -68,7 +71,8 @@ const FeaturesShowcase: React.FC = () => {
         {
           icon: Zap,
           title: 'One-Click Deploy',
-          description: 'Deploy to Sui mainnet, testnet, or devnet with a single click. No CLI required.',
+          description: 'Deploy to Sui mainnet, testnet, or devnet with a single click. Requires Sui CLI for compilation.',
+          badge: 'Sui CLI',
         },
         {
           icon: Shield,
@@ -159,7 +163,12 @@ const FeaturesShowcase: React.FC = () => {
 
                   {/* Badge */}
                   {feature.badge && (
-                    <div className="absolute top-8 right-8 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-bold border border-blue-500/20">
+                    <div className={`absolute top-8 right-8 px-3 py-1 rounded-full text-xs font-bold border ${feature.badge === 'Beta'
+                        ? 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+                        : feature.badge === 'Sui CLI'
+                          ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                          : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                      }`}>
                       {feature.badge}
                     </div>
                   )}
